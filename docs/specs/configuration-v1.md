@@ -70,7 +70,7 @@ Equal-specificity patterns are accepted only when static analysis proves them di
 - `check_fragments`.
 - `allow_authored_symlinks`.
 
-Every flag is a TOML Boolean. A root may not also appear as an exact exclusion and may not be excluded by the global `**` pattern. Sibling-link and child-index-link requirements depend on directory-index requirements. Fragment checking depends on local-target checking. More general root-versus-exclusion overlap is evaluated by the matcher once repository inventory exists.
+Every flag is a TOML Boolean. Version 1 requires `allow_authored_symlinks = false` because the snapshot reader deliberately does not follow symlinks; a later alias contract may expand this without weakening repository-escape safety. A root may not also appear as an exact exclusion and may not be excluded by the global `**` pattern. Sibling-link and child-index-link requirements depend on directory-index requirements. Fragment checking depends on local-target checking. More general root-versus-exclusion overlap is evaluated by the matcher once repository inventory exists.
 
 ## Entrypoints and context sets
 

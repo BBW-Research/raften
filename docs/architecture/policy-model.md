@@ -50,6 +50,8 @@ Hierarchical mode adds structural requirements:
 
 The graph must include every ancestor directory between a document and its configured root, even when an intermediate directory contains no non-index Markdown. This fixes the ancestor-discovery gap in the seed checker.
 
+The executable parser, normalization, anchor, hierarchy, and diagnostic semantics are defined by the [version 1 Markdown and documentation graph contract](../specs/markdown-graph-v1.md).
+
 ## Base revision and ratchet
 
 The base revision supplies both the old policy and old file contents. For a current file above its ordinary hard limit:

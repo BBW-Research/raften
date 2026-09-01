@@ -88,6 +88,19 @@ class LinkKind(StrEnum):
     IMAGE = "image"
 
 
+class AnchorKind(StrEnum):
+    HEADING = "heading"
+    EXPLICIT = "explicit_id"
+
+
+class DestinationIssueKind(StrEnum):
+    ABSOLUTE = "absolute"
+    ESCAPES_REPOSITORY = "escapes_repository"
+    INVALID_PERCENT_ENCODING = "invalid_percent_encoding"
+    INVALID_UTF8 = "invalid_utf8"
+    UNSAFE_PATH = "unsafe_path"
+
+
 class Severity(StrEnum):
     ERROR = "error"
     WARNING = "warning"
@@ -275,6 +288,15 @@ class Link:
     raw_destination: str
     target_path: RepositoryPath | None
     fragment: str | None
+    resolution_error: DestinationIssueKind | None = None
+    directory_hint: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class Anchor:
+    source: SourceLocation
+    kind: AnchorKind
+    value: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -286,6 +308,38 @@ class Diagnostic:
     field_path: str | None = None
     details: tuple[tuple[str, JsonValue], ...] = ()
     hint: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class MarkdownDocument:
+    path: RepositoryPath
+    links: tuple[Link, ...]
+    anchors: tuple[Anchor, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class DocumentationDirectory:
+    path: str
+    index_path: RepositoryPath
+    document_paths: tuple[RepositoryPath, ...]
+    child_paths: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class DocumentationEdge:
+    source_path: RepositoryPath
+    target_path: RepositoryPath
+
+
+@dataclass(frozen=True, slots=True)
+class DocumentationEvaluation:
+    roots: tuple[RepositoryPath, ...]
+    governed_paths: tuple[RepositoryPath, ...]
+    documents: tuple[MarkdownDocument, ...]
+    directories: tuple[DocumentationDirectory, ...]
+    edges: tuple[DocumentationEdge, ...]
+    diagnostics: tuple[Diagnostic, ...]
+    unreachable_paths: tuple[RepositoryPath, ...]
 
 
 @dataclass(frozen=True, slots=True)

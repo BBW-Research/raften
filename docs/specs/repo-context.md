@@ -129,7 +129,7 @@ The starter file at the repository root is the normative configuration example. 
 
 The parser returns immutable typed records. Validation errors name the exact key and source location when available.
 
-The exact table shapes, cross-field invariants, static pattern precedence, intentional-exception record format, and configuration diagnostic codes are defined by the [version 1 configuration schema](configuration-v1.md). Classification, raw-byte limits, context-set accounting, and exception application are defined by the [version 1 file and context budget contract](file-budgets-v1.md).
+The exact table shapes, cross-field invariants, static pattern precedence, intentional-exception record format, and configuration diagnostic codes are defined by the [version 1 configuration schema](configuration-v1.md). Classification, raw-byte limits, context-set accounting, and exception application are defined by the [version 1 file and context budget contract](file-budgets-v1.md). Markdown extraction, local-destination normalization, anchors, graph evaluation, and `DOC` diagnostics are defined by the [version 1 Markdown and documentation graph contract](markdown-graph-v1.md).
 
 ## Inventory and path semantics
 
