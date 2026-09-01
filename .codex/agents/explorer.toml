@@ -1,0 +1,3 @@
+# Read-only codebase mapping and behavior discovery.
+read_only = true
+description = "Map files, dependencies, contracts, and existing behavior without editing."

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repo-context"
+version = "0.0.0"
+description = "Repository context budgets, documentation reachability, and policy ratchets for coding-agent projects."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+repo-context = "repo_context.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

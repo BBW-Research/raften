@@ -1,0 +1,27 @@
+{
+  "repository": "BBW-Research/scene-maker",
+  "source_commit": "9e792124bc61f55150416b8bf803862c6c634c78",
+  "introduced_commit": "933ce791f98ecb42e9de6a794527efc57acde59e",
+  "copied_files": {
+    "tools/check_repository_policy.py": {
+      "source_path": "tools/check_repository_policy.py",
+      "git_blob_sha1": "a18f52d15c8f70a53bad2e0d961f5fa355a50a84",
+      "sha256": "bb796f2304f3692089a5e87cef55a7fbe3e7c4c9521d6d2299b738a84f7ebd11",
+      "mode": "verbatim"
+    },
+    "reference/scene-maker/repository-policy.yml": {
+      "source_path": ".github/workflows/repository-policy.yml",
+      "git_blob_sha1": "593d5ed1e2f82af314334cd60afef18b3e0ef129",
+      "mode": "verbatim"
+    },
+    "reference/scene-maker/lychee.toml": {
+      "source_path": "lychee.toml",
+      "git_blob_sha1": "475114c29bdf25f4b101fa3415217d8ae27cbae2",
+      "mode": "verbatim"
+    }
+  },
+  "adapted_files": {
+    "config/repository_policy.v1.json": "Clean starter policy; scene-maker's legacy oversized-file inventory was intentionally omitted.",
+    ".github/workflows/repository-policy.yml": "Uses scripts/validate and includes ARCHITECTURE.md in the offline link pass."
+  }
+}

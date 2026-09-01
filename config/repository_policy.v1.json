@@ -1,0 +1,31 @@
+{
+  "policy_version": 1,
+  "max_text_bytes": 25600,
+  "index_max_bytes": 12288,
+  "entrypoint_limits": {
+    "AGENTS.md": 12288,
+    "ARCHITECTURE.md": 8192,
+    "README.md": 16384
+  },
+  "documentation_roots": [
+    "docs"
+  ],
+  "documentation_excluded_globs": [
+    "docs/licenses/**"
+  ],
+  "text_excluded_globs": [
+    "uv.lock"
+  ],
+  "required_entrypoint_links": {
+    "AGENTS.md": [
+      "docs/index.md"
+    ],
+    "ARCHITECTURE.md": [
+      "docs/architecture/index.md"
+    ],
+    "README.md": [
+      "docs/index.md"
+    ]
+  },
+  "legacy_oversize": {}
+}
