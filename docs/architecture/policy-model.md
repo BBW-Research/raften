@@ -27,7 +27,7 @@ The initial kinds are:
 - `fixture`: intentionally large test or snapshot data. Governed by fixture-specific limits rather than silently excluded.
 - `legal`: licenses and notices whose integrity matters more than context size. Reported but not split automatically.
 
-A file with no matching rule is an error. The starter policy ends with a catch-all authored rule, so ordinary repositories remain governed by default.
+A file with no matching rule is an error. Version 1 requires the final rule to be a scanned authored catch-all, so ordinary repositories remain governed by default. The strict table shapes and static ambiguity rules are defined in the [version 1 configuration schema](../specs/configuration-v1.md).
 
 ## Limits
 

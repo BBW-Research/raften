@@ -58,20 +58,33 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Tasks
 
-- [ ] Add immutable typed records for policy, file rules, overrides, documentation settings, entrypoints, context sets, ratchet settings, exceptions, inventory entries, links, diagnostics, and run results.
-- [ ] Implement strict `tomllib` parsing for `repo-context.toml`.
-- [ ] Reject unknown keys, wrong types, duplicate names, missing catch-all classification, ambiguous overrides, unsafe paths, invalid limits, broad exception patterns, and internally inconsistent settings.
-- [ ] Preserve declaration order where semantics require it.
-- [ ] Produce configuration diagnostics with stable codes and field paths.
-- [ ] Implement configuration serialization needed by `init` without creating a general-purpose TOML writer. A deterministic project-owned template is acceptable.
-- [ ] Add round-trip tests for generated starter policy where applicable.
+- [x] Add immutable typed records for policy, file rules, overrides, documentation settings, entrypoints, context sets, ratchet settings, exceptions, inventory entries, links, diagnostics, and run results.
+- [x] Implement strict `tomllib` parsing for `repo-context.toml`.
+- [x] Reject unknown keys, wrong types, duplicate names, missing catch-all classification, ambiguous overrides, unsafe paths, invalid limits, broad exception patterns, and internally inconsistent settings.
+- [x] Preserve declaration order where semantics require it.
+- [x] Produce configuration diagnostics with stable codes and field paths.
+- [x] Implement configuration serialization needed by `init` without creating a general-purpose TOML writer. A deterministic project-owned template is acceptable.
+- [x] Add round-trip tests for generated starter policy where applicable.
 
 ### Gate
 
-- [ ] The root `repo-context.toml` parses into immutable records.
-- [ ] Invalid-policy fixture coverage includes every validation rule in the product spec.
-- [ ] No scanning or Git access occurs during configuration parsing.
-- [ ] Reviewer confirms model/config modules do not depend on CLI, reporting, or repository I/O.
+- [x] The root `repo-context.toml` parses into immutable records.
+- [x] Invalid-policy fixture coverage includes every validation rule in the product spec.
+- [x] No scanning or Git access occurs during configuration parsing.
+- [x] Reviewer confirms model/config modules do not depend on CLI, reporting, or repository I/O.
+
+### Phase 1 completion evidence
+
+- Completed: 2026-09-01.
+- Models: frozen, slotted records and immutable tuple collections cover the complete policy surface plus inventory entries, source locations, links, diagnostics, and run results. Exact and pattern selectors are distinct union variants, preventing dual-selector parser states.
+- Configuration: the UTF-8 `tomllib` boundary validates exact table shapes, types, canonical paths, repository-pattern syntax, ordered file rules, the mandatory final scanned authored catch-all, deterministic override specificity, documentation dependencies, context sets, ratchets, and governed intentional exceptions. Configuration failures use stable `CFG001` through `CFG013` and `EXC001` identities with unambiguous field paths and deterministic source/position/code ordering.
+- Serialization: `render_starter_policy()` returns a package-owned byte template that is LF-normalized, final-newline-terminated, byte-identical to the normative root policy, and model-equivalent after parsing. No general TOML writer or runtime dependency was added.
+- Contract: `docs/specs/configuration-v1.md` is the authoritative exact schema for table shapes, static precedence, path and pattern syntax, exceptions, and diagnostic identities. The product and architecture documents link to it rather than duplicating the detailed contract.
+- Tests: 70 Phase 1 tests cover every immutable record family, complete root-policy projection, optional record defaults, template round trips, strict shape/type failures, every semantic invariant, malformed path and pattern cases, ambiguity proofs, exception governance, side-effect isolation, and diagnostic identity/order. The full 144-test repository suite passes on Python 3.12.14 and 3.13.13, including warnings-as-errors probes.
+- Validation: `scripts/validate`, the transitional policy check with `--base-ref HEAD`, hostile ambient Git-variable execution, and offline Lychee validation pass. The frozen checker remains byte-identical at `bb796f2304f3692089a5e87cef55a7fbe3e7c4c9521d6d2299b738a84f7ebd11`.
+- Review: the read-only reviewer found and verified fixes for wildcard-aligned disjointness, literal stars inside character classes, public diagnostic sort order, Unicode C1 controls, and exact schema wording. The final review reports no findings and confirms config/model code has no CLI, reporting, Git, scanning, or matcher-bypass dependency.
+- Remaining work: Phase 2 owns repository-root validation, Git inventory, base blobs, canonical platform path normalization, and actual glob matching. Phase 1 intentionally implements only pattern syntax and conservative static ambiguity analysis.
+- Risks: static ambiguity analysis intentionally rejects equal-specificity overrides unless disjointness is provable from aligned literals. Exception expiry against an evaluation date remains a deterministic run-time check; parsing validates date types and chronology without consulting the wall clock.
 
 ## Phase 2: Build deterministic inventory and matcher semantics
 
