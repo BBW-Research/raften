@@ -46,6 +46,7 @@ class TextEncoding(StrEnum):
 class InventorySource(StrEnum):
     TRACKED = "tracked"
     UNTRACKED = "untracked"
+    DELETED = "deleted"
 
 
 class WorktreeKind(StrEnum):
@@ -53,6 +54,19 @@ class WorktreeKind(StrEnum):
     SYMLINK = "symlink"
     MISSING = "missing"
     OTHER = "other"
+
+
+class GitFileMode(StrEnum):
+    REGULAR = "100644"
+    EXECUTABLE = "100755"
+    SYMLINK = "120000"
+    GITLINK = "160000"
+
+
+class GitObjectType(StrEnum):
+    BLOB = "blob"
+    TREE = "tree"
+    COMMIT = "commit"
 
 
 class LinkKind(StrEnum):
@@ -192,12 +206,34 @@ class Policy:
 
 
 @dataclass(frozen=True, slots=True)
+class GitIndexMetadata:
+    mode: GitFileMode
+    object_id: str
+    skip_worktree: bool = False
+
+
+@dataclass(frozen=True, slots=True)
 class InventoryEntry:
     path: RepositoryPath
     source: InventorySource
     kind: WorktreeKind
     size_bytes: int | None = None
     symlink_target: str | None = None
+    index: GitIndexMetadata | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class BaseRevision:
+    requested_ref: str
+    commit_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class BaseTreeEntry:
+    path: RepositoryPath
+    mode: GitFileMode
+    object_type: GitObjectType
+    object_id: str
 
 
 @dataclass(frozen=True, slots=True)

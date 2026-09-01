@@ -12,6 +12,7 @@ src/repo_context/
 ├── config.py
 ├── diagnostics.py
 ├── docs.py
+├── git_executable.py
 ├── inventory.py
 ├── markdown.py
 ├── matcher.py
@@ -35,8 +36,9 @@ cli -> runner -> checks -> inventory/config/model -> standard library
 
 - `model.py` contains immutable domain records and no filesystem or subprocess access.
 - `config.py` parses and validates TOML into model records. It does not scan a repository.
-- `inventory.py` is the only module that invokes Git or reads base-revision blobs.
-- `matcher.py` owns documented path-pattern semantics. No other module may call `fnmatch` or invent matching behavior.
+- `git_executable.py` resolves an absolute Git executable through a sanitized search path that excludes relative, empty, and selected-repository entries. It does not invoke Git.
+- `inventory.py` is the only module that invokes Git or reads base-revision blobs. Its exact root, worktree snapshot, and base-object contract is documented in [Repository inventory](inventory.md).
+- `matcher.py` owns the [version 1 repository path and glob semantics](../specs/repository-paths-and-globs-v1.md). No other module may call `fnmatch` or invent matching behavior.
 - `markdown.py` extracts normalized local links and anchors. It does not decide policy violations.
 - `docs.py` builds the documentation graph and emits document diagnostics.
 - `sizes.py` classifies plaintext and evaluates file and context-set budgets.

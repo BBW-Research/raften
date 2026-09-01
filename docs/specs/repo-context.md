@@ -133,7 +133,7 @@ The exact table shapes, cross-field invariants, static pattern precedence, inten
 
 ## Inventory and path semantics
 
-The tool requires Git for version 1. It discovers current paths with tracked plus non-ignored untracked semantics. Deleted tracked paths are absent from current checks but may be read from the base revision for comparison.
+The tool requires Git for version 1. It discovers current paths with tracked plus non-ignored untracked semantics. The inventory retains deleted tracked paths as explicit missing records; they are absent from current-content checks but may be read from the base revision for comparison. The [repository inventory boundary](../architecture/inventory.md) defines root validation, Git isolation, snapshot states, base-object access, races, and `GIT` diagnostic identities.
 
 Internal paths use `/` regardless of platform. Reject:
 
@@ -150,7 +150,7 @@ Filesystem and Git outputs are sorted before evaluation. Diagnostic ordering is 
 
 ## Pattern semantics
 
-Do not inherit Python `fnmatch` behavior implicitly. Version 1 defines repository globs:
+Do not inherit Python `fnmatch` behavior implicitly. The complete normative contract is [version 1 repository paths and globs](repository-paths-and-globs-v1.md). In summary, version 1 defines repository globs:
 
 - `*` matches zero or more characters except `/`.
 - `?` matches one character except `/`.

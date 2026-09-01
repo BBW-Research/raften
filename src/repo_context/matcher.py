@@ -2,11 +2,60 @@
 
 from __future__ import annotations
 
+import os
 import re
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import TypeAlias
 
 
 _WINDOWS_DRIVE = re.compile(r"^[A-Za-z]:")
 _GLOB_CHARACTERS = frozenset("*?[]")
+
+
+class PathFlavor(StrEnum):
+    POSIX = "posix"
+    WINDOWS = "windows"
+
+
+class PatternSyntaxError(ValueError):
+    """Raised when a repository pattern does not use the v1 glob language."""
+
+
+@dataclass(frozen=True, slots=True)
+class _LiteralToken:
+    value: str
+
+
+@dataclass(frozen=True, slots=True)
+class _StarToken:
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class _QuestionToken:
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class _ClassToken:
+    negated: bool
+    ranges: tuple[tuple[str, str], ...]
+
+
+PatternToken: TypeAlias = _LiteralToken | _StarToken | _QuestionToken | _ClassToken
+
+
+@dataclass(frozen=True, slots=True)
+class PatternComponent:
+    recursive: bool
+    tokens: tuple[PatternToken, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class CompiledPattern:
+    source: str
+    components: tuple[PatternComponent, ...]
 
 
 def path_validation_error(value: str) -> str | None:
@@ -16,6 +65,39 @@ def path_validation_error(value: str) -> str | None:
     if any(character in value for character in _GLOB_CHARACTERS):
         return "exact paths may not contain glob metacharacters"
     return None
+
+
+def candidate_path_validation_error(value: str) -> str | None:
+    """Validate an internal Git path without treating filename data as syntax."""
+
+    if not value:
+        return "path must not be empty"
+    if value.startswith("/") or _has_drive_qualified_component(value):
+        return "path must be repository-relative"
+    if "\x00" in value:
+        return "path must not contain NUL"
+    if value.endswith("/") or "//" in value:
+        return "path contains an empty component"
+    if any(component in {".", ".."} for component in value.split("/")):
+        return "path contains a traversal or non-canonical component"
+    return None
+
+
+def normalize_platform_path(
+    value: str,
+    *,
+    flavor: PathFlavor | None = None,
+) -> str:
+    """Convert one native relative path to the canonical internal spelling."""
+
+    selected_flavor = flavor
+    if selected_flavor is None:
+        selected_flavor = PathFlavor.WINDOWS if os.name == "nt" else PathFlavor.POSIX
+    normalized = value.replace("\\", "/") if selected_flavor is PathFlavor.WINDOWS else value
+    error = candidate_path_validation_error(normalized)
+    if error is not None:
+        raise ValueError(error)
+    return normalized
 
 
 def pattern_validation_error(value: str) -> str | None:
@@ -29,6 +111,38 @@ def pattern_validation_error(value: str) -> str | None:
         if _contains_embedded_double_star(component):
             return "** must occupy an entire path component"
     return None
+
+
+def compile_pattern(pattern: str) -> CompiledPattern:
+    """Compile a validated v1 repository glob into immutable matcher tokens."""
+
+    error = pattern_validation_error(pattern)
+    if error is not None:
+        raise PatternSyntaxError(error)
+    return CompiledPattern(
+        source=pattern,
+        components=tuple(_compile_component(item) for item in pattern.split("/")),
+    )
+
+
+def match_path(pattern: CompiledPattern | str, path: str) -> bool:
+    """Return whether a pattern matches one complete canonical repository path."""
+
+    error = candidate_path_validation_error(path)
+    if error is not None:
+        raise ValueError(error)
+    compiled = compile_pattern(pattern) if isinstance(pattern, str) else pattern
+    return _match_compiled(compiled, path.split("/"))
+
+
+def matches_any(patterns: tuple[CompiledPattern, ...], path: str) -> bool:
+    """Return whether any precompiled pattern matches a repository path."""
+
+    error = candidate_path_validation_error(path)
+    if error is not None:
+        raise ValueError(error)
+    components = path.split("/")
+    return any(_match_compiled(pattern, components) for pattern in patterns)
 
 
 def pattern_has_wildcards(pattern: str) -> bool:
@@ -92,10 +206,101 @@ def narrow_pattern_error(pattern: str) -> str | None:
     return None
 
 
+def _compile_component(component: str) -> PatternComponent:
+    if component == "**":
+        return PatternComponent(recursive=True, tokens=())
+    tokens: list[PatternToken] = []
+    index = 0
+    while index < len(component):
+        character = component[index]
+        if character == "*":
+            tokens.append(_StarToken())
+            index += 1
+        elif character == "?":
+            tokens.append(_QuestionToken())
+            index += 1
+        elif character == "[":
+            closing = component.index("]", index + 1)
+            content = component[index + 1 : closing]
+            negated = content.startswith("!")
+            if negated:
+                content = content[1:]
+            tokens.append(_ClassToken(negated, _compile_class_ranges(content)))
+            index = closing + 1
+        else:
+            tokens.append(_LiteralToken(character))
+            index += 1
+    return PatternComponent(recursive=False, tokens=tuple(tokens))
+
+
+def _compile_class_ranges(content: str) -> tuple[tuple[str, str], ...]:
+    ranges: list[tuple[str, str]] = []
+    index = 0
+    while index < len(content):
+        if index + 2 < len(content) and content[index + 1] == "-":
+            ranges.append((content[index], content[index + 2]))
+            index += 3
+        else:
+            ranges.append((content[index], content[index]))
+            index += 1
+    return tuple(ranges)
+
+
+def _match_compiled(pattern: CompiledPattern, path: list[str]) -> bool:
+    path_count = len(path)
+    following = [False] * (path_count + 1)
+    following[path_count] = True
+    for component in reversed(pattern.components):
+        current = [False] * (path_count + 1)
+        if component.recursive:
+            current[path_count] = following[path_count]
+            for path_index in range(path_count - 1, -1, -1):
+                current[path_index] = following[path_index] or current[path_index + 1]
+        else:
+            for path_index in range(path_count - 1, -1, -1):
+                current[path_index] = (
+                    _match_component(component.tokens, path[path_index])
+                    and following[path_index + 1]
+                )
+        following = current
+    return following[0]
+
+
+def _match_component(tokens: tuple[PatternToken, ...], value: str) -> bool:
+    value_count = len(value)
+    following = [False] * (value_count + 1)
+    following[value_count] = True
+    for token in reversed(tokens):
+        current = [False] * (value_count + 1)
+        if isinstance(token, _StarToken):
+            current[value_count] = following[value_count]
+            for value_index in range(value_count - 1, -1, -1):
+                current[value_index] = following[value_index] or current[value_index + 1]
+        else:
+            for value_index, character in enumerate(value):
+                current[value_index] = (
+                    _token_matches_character(token, character)
+                    and following[value_index + 1]
+                )
+        following = current
+    return following[0]
+
+
+def _token_matches_character(token: PatternToken, character: str) -> bool:
+    if isinstance(token, _LiteralToken):
+        return token.value == character
+    if isinstance(token, _QuestionToken):
+        return True
+    if isinstance(token, _ClassToken):
+        contained = any(start <= character <= end for start, end in token.ranges)
+        return not contained if token.negated else contained
+    raise AssertionError("star tokens are handled before character matching")
+
+
 def _common_path_error(value: str) -> str | None:
     if not value:
         return "path must not be empty"
-    if value.startswith("/") or _WINDOWS_DRIVE.match(value):
+    if value.startswith("/") or _has_drive_qualified_component(value):
         return "path must be repository-relative"
     if "\\" in value:
         return "path must use POSIX separators"
@@ -110,6 +315,10 @@ def _common_path_error(value: str) -> str | None:
     if any(component in {".", ".."} for component in components):
         return "path contains a traversal or non-canonical component"
     return None
+
+
+def _has_drive_qualified_component(value: str) -> bool:
+    return any(_WINDOWS_DRIVE.match(component) for component in value.split("/"))
 
 
 def _character_class_error(component: str) -> str | None:

@@ -9,7 +9,7 @@ import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from tests.support.seed import BOOTSTRAP_POLICY_PATH, ROOT, SEED_PATH
 
@@ -75,13 +75,21 @@ def seed_policy(**overrides: Any) -> dict[str, Any]:
 class RepositoryFixture:
     """A disposable real Git repository for integration behavior."""
 
-    def __init__(self, *, initialize_git: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        initialize_git: bool = True,
+        object_format: str = "sha1",
+    ) -> None:
         self._temporary_directory = tempfile.TemporaryDirectory(
             prefix="repo-context-fixture-",
         )
         self.root = Path(self._temporary_directory.name)
         if initialize_git:
-            self.git("init", "--quiet", "--initial-branch=main")
+            init_arguments = ["init", "--quiet", "--initial-branch=main"]
+            if object_format != "sha1":
+                init_arguments.append(f"--object-format={object_format}")
+            self.git(*init_arguments)
             self.git("config", "user.name", "Repo Context Tests")
             self.git("config", "user.email", "repo-context@example.invalid")
             self.git("config", "commit.gpgsign", "false")
@@ -145,6 +153,37 @@ class RepositoryFixture:
             env=isolated_environment(),
             timeout=30,
         )
+
+    def git_bytes(
+        self,
+        *arguments: str,
+        check: bool = True,
+        environment_overrides: Mapping[str, str] | None = None,
+    ) -> subprocess.CompletedProcess[bytes]:
+        overrides = {} if environment_overrides is None else dict(environment_overrides)
+        return subprocess.run(
+            ["git", *arguments],
+            cwd=self.root,
+            check=check,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=isolated_environment(**overrides),
+            timeout=30,
+        )
+
+    def status_bytes(self) -> bytes:
+        return self.git_bytes(
+            "status",
+            "--porcelain=v1",
+            "-z",
+            environment_overrides={"GIT_OPTIONAL_LOCKS": "0"},
+        ).stdout
+
+    def git_path(self, name: str) -> Path:
+        rendered = self.git("rev-parse", "--git-path", name).stdout.strip()
+        path = Path(rendered)
+        return path if path.is_absolute() else self.root / path
 
     def commit(self, message: str = "fixture state") -> str:
         self.git("add", "--all")
