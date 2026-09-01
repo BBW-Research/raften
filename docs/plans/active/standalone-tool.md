@@ -26,20 +26,33 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Tasks
 
-- [ ] Verify `reference/scene-maker/SOURCE.json` against the copied Python checker and referenced workflow files.
-- [ ] Expand source characterization tests to cover every public behavior in the seed: policy parsing, path canonicalization, Git inventory invocation, UTF-8 classification, limit selection, legacy ceilings, document discovery, required indexes, sibling links, child-index links, entrypoint targets, base-policy loading, non-weakening comparisons, exit codes, and deterministic ordering.
-- [ ] Create fixture-repository helpers that initialize temporary Git repositories, commit a base state, mutate a working tree, and run either checker without network access.
-- [ ] Add golden text fixtures only where structured assertions cannot express behavior. Normalize temporary paths before comparison.
-- [ ] Record the intended differences rather than forcing parity for known seed defects: missing ancestor-directory discovery, implicit `fnmatch` semantics, regex-only link parsing, stale manual legacy ceilings, hardcoded structured-data exemptions, and package-location root inference.
-- [ ] Decide the packaging backend after a current dependency review. Keep runtime dependency-free. Add a lock file only when the chosen workflow needs one.
-- [ ] Confirm the starter runs on Python 3.12 and 3.13 locally or in CI.
+- [x] Verify `reference/scene-maker/SOURCE.json` against the copied Python checker and referenced workflow files.
+- [x] Expand source characterization tests to cover every public behavior in the seed: policy parsing, path canonicalization, Git inventory invocation, UTF-8 classification, limit selection, legacy ceilings, document discovery, required indexes, sibling links, child-index links, entrypoint targets, base-policy loading, non-weakening comparisons, exit codes, and deterministic ordering.
+- [x] Create fixture-repository helpers that initialize temporary Git repositories, commit a base state, mutate a working tree, and run either checker without network access.
+- [x] Add golden text fixtures only where structured assertions cannot express behavior. Normalize temporary paths before comparison.
+- [x] Record the intended differences rather than forcing parity for known seed defects: missing ancestor-directory discovery, implicit `fnmatch` semantics, regex-only link parsing, stale manual legacy ceilings, hardcoded structured-data exemptions, and package-location root inference.
+- [x] Decide the packaging backend after a current dependency review. Keep runtime dependency-free. Add a lock file only when the chosen workflow needs one.
+- [x] Confirm the starter runs on Python 3.12 and 3.13 locally or in CI.
 
 ### Gate
 
-- [ ] Every behavior inherited from scene-maker has at least one characterization test.
-- [ ] The frozen checker hash test passes.
-- [ ] Known differences have explicit target tests or documented deferred test cases.
-- [ ] `scripts/validate` passes without network access.
+- [x] Every behavior inherited from scene-maker has at least one characterization test.
+- [x] The frozen checker hash test passes.
+- [x] Known differences have explicit target tests or documented deferred test cases.
+- [x] `scripts/validate` passes without network access.
+
+### Phase 0 completion evidence
+
+- Completed: 2026-09-01.
+- Baseline: root commit `6b4263d` records the validated 50-file starter before implementation changes.
+- Provenance: tests verify the recorded scene-maker repository and commit, every copied file's verbatim mode and Git blob, and the checker SHA-256. The frozen checker remains byte-identical at `bb796f2304f3692089a5e87cef55a7fbe3e7c4c9521d6d2299b738a84f7ebd11`.
+- Characterization: 74 tests cover the complete source surface and deterministic CLI streams. Real temporary repositories isolate ambient Git configuration, use fixed identities and timestamps, commit reproducible base states, mutate tracked and untracked content, and run both seed and target entrypoints. Structured assertions were sufficient, so Phase 0 added no golden output file.
+- Intended differences: `docs/reference/scene-maker-seed.md` maps the known intended differences to retained seed evidence and an owning target phase.
+- Packaging: accepted decision 0004 pins `setuptools==84.0.0` after a 2026-09-01 review of release age, Python compatibility, ownership, maintenance, license, dependency footprint, execution surface, and artifact provenance. Runtime dependencies remain empty and no environment-manager lock is warranted yet.
+- Validation: `scripts/validate` and the offline Lychee check pass without network access. The seed policy check, compile checks, CLI help, diff check, and all 74 tests pass locally on Python 3.12.14 and 3.13.13 without package installation. The suite also passes with hostile ambient `GIT_DIR` and injected Git configuration.
+- Review: the read-only Phase 0 reviewer found and verified fixes for Git-environment isolation, Windows-invalid fixture names, overly broad symlink skips, deterministic commit evidence, and dependency-review completeness. No review finding remains open.
+- Remaining work: Phase 1 begins immutable models and strict TOML parsing; no production seed behavior was extracted during Phase 0.
+- Risks: local cross-version evidence is macOS arm64; Linux and Windows execution remains dependent on the supported-version CI and release matrix. Symlink assertions skip only when the host cannot create symlinks. Isolated distribution builds will require the reviewed backend artifact to be available and will receive explicit offline artifact verification in Phase 8.
 
 ## Phase 1: Define immutable models and strict configuration
 
