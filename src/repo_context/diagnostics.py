@@ -18,8 +18,15 @@ CFG_CATCH_ALL = "CFG010"
 CFG_AMBIGUOUS_OVERRIDE = "CFG011"
 CFG_LIMIT = "CFG012"
 CFG_INCONSISTENT = "CFG013"
+CFG_UNCLASSIFIED_PATH = "CFG014"
+CFG_EFFECTIVE_POLICY = "CFG015"
 EXC_BROAD_SELECTOR = "EXC001"
 EXC_EXPIRED = "EXC002"
+FILE_WARN_BYTES = "CTX001"
+FILE_HARD_BYTES = "CTX002"
+CONTEXT_MEMBER_MISSING = "CTX003"
+CONTEXT_WARN_BYTES = "CTX004"
+CONTEXT_HARD_BYTES = "CTX005"
 GIT_INVALID_ROOT = "GIT001"
 GIT_COMMAND = "GIT002"
 GIT_MALFORMED_OUTPUT = "GIT003"
@@ -66,6 +73,27 @@ def operational_diagnostic(
         severity=Severity.ERROR,
         message=message,
         location=None if path is None else SourceLocation(path),
+        details=details,
+        hint=hint,
+    )
+
+
+def policy_diagnostic(
+    code: str,
+    severity: Severity,
+    message: str,
+    *,
+    path: str | None = None,
+    field_path: str | None = None,
+    details: tuple[tuple[str, JsonValue], ...] = (),
+    hint: str | None = None,
+) -> Diagnostic:
+    return Diagnostic(
+        code=code,
+        severity=severity,
+        message=message,
+        location=None if path is None else SourceLocation(path),
+        field_path=field_path,
         details=details,
         hint=hint,
     )

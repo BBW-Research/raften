@@ -94,9 +94,9 @@ Each exception record requires:
 - An optional TOML local date in `expires_on` that is not earlier than `created_on`.
 - Replacement scan behavior, a complete pair of replacement limits, or both when consistent.
 
-`scan = false` may not be combined with byte limits. Selectors are unique within the exception table. Catch-all and other broad exception patterns are invalid.
+`scan = false` may not be combined with byte limits. Selectors are unique within the exception table. Catch-all and other broad exception patterns are invalid. Pattern exceptions use the same specificity and conservative equal-specificity ambiguity rules as pattern overrides; exact exception selectors take precedence at evaluation time.
 
-Configuration parsing does not consult the wall clock: the same bytes always produce the same model or diagnostics. Expiry relative to an evaluation date is a run-time exception check and receives that date as an explicit run input; an expired record then produces `EXC002`.
+Configuration parsing does not consult the wall clock: the same bytes always produce the same model or diagnostics. Expiry relative to an evaluation date is a run-time exception check and receives that date as an explicit run input; an expired record then produces `EXC002`. Complete evaluation semantics are defined by the [version 1 file and context budget contract](file-budgets-v1.md).
 
 ## Paths and patterns
 
@@ -120,8 +120,12 @@ Every failure has a stable code and field path. Array-of-table indexes are zero-
 | `CFG008` | Duplicate named record |
 | `CFG009` | Duplicate path, pattern, or selector |
 | `CFG010` | Missing or invalid file-rule catch-all |
-| `CFG011` | Ambiguous equal-specificity overrides |
+| `CFG011` | Ambiguous equal-specificity pattern overrides or exceptions |
 | `CFG012` | Invalid byte limits |
 | `CFG013` | Internally inconsistent settings |
+| `CFG014` | Inventoried path is unclassified at evaluation time |
+| `CFG015` | Effective run-time file policy is incomplete or ineffective |
 | `EXC001` | Broad intentional-exception selector |
 | `EXC002` | Exception expired at the explicit evaluation date |
+
+`CFG001` through `CFG013` are emitted while parsing configuration and carry a configuration source location and field path. `CFG014` and `CFG015` are run-time configuration failures tied to an inventoried repository path. `EXC002` is tied to the expired record's field path and explicit evaluation date without consulting the wall clock.

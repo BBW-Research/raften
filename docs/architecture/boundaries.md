@@ -22,6 +22,7 @@ src/repo_context/
 ├── report.py
 ├── repository_errors.py
 ├── runner.py
+├── size_policy.py
 ├── sizes.py
 └── worktree.py
 ```
@@ -45,14 +46,15 @@ cli -> runner -> checks -> inventory/config/model -> standard library
 - `matcher.py` owns the [version 1 repository path and glob semantics](../specs/repository-paths-and-globs-v1.md). No other module may call `fnmatch` or invent matching behavior.
 - `markdown.py` extracts normalized local links and anchors. It does not decide policy violations.
 - `docs.py` builds the documentation graph and emits document diagnostics.
-- `sizes.py` classifies plaintext and evaluates file and context-set budgets.
+- `size_policy.py` compiles patterns and resolves rule, override, and exception provenance without reading repository content.
+- `sizes.py` classifies plaintext and evaluates file and context-set budgets through an injected snapshot reader. Its complete behavior is defined by the [version 1 file and context budget contract](../specs/file-budgets-v1.md).
 - `ratchet.py` compares current policy and current files with the base revision.
 - `diagnostics.py` defines stable diagnostic identities, locations, severity, and structured payloads.
 - `report.py` renders text, JSON, and SARIF without changing diagnostic meaning.
 - `repository_errors.py` owns the shared structured-error boundary for repository helpers without importing the inventory facade.
 - `runner.py` orchestrates checks and returns a result object. It contains no presentation logic.
 - `cli.py` maps arguments, exit codes, and output streams onto the runner.
-- `worktree.py` joins validated repository paths and performs no-follow filesystem metadata inspection without invoking Git.
+- `worktree.py` joins validated repository paths, performs no-follow filesystem metadata inspection, and owns snapshot-verified current-content reads without invoking Git.
 
 Circular imports are a design failure. Resolve them by moving shared immutable concepts into `model.py`, not by adding runtime import tricks.
 

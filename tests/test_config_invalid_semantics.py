@@ -410,6 +410,29 @@ scan = false'''
         text = append_exception_record(append_exception_record(ROOT_POLICY_TEXT, body), body)
         self.assert_policy_diagnostic(text, CFG_DUPLICATE_SELECTOR, "exceptions.record[1].path")
 
+    def test_overlapping_equal_specificity_exception_patterns_are_ambiguous(self) -> None:
+        first = '''pattern = "temporary/*.txt"
+owner = "tooling"
+rationale = "Temporary compatibility boundary"
+tracking_reference = "ADR-42"
+created_on = 2026-08-01
+scan = false'''
+        second = '''pattern = "temporary/?.txt"
+owner = "tooling"
+rationale = "A different temporary boundary"
+tracking_reference = "ADR-43"
+created_on = 2026-08-01
+scan = false'''
+        text = append_exception_record(
+            append_exception_record(ROOT_POLICY_TEXT, first),
+            second,
+        )
+        self.assert_policy_diagnostic(
+            text,
+            CFG_AMBIGUOUS_OVERRIDE,
+            "exceptions.record[1].pattern",
+        )
+
     def test_exception_metadata_may_not_be_blank(self) -> None:
         text = append_exception_record(
             ROOT_POLICY_TEXT,

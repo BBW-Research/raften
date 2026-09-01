@@ -25,6 +25,7 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
                 "list_base_tree",
                 "open_repository",
                 "read_base_blob",
+                "read_worktree_bytes",
                 "resolve_base_revision",
                 "validate_git_repository_path",
                 "worktree_path",
@@ -103,6 +104,32 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
                     and node.func.value.id == "Path"
                 ):
                     offenders.append(source_path.name)
+        self.assertEqual(offenders, [])
+
+    def test_size_policy_and_budget_evaluation_have_no_repository_io_dependency(self) -> None:
+        forbidden_modules = {
+            "os",
+            "pathlib",
+            "subprocess",
+            "repo_context.inventory",
+            "repo_context.worktree",
+        }
+        offenders: list[tuple[str, str]] = []
+        for name in ("size_policy.py", "sizes.py"):
+            source_path = PACKAGE / name
+            tree = ast.parse(source_path.read_text(encoding="utf-8"), name)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imported = tuple(alias.name for alias in node.names)
+                elif isinstance(node, ast.ImportFrom):
+                    imported = (node.module or "",)
+                else:
+                    continue
+                offenders.extend(
+                    (name, module)
+                    for module in imported
+                    if module in forbidden_modules
+                )
         self.assertEqual(offenders, [])
 
 

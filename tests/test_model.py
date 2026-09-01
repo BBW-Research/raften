@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 from dataclasses import FrozenInstanceError, fields, is_dataclass
+from datetime import date
 
 from repo_context.config import starter_policy
 from repo_context.model import (
@@ -21,7 +22,9 @@ from repo_context.model import (
     Severity,
     SourceLocation,
     WorktreeKind,
+    WorktreeIdentity,
 )
+from repo_context.sizes import compile_size_policy, evaluate_sizes, explain_size_path
 
 
 class ImmutableModelTests(unittest.TestCase):
@@ -117,6 +120,49 @@ class ImmutableModelTests(unittest.TestCase):
             self.assertTrue(hasattr(type(record), "__slots__"))
             with self.assertRaises(FrozenInstanceError):
                 setattr(record, fields(record)[0].name, "changed")
+
+    def test_phase_three_policy_and_evaluation_records_are_immutable(self) -> None:
+        identity = WorktreeIdentity(0o100644, 1, 2, 4, 3, 4)
+        entry = InventoryEntry(
+            "README.md",
+            InventorySource.TRACKED,
+            WorktreeKind.REGULAR,
+            size_bytes=4,
+            identity=identity,
+        )
+        compiled = compile_size_policy(starter_policy())
+        evaluation_date = date(2026, 9, 1)
+        evaluation = evaluate_sizes(
+            compiled,
+            (entry,),
+            lambda _entry: b"text",
+            evaluation_date=evaluation_date,
+            retain_text_paths=frozenset({"README.md"}),
+        )
+        explanation = explain_size_path(
+            compiled,
+            "README.md",
+            evaluation_date,
+            evaluation,
+        )
+        records = (
+            identity,
+            evaluation,
+            evaluation.files[0],
+            evaluation.files[0].policy,
+            evaluation.files[0].policy.rule_match,
+            evaluation.files[0].policy.override_match,
+            evaluation.contexts[0],
+            evaluation.contexts[0].members[0],
+            evaluation.documents[0],
+            explanation,
+        )
+        for record in records:
+            with self.subTest(record=type(record).__name__):
+                self.assertTrue(is_dataclass(record))
+                self.assertTrue(hasattr(type(record), "__slots__"))
+                with self.assertRaises(FrozenInstanceError):
+                    setattr(record, fields(record)[0].name, "changed")
 
 
 if __name__ == "__main__":

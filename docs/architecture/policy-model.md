@@ -17,7 +17,7 @@ All paths are repository-relative POSIX strings. Reject absolute paths, backslas
 
 ## Classification
 
-Classification determines whether a file is scanned and which limits apply. Rule order is significant: the first matching `file_rule` wins. Exact `path_override` entries then narrow the effective limit. Pattern overrides are evaluated after exact overrides and from most specific to least specific; ambiguous equal-specificity matches are a configuration error.
+Classification determines whether a file is scanned and which limits apply. Rule order is significant: the first matching `file_rule` wins. Exact `path_override` entries then narrow the ordinary limit. Without an exact match, the most-specific matching pattern override applies; ambiguous equal-specificity matches are a configuration error. Intentional exceptions resolve afterward and can replace effective scan behavior or thresholds while preserving the ordinary policy for ratchet comparison.
 
 The initial kinds are:
 
@@ -27,7 +27,7 @@ The initial kinds are:
 - `fixture`: intentionally large test or snapshot data. Governed by fixture-specific limits rather than silently excluded.
 - `legal`: licenses and notices whose integrity matters more than context size. Reported but not split automatically.
 
-A file with no matching rule is an error. Version 1 requires the final rule to be a scanned authored catch-all, so ordinary repositories remain governed by default. The strict table shapes and static ambiguity rules are defined in the [version 1 configuration schema](../specs/configuration-v1.md).
+A file with no matching rule is an error. Version 1 requires the final rule to be a scanned authored catch-all, so ordinary repositories remain governed by default. The strict table shapes and static ambiguity rules are defined in the [version 1 configuration schema](../specs/configuration-v1.md), and executable classification and accounting behavior is defined in the [version 1 file and context budget contract](../specs/file-budgets-v1.md).
 
 ## Limits
 

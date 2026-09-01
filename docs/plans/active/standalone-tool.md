@@ -43,16 +43,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 0 completion evidence
 
-- Completed: 2026-09-01.
-- Baseline: root commit `6b4263d` records the validated 50-file starter before implementation changes.
-- Provenance: tests verify the recorded scene-maker repository and commit, every copied file's verbatim mode and Git blob, and the checker SHA-256. The frozen checker remains byte-identical at `bb796f2304f3692089a5e87cef55a7fbe3e7c4c9521d6d2299b738a84f7ebd11`.
-- Characterization: 74 tests cover the complete source surface and deterministic CLI streams. Real temporary repositories isolate ambient Git configuration, use fixed identities and timestamps, commit reproducible base states, mutate tracked and untracked content, and run both seed and target entrypoints. Structured assertions were sufficient, so Phase 0 added no golden output file.
-- Intended differences: `docs/reference/scene-maker-seed.md` maps the known intended differences to retained seed evidence and an owning target phase.
-- Packaging: accepted decision 0004 pins `setuptools==84.0.0` after a 2026-09-01 review of release age, Python compatibility, ownership, maintenance, license, dependency footprint, execution surface, and artifact provenance. Runtime dependencies remain empty and no environment-manager lock is warranted yet.
-- Validation: `scripts/validate` and the offline Lychee check pass without network access. The seed policy check, compile checks, CLI help, diff check, and all 74 tests pass locally on Python 3.12.14 and 3.13.13 without package installation. The suite also passes with hostile ambient `GIT_DIR` and injected Git configuration.
-- Review: the read-only Phase 0 reviewer found and verified fixes for Git-environment isolation, Windows-invalid fixture names, overly broad symlink skips, deterministic commit evidence, and dependency-review completeness. No review finding remains open.
-- Remaining work: Phase 1 begins immutable models and strict TOML parsing; no production seed behavior was extracted during Phase 0.
-- Risks: local cross-version evidence is macOS arm64; Linux and Windows execution remains dependent on the supported-version CI and release matrix. Symlink assertions skip only when the host cannot create symlinks. Isolated distribution builds will require the reviewed backend artifact to be available and will receive explicit offline artifact verification in Phase 8.
+[Phase 0 completion evidence](standalone-tool-evidence.md#phase-0-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 1: Define immutable models and strict configuration
 
@@ -75,16 +66,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 1 completion evidence
 
-- Completed: 2026-09-01.
-- Models: frozen, slotted records and immutable tuple collections cover the complete policy surface plus inventory entries, source locations, links, diagnostics, and run results. Exact and pattern selectors are distinct union variants, preventing dual-selector parser states.
-- Configuration: the UTF-8 `tomllib` boundary validates exact table shapes, types, canonical paths, repository-pattern syntax, ordered file rules, the mandatory final scanned authored catch-all, deterministic override specificity, documentation dependencies, context sets, ratchets, and governed intentional exceptions. Configuration failures use stable `CFG001` through `CFG013` and `EXC001` identities with unambiguous field paths and deterministic source/position/code ordering.
-- Serialization: `render_starter_policy()` returns a package-owned byte template that is LF-normalized, final-newline-terminated, byte-identical to the normative root policy, and model-equivalent after parsing. No general TOML writer or runtime dependency was added.
-- Contract: `docs/specs/configuration-v1.md` is the authoritative exact schema for table shapes, static precedence, path and pattern syntax, exceptions, and diagnostic identities. The product and architecture documents link to it rather than duplicating the detailed contract.
-- Tests: 70 Phase 1 tests cover every immutable record family, complete root-policy projection, optional record defaults, template round trips, strict shape/type failures, every semantic invariant, malformed path and pattern cases, ambiguity proofs, exception governance, side-effect isolation, and diagnostic identity/order. The full 144-test repository suite passes on Python 3.12.14 and 3.13.13, including warnings-as-errors probes.
-- Validation: `scripts/validate`, the transitional policy check with `--base-ref HEAD`, hostile ambient Git-variable execution, and offline Lychee validation pass. The frozen checker remains byte-identical at `bb796f2304f3692089a5e87cef55a7fbe3e7c4c9521d6d2299b738a84f7ebd11`.
-- Review: the read-only reviewer found and verified fixes for wildcard-aligned disjointness, literal stars inside character classes, public diagnostic sort order, Unicode C1 controls, and exact schema wording. The final review reports no findings and confirms config/model code has no CLI, reporting, Git, scanning, or matcher-bypass dependency.
-- Remaining work: Phase 2 owns repository-root validation, Git inventory, base blobs, canonical platform path normalization, and actual glob matching. Phase 1 intentionally implements only pattern syntax and conservative static ambiguity analysis.
-- Risks: static ambiguity analysis intentionally rejects equal-specificity overrides unless disjointness is provable from aligned literals. Exception expiry against an evaluation date remains a deterministic run-time check; parsing validates date types and chronology without consulting the wall clock.
+[Phase 1 completion evidence](standalone-tool-evidence.md#phase-1-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 2: Build deterministic inventory and matcher semantics
 
@@ -109,38 +91,32 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 2 completion evidence
 
-- Completed: 2026-09-01.
-- Inventory: explicit canonical roots work independently of package and process location. Three strictly framed NUL-delimited Git views produce globally path-sorted immutable records for tracked, non-ignored untracked, deleted, sparse-missing, regular, executable, symlink, other, and gitlink states. SHA-1 and SHA-256 object identities, unresolved index stages, filesystem races, parent symlinks, and Windows junction shapes have explicit behavior and stable `GIT001` through `GIT009` diagnostics.
-- Process boundary: Git runs through a canonical absolute executable resolved before the child changes directory. The sanitized search path rejects empty, relative, selected-repository, directory-symlink, and executable-symlink routes into repository content and is inherited by Git with Windows current-directory search disabled. Argument vectors, binary streams, prompt and lock suppression, configuration isolation, null-device hooks and filesystem monitor, disabled lazy fetch, disabled replacement objects, and a timeout keep operations deterministic and noninteractive.
-- Base access: safe ref resolution, sorted recursive tree metadata, binary-search lookup, and lazy exact-object blob reads preserve invalid UTF-8 and NUL bytes without checkout or index/worktree mutation. Gitlinks remain commit objects rather than readable blobs, and local replacement refs cannot substitute validated identities.
-- Matcher: canonical platform conversion and an iterative dynamic-programming engine define full-path `*`, `?`, component-only `**`, character classes, dotfiles, literal candidate metacharacters, exact case, and unnormalized Unicode behavior without `fnmatch`, regular-expression backtracking, or filesystem globbing.
-- Contract: `docs/specs/repository-paths-and-globs-v1.md` is authoritative for canonical paths and matcher semantics. `docs/architecture/inventory.md` owns root, process, snapshot, base-object, race, and diagnostic behavior; the product, configuration, and architecture indexes link to those contracts rather than duplicating them.
-- Tests: 57 tests added since Phase 1 cover real repositories, hostile environments, process non-execution, malformed Git bytes, races, sparse checkout, gitlinks, symlinks, SHA-256 when supported, base-state non-mutation, path normalization, the complete matcher matrix, public-facade preservation, and architecture boundaries. The full 201-test suite passes on Python 3.12.14 and 3.13.13 with warnings as errors; one macOS filesystem-capability test for an invalid UTF-8 filename skips. The reviewer independently compared 949,221 matcher cases with complete agreement.
-- Validation: `scripts/validate`, the transitional policy check with `--base-ref HEAD`, hostile ambient Git-variable execution, target CLI help, `git diff --check`, and offline Lychee validation pass. The frozen checker remains byte-identical at `bb796f2304f3692089a5e87cef55a7fbe3e7c4c9521d6d2299b738a84f7ebd11`.
-- Review: the read-only reviewer found and verified fixes for executable filesystem-monitor configuration, replacement refs, readlink error identity, sparse-checkout absence, nested Windows drive components, empty and NUL roots, base-state mutation evidence, mixed-source failure ordering, and repository-controlled Git executable search. The final implementation review and post-split architecture review report no remaining findings.
-- Remaining work: Phase 3 owns classification, shared no-follow content reads, byte accounting, file budgets, context sets, and explain data. Public CLI integration remains Phase 6 work.
-- Risks: local cross-version evidence is macOS arm64 with Git 2.55.0; real Linux and Windows execution remains dependent on CI, including Windows junction and executable-search behavior. The supported Git-version floor remains deferred to distribution validation. The inventory facade is now split from record decoding, worktree inspection, and shared errors; Phase 3 must extend those boundaries without recreating a god module. Centralized no-follow content opening must reduce the documented parent-inspection-to-leaf-open race.
+[Phase 2 completion evidence](standalone-tool-evidence.md#phase-2-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 3: Implement classification, file budgets, and context sets
 
 ### Tasks
 
-- [ ] Implement first-match file-rule classification and exact/pattern override precedence.
-- [ ] Detect plaintext with NUL and UTF-8 rules and count raw bytes exactly once per file.
-- [ ] Emit advisory diagnostics at warning thresholds and blocking diagnostics at hard thresholds.
-- [ ] Report unclassified paths as configuration failures.
-- [ ] Make generated, vendored, fixture, and legal handling explicit in audit output.
-- [ ] Implement named context sets with de-duplicated membership, missing-member diagnostics, aggregate warning thresholds, and aggregate hard thresholds.
-- [ ] Add `explain` data for matched rule, override, effective limits, and context-set membership even before the CLI renderer is complete.
-- [ ] Test boundary values at limit minus one, exact limit, and limit plus one using multibyte UTF-8 content and CRLF bytes.
-- [ ] Test that file extensions do not automatically confer exemption.
+- [x] Implement first-match file-rule classification and exact/pattern override precedence.
+- [x] Detect plaintext with NUL and UTF-8 rules and count raw bytes exactly once per file.
+- [x] Emit advisory diagnostics at warning thresholds and blocking diagnostics at hard thresholds.
+- [x] Report unclassified paths as configuration failures.
+- [x] Make generated, vendored, fixture, and legal handling explicit in audit output.
+- [x] Implement named context sets with de-duplicated membership, missing-member diagnostics, aggregate warning thresholds, and aggregate hard thresholds.
+- [x] Add `explain` data for matched rule, override, effective limits, and context-set membership even before the CLI renderer is complete.
+- [x] Test boundary values at limit minus one, exact limit, and limit plus one using multibyte UTF-8 content and CRLF bytes.
+- [x] Test that file extensions do not automatically confer exemption.
 
 ### Gate
 
-- [ ] File and context-set checks satisfy the target spec on fixture repositories.
-- [ ] Every diagnostic has a stable code and structured fields.
-- [ ] One read of a file is shared by classification, size, and later document parsing where possible.
-- [ ] Audit data identifies the largest governed files and their effective limits.
+- [x] File and context-set checks satisfy the target spec on fixture repositories.
+- [x] Every diagnostic has a stable code and structured fields.
+- [x] One read of a file is shared by classification, size, and later document parsing where possible.
+- [x] Audit data identifies the largest governed files and their effective limits.
+
+### Phase 3 completion evidence
+
+[Phase 3 completion evidence](standalone-tool-evidence.md#phase-3-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 4: Implement Markdown extraction and documentation graph
 
