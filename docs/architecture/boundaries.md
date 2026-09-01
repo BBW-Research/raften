@@ -13,14 +13,17 @@ src/repo_context/
 ├── diagnostics.py
 ├── docs.py
 ├── git_executable.py
+├── git_records.py
 ├── inventory.py
 ├── markdown.py
 ├── matcher.py
 ├── model.py
 ├── ratchet.py
 ├── report.py
+├── repository_errors.py
 ├── runner.py
-└── sizes.py
+├── sizes.py
+└── worktree.py
 ```
 
 This is a target boundary, not a requirement to create empty modules immediately. Add each module when its phase begins.
@@ -37,7 +40,8 @@ cli -> runner -> checks -> inventory/config/model -> standard library
 - `model.py` contains immutable domain records and no filesystem or subprocess access.
 - `config.py` parses and validates TOML into model records. It does not scan a repository.
 - `git_executable.py` resolves an absolute Git executable through a sanitized search path that excludes relative, empty, and selected-repository entries. It does not invoke Git.
-- `inventory.py` is the only module that invokes Git or reads base-revision blobs. Its exact root, worktree snapshot, and base-object contract is documented in [Repository inventory](inventory.md).
+- `git_records.py` purely decodes and validates NUL-delimited index, path, tree, and object records. It has no subprocess or worktree access.
+- `inventory.py` is the public repository facade and the only module that invokes Git or reads base-revision blobs. Its exact root, snapshot, and base-object contract is documented in [Repository inventory](inventory.md).
 - `matcher.py` owns the [version 1 repository path and glob semantics](../specs/repository-paths-and-globs-v1.md). No other module may call `fnmatch` or invent matching behavior.
 - `markdown.py` extracts normalized local links and anchors. It does not decide policy violations.
 - `docs.py` builds the documentation graph and emits document diagnostics.
@@ -45,8 +49,10 @@ cli -> runner -> checks -> inventory/config/model -> standard library
 - `ratchet.py` compares current policy and current files with the base revision.
 - `diagnostics.py` defines stable diagnostic identities, locations, severity, and structured payloads.
 - `report.py` renders text, JSON, and SARIF without changing diagnostic meaning.
+- `repository_errors.py` owns the shared structured-error boundary for repository helpers without importing the inventory facade.
 - `runner.py` orchestrates checks and returns a result object. It contains no presentation logic.
 - `cli.py` maps arguments, exit codes, and output streams onto the runner.
+- `worktree.py` joins validated repository paths and performs no-follow filesystem metadata inspection without invoking Git.
 
 Circular imports are a design failure. Resolve them by moving shared immutable concepts into `model.py`, not by adding runtime import tricks.
 

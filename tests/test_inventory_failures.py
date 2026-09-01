@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import repo_context.inventory as inventory_module
+import repo_context.worktree as worktree_module
 from repo_context.inventory import (
     RepositoryAccessError,
     RepositoryHandle,
@@ -348,14 +348,14 @@ class WorktreeRaceAndSafetyTests(unittest.TestCase):
     def test_untracked_path_disappearing_after_listing_is_git005(self) -> None:
         with RepositoryFixture() as repository:
             disappearing = repository.write_text("disappearing.txt", "content\n")
-            original_lstat = inventory_module._lstat
+            original_lstat = worktree_module._lstat
 
             def fail_one(path: Path) -> os.stat_result:
                 if path.name == disappearing.name:
                     raise FileNotFoundError(path)
                 return original_lstat(path)
 
-            with patch("repo_context.inventory._lstat", side_effect=fail_one):
+            with patch("repo_context.worktree._lstat", side_effect=fail_one):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     inventory_worktree(open_repository(repository.root))
             self.assertEqual(raised.exception.diagnostics[0].code, "GIT005")
@@ -364,14 +364,14 @@ class WorktreeRaceAndSafetyTests(unittest.TestCase):
     def test_filesystem_inspection_failure_is_git009(self) -> None:
         with RepositoryFixture() as repository:
             unreadable = repository.write_text("unreadable.txt", "content\n")
-            original_lstat = inventory_module._lstat
+            original_lstat = worktree_module._lstat
 
             def fail_one(path: Path) -> os.stat_result:
                 if path.name == unreadable.name:
                     raise PermissionError(path)
                 return original_lstat(path)
 
-            with patch("repo_context.inventory._lstat", side_effect=fail_one):
+            with patch("repo_context.worktree._lstat", side_effect=fail_one):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     inventory_worktree(open_repository(repository.root))
             self.assertEqual(raised.exception.diagnostics[0].code, "GIT009")
@@ -383,7 +383,7 @@ class WorktreeRaceAndSafetyTests(unittest.TestCase):
             except OSError as error:
                 self.skipTest(f"symlink creation is unavailable: {error}")
             handle = open_repository(repository.root)
-            with patch("repo_context.inventory.os.readlink", side_effect=PermissionError()):
+            with patch("repo_context.worktree.os.readlink", side_effect=PermissionError()):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     inventory_worktree(handle)
             diagnostic = raised.exception.diagnostics[0]
@@ -413,7 +413,7 @@ class WorktreeRaceAndSafetyTests(unittest.TestCase):
             repository.commit()
             handle = open_repository(repository.root)
             with patch(
-                "repo_context.inventory._is_junction",
+                "repo_context.worktree._is_junction",
                 side_effect=lambda path: path.name == "parent",
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:

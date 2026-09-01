@@ -1,6 +1,8 @@
 # Repository inventory boundary
 
-`repo_context.inventory` is the only production module allowed to invoke Git or read base-revision objects. It accepts an explicit root, returns immutable sorted records, and raises `RepositoryAccessError` containing stable structured diagnostics for expected failures. It never searches upward from the selected path and never infers a repository from the package location.
+`repo_context.inventory` is the public facade and the only production module allowed to invoke Git or read base-revision objects. It accepts an explicit root, returns immutable sorted records, and raises `RepositoryAccessError` containing stable structured diagnostics for expected failures. It never searches upward from the selected path and never infers a repository from the package location.
+
+The facade delegates pure Git-output decoding to `git_records.py`, trusted executable discovery to `git_executable.py`, no-follow metadata inspection to `worktree.py`, and shared diagnostic construction to `repository_errors.py`. These helpers never import the facade, so dependency flow remains one-way and public callers retain one repository API.
 
 ## Root validation
 
