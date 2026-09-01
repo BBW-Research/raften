@@ -129,6 +129,8 @@ The starter file at the repository root is the normative configuration example. 
 
 The parser returns immutable typed records. Validation errors name the exact key and source location when available.
 
+The exact table shapes, cross-field invariants, static pattern precedence, intentional-exception record format, and configuration diagnostic codes are defined by the [version 1 configuration schema](configuration-v1.md).
+
 ## Inventory and path semantics
 
 The tool requires Git for version 1. It discovers current paths with tracked plus non-ignored untracked semantics. Deleted tracked paths are absent from current checks but may be read from the base revision for comparison.
@@ -157,7 +159,7 @@ Do not inherit Python `fnmatch` behavior implicitly. Version 1 defines repositor
 - A pattern without `/` matches a basename at any depth only when explicitly prefixed by `**/` in configuration; do not add Gitignore-style magic silently.
 - Patterns are repository-relative and case-sensitive on every platform.
 
-Rules are evaluated in declaration order and first match wins. A final catch-all authored rule is recommended. Exact path overrides take precedence over pattern overrides. Ambiguous equal-precedence pattern overrides are configuration errors rather than order-dependent surprises.
+Rules are evaluated in declaration order and first match wins. Version 1 requires exactly one final catch-all scanned authored rule. Exact path overrides take precedence over pattern overrides. Ambiguous equal-precedence pattern overrides are configuration errors rather than order-dependent surprises.
 
 ## Plaintext and size accounting
 
