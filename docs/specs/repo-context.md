@@ -99,7 +99,7 @@ Create a starter policy without rewriting source or documentation.
 repo-context init [--repo PATH] [--config PATH] [--capture-debt] [--force]
 ```
 
-Without `--capture-debt`, initialization fails when current authored files exceed the generated ordinary limits. With `--capture-debt`, the command records a deterministic baseline manifest containing current oversized file sizes and content identities. It must never add broad exclusions automatically.
+Without `--capture-debt`, initialization fails when current authored files exceed the generated ordinary limits. With `--capture-debt`, the command records a deterministic baseline manifest containing current oversized file sizes and content identities. It must never add broad exclusions automatically. The manifest schema and config-derived sidecar path are defined by the [version 1 ratchet contract](ratchets-v1.md#first-adoption-manifest).
 
 ### Exit codes
 
@@ -208,7 +208,7 @@ Fragments are matched against explicit HTML IDs and deterministic GitHub-style h
 
 When `--base-ref` is supplied, the tool reads both the prior policy and prior file blobs from Git without checking out another tree.
 
-For each current authored file above its ordinary hard limit:
+For each current authored plaintext file above its current ordinary hard limit:
 
 - A new path fails.
 - A path whose base version was within the ordinary limit fails.
@@ -218,7 +218,7 @@ For each current authored file above its ordinary hard limit:
 
 This comparison is authoritative. A manually maintained legacy ceiling must not allow a partially reduced file to grow back.
 
-`init --capture-debt` may create a baseline manifest for first adoption when no prior policy exists. That manifest records exact paths, base sizes, and content identities. After the first committed policy, ordinary Git base comparison takes precedence.
+`init --capture-debt` may create a baseline manifest for first adoption when no prior policy exists. That manifest records exact paths, base sizes, and content identities. After the first committed policy, ordinary Git base comparison takes precedence. Exact eligibility, type-change, unavailable-base, manifest, diagnostic-reconciliation, and partial-order behavior is defined by the [version 1 ratchet contract](ratchets-v1.md).
 
 ## Policy ratchet
 
@@ -227,13 +227,13 @@ When the base revision contains a policy, `check` reports weakening attempts, in
 - Increased warning or hard limits.
 - Removal or weakening of path overrides.
 - Expansion of unscanned classifications or exclusion patterns.
-- Removal of documentation roots or graph requirements.
+- Removal of documentation roots or graph requirements, or addition of a reachability seed inside an already governed tree.
 - Removal of required entrypoint targets.
 - Removal or weakening of context sets.
-- Addition or broadening of exceptions without the required governance record.
+- Addition or broadening of exception relief, including a removal or limit fallback that exposes weaker enforcement; every surfaced addition retains its required governance record for review.
 - Disabling base-size comparison.
 
-The engine surfaces these changes; repository review and branch protection determine whether an intentional policy migration is accepted. Do not provide a generic `--ignore-policy-weakening` switch in version 1.
+The engine surfaces these changes; repository review and branch protection determine whether an intentional policy migration is accepted. Do not provide a generic `--ignore-policy-weakening` switch in version 1. The conservative structural comparison and stable `RAT` identities are defined by the [version 1 ratchet contract](ratchets-v1.md#policy-partial-order).
 
 ## Exceptions and classifications
 

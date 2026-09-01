@@ -70,7 +70,26 @@ class LimitState(StrEnum):
     HARD = "hard"
 
 
+class MigrationStatus(StrEnum):
+    DEBT = "debt"
+    VIOLATION = "violation"
+    UNBASELINED = "unbaselined"
+
+
+class RatchetBaselineSource(StrEnum):
+    GIT = "git"
+    MANIFEST = "manifest"
+    UNAVAILABLE = "unavailable"
+    DISABLED = "disabled"
+
+
+class RatchetUnavailableReason(StrEnum):
+    BASE_REF_ABSENT = "base_ref_absent"
+    ZERO_SENTINEL = "zero_sentinel"
+
+
 class GitFileMode(StrEnum):
+    TREE = "040000"
     REGULAR = "100644"
     EXECUTABLE = "100755"
     SYMLINK = "120000"
@@ -392,6 +411,39 @@ class FileAssessment:
     content_state: ContentState | None
     size_bytes: int | None
     limit_state: LimitState | None
+    content_identity: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class MigrationDebtEntry:
+    path: RepositoryPath
+    size_bytes: int
+    content_identity: str
+
+
+@dataclass(frozen=True, slots=True)
+class MigrationDebtManifest:
+    schema_version: int
+    entries: tuple[MigrationDebtEntry, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class FileRatchetAssessment:
+    path: RepositoryPath
+    current_size_bytes: int
+    ordinary_hard_bytes: int
+    base_size_bytes: int | None
+    base_content_identity: str | None
+    ceiling_bytes: int | None
+    baseline_source: RatchetBaselineSource
+    migration_status: MigrationStatus
+
+
+@dataclass(frozen=True, slots=True)
+class FileRatchetEvaluation:
+    baseline_source: RatchetBaselineSource
+    files: tuple[FileRatchetAssessment, ...]
+    diagnostics: tuple[Diagnostic, ...]
 
 
 @dataclass(frozen=True, slots=True)

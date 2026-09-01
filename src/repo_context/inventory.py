@@ -220,13 +220,13 @@ def list_base_tree(
     repository: RepositoryHandle,
     revision: BaseRevision,
 ) -> tuple[BaseTreeEntry, ...]:
-    """List base-tree blobs and gitlinks without touching the worktree or index."""
+    """List base-tree objects without touching the worktree or index."""
 
     _require_object_id(revision.commit_id, operation="list-base-tree")
     output = _run_git(
         repository.root,
         operation="list-base-tree",
-        arguments=("ls-tree", "-r", "-z", "--full-tree", revision.commit_id),
+        arguments=("ls-tree", "-r", "-t", "-z", "--full-tree", revision.commit_id),
         failure_code=GIT_BASE_OBJECT,
         failure_message="base tree is unavailable",
     )

@@ -61,9 +61,9 @@ The base revision supplies both the old policy and old file contents. For a curr
 - It fails when its current byte size exceeds its base byte size.
 - It may pass only while equal to or smaller than the already-oversized base file.
 
-This locks in every partial reduction without maintaining a stale ceiling map.
+This locks in every partial reduction without maintaining a stale ceiling map. The current ordinary hard limit is authoritative for candidate and base eligibility, while the immediate base blob supplies the size ceiling.
 
-Policy comparison separately rejects silent weakening: increased limits, expanded exclusion rules, removed documentation roots, removed required entrypoint targets, weakened context sets, and ungoverned new exception records. A repository may intentionally change policy through owner review, but the default CI path must surface the weakening rather than treating configuration as unquestioned authority.
+Policy comparison separately rejects silent weakening: increased limits, expanded exclusion rules, removed documentation roots, removed required entrypoint targets, weakened context sets, and ungoverned new exception records. A repository may intentionally change policy through owner review, but the default CI path must surface the weakening rather than treating configuration as unquestioned authority. The executable truth table, first-adoption manifest, policy partial order, and diagnostic identities are defined by the [version 1 file and policy ratchet contract](../specs/ratchets-v1.md).
 
 ## Exceptions
 

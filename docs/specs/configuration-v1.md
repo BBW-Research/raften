@@ -80,7 +80,7 @@ Each optional `[[context_set]]` requires a unique nonblank `name`, positive incr
 
 ## Ratchets
 
-`[ratchet]` requires exactly six Boolean keys: `compare_file_sizes`, `forbid_new_oversize`, `forbid_limit_increases`, `forbid_exclusion_expansion`, `forbid_removed_documentation_roots`, and `forbid_removed_entrypoint_targets`. `forbid_new_oversize = true` requires `compare_file_sizes = true`. Other false values remain syntactically representable so later base-policy comparison can report attempted weakening against a configured revision.
+`[ratchet]` requires exactly six Boolean keys: `compare_file_sizes`, `forbid_new_oversize`, `forbid_limit_increases`, `forbid_exclusion_expansion`, `forbid_removed_documentation_roots`, and `forbid_removed_entrypoint_targets`. `forbid_new_oversize = true` requires `compare_file_sizes = true`. Other false values remain syntactically representable so later base-policy comparison can report attempted weakening against a configured revision. The exact monotonic comparison belongs to the [version 1 ratchet contract](ratchets-v1.md).
 
 ## Intentional exceptions
 
