@@ -40,6 +40,7 @@ from repo_context.repository_errors import (
 from repo_context.worktree import (
     inspect_worktree_entry as _inspect_worktree_entry,
     join_worktree_path,
+    read_regular_bytes as _read_regular_bytes,
 )
 
 
@@ -53,6 +54,7 @@ __all__ = (
     "list_base_tree",
     "open_repository",
     "read_base_blob",
+    "read_worktree_bytes",
     "resolve_base_revision",
     "validate_git_repository_path",
     "worktree_path",
@@ -255,6 +257,15 @@ def read_base_blob(
         failure_code=GIT_BASE_OBJECT,
         failure_message="base blob is unavailable or has the wrong type",
     )
+
+
+def read_worktree_bytes(
+    repository: RepositoryHandle,
+    entry: InventoryEntry,
+) -> bytes:
+    """Read exact bytes for one regular entry from its inventory snapshot."""
+
+    return _read_regular_bytes(repository.root, entry)
 
 
 def worktree_path(repository: RepositoryHandle, path: RepositoryPath) -> Path:

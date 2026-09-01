@@ -13,6 +13,7 @@ from repo_context.config_values import (
     parse_selector,
 )
 from repo_context.diagnostics import (
+    CFG_AMBIGUOUS_OVERRIDE,
     CFG_DUPLICATE_NAME,
     CFG_DUPLICATE_SELECTOR,
     CFG_INCONSISTENT,
@@ -20,11 +21,13 @@ from repo_context.diagnostics import (
     CFG_VALUE,
     EXC_BROAD_SELECTOR,
 )
+from repo_context.matcher import pattern_specificity, patterns_provably_disjoint
 from repo_context.model import (
     ContextSet,
     Entrypoint,
     ExactSelector,
     IntentionalException,
+    PatternSelector,
 )
 
 
@@ -128,6 +131,7 @@ def parse_exception_records(
 ) -> tuple[IntentionalException, ...]:
     result: list[IntentionalException] = []
     seen_selectors: dict[tuple[str, str], int] = {}
+    pattern_selectors: list[tuple[int, str]] = []
     for index, table in validator.array_of_tables(
         exceptions_table,
         "record",
@@ -224,6 +228,26 @@ def parse_exception_records(
                 )
             else:
                 seen_selectors[selector_key] = index
+                if isinstance(selector, PatternSelector):
+                    for other_index, other_pattern in pattern_selectors:
+                        if (
+                            pattern_specificity(other_pattern)
+                            == pattern_specificity(selector.pattern)
+                            and not patterns_provably_disjoint(
+                                other_pattern,
+                                selector.pattern,
+                            )
+                        ):
+                            validator.add(
+                                CFG_AMBIGUOUS_OVERRIDE,
+                                f"{parent}.pattern",
+                                "equal-specificity exception patterns are not provably disjoint",
+                                details=(
+                                    ("other_index", other_index),
+                                    ("other_pattern", other_pattern),
+                                ),
+                            )
+                    pattern_selectors.append((index, selector.pattern))
 
         if all(
             value is not None

@@ -15,6 +15,7 @@ from repo_context.model import (
     InventoryEntry,
     InventorySource,
     RepositoryPath,
+    WorktreeIdentity,
     WorktreeKind,
 )
 from repo_context.repository_errors import fail_repository
@@ -70,6 +71,7 @@ def inspect_worktree_entry(
             kind=WorktreeKind.REGULAR,
             size_bytes=status.st_size,
             index=index,
+            identity=_identity(status),
         )
     if stat.S_ISLNK(status.st_mode):
         try:
@@ -93,6 +95,40 @@ def inspect_worktree_entry(
         kind=WorktreeKind.OTHER,
         index=index,
     )
+
+
+def read_regular_bytes(root: Path, entry: InventoryEntry) -> bytes:
+    """Read one inventoried regular file without accepting path replacement."""
+
+    if entry.kind is not WorktreeKind.REGULAR:
+        raise ValueError("worktree content reads require a regular inventory entry")
+    if entry.identity is None:
+        raise ValueError("regular inventory entry lacks snapshot identity")
+    _require_current_identity(root, entry, "content-lstat")
+    try:
+        descriptor = _open_snapshot_file(root, entry.path)
+    except OSError as error:
+        _require_current_identity(root, entry, "content-open-recheck")
+        if _is_path_change_error(error):
+            _path_changed(entry.path, entry.source, "path changed before content open")
+        _filesystem_error(entry.path, "open", error)
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or _identity(before) != entry.identity:
+            _path_changed(entry.path, entry.source, "path identity changed before content read")
+        data = _read_descriptor(descriptor, entry.identity.size_bytes)
+        after = os.fstat(descriptor)
+        if _identity(after) != entry.identity or len(data) != entry.identity.size_bytes:
+            _path_changed(entry.path, entry.source, "file changed during content read")
+        _require_current_identity(root, entry, "content-post-lstat")
+        return data
+    except OSError as error:
+        _filesystem_error(entry.path, "read", error)
+    finally:
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
 
 
 def _inspect_parent_chain(
@@ -139,6 +175,82 @@ def _lstat(path: Path) -> os.stat_result:
 
 def _is_junction(path: Path) -> bool:
     return path.is_junction()
+
+
+def _identity(status: os.stat_result) -> WorktreeIdentity:
+    return WorktreeIdentity(
+        mode=status.st_mode,
+        device=status.st_dev,
+        inode=status.st_ino,
+        size_bytes=status.st_size,
+        modified_ns=status.st_mtime_ns,
+        changed_ns=status.st_ctime_ns,
+    )
+
+
+def _require_current_identity(
+    root: Path,
+    entry: InventoryEntry,
+    operation: str,
+) -> None:
+    target = join_worktree_path(root, entry.path)
+    _inspect_parent_chain(root, entry.path, entry.source, False)
+    try:
+        status = _lstat(target)
+    except (FileNotFoundError, NotADirectoryError):
+        _path_changed(entry.path, entry.source, "path disappeared before content read completed")
+    except OSError as error:
+        _filesystem_error(entry.path, operation, error)
+    if not stat.S_ISREG(status.st_mode) or _identity(status) != entry.identity:
+        _path_changed(entry.path, entry.source, "path identity changed before content read completed")
+
+
+def _open_snapshot_file(root: Path, path: str) -> int:
+    components = path.split("/")
+    close_on_exec = getattr(os, "O_CLOEXEC", 0)
+    no_follow = getattr(os, "O_NOFOLLOW", 0)
+    directory = getattr(os, "O_DIRECTORY", 0)
+    nonblocking = getattr(os, "O_NONBLOCK", 0)
+    if os.open in os.supports_dir_fd and no_follow and directory:
+        directory_flags = os.O_RDONLY | close_on_exec | no_follow | directory
+        current = os.open(root, directory_flags)
+        try:
+            for component in components[:-1]:
+                following = os.open(component, directory_flags, dir_fd=current)
+                os.close(current)
+                current = following
+            return os.open(
+                components[-1],
+                os.O_RDONLY | close_on_exec | no_follow | nonblocking,
+                dir_fd=current,
+            )
+        finally:
+            os.close(current)
+    raise OSError(
+        getattr(errno, "ENOTSUP", errno.ENOSYS),
+        "secure descriptor-relative no-follow opens are unavailable",
+    )
+
+
+def _read_descriptor(descriptor: int, expected_size: int) -> bytes:
+    chunks: list[bytes] = []
+    remaining = expected_size + 1
+    while remaining:
+        chunk = os.read(descriptor, min(1024 * 1024, remaining))
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+        remaining -= len(chunk)
+    return b"".join(chunks)
+
+
+def _is_path_change_error(error: OSError) -> bool:
+    return error.errno in {
+        errno.ENOENT,
+        errno.ENOTDIR,
+        errno.ELOOP,
+        errno.EISDIR,
+    }
 
 
 def _path_changed(path: str, source: InventorySource, message: str) -> Never:

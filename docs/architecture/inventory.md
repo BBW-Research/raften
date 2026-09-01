@@ -34,8 +34,8 @@ The resulting tuple is explicitly sorted by exact Python string order, with no c
 
 | Inventory state | `source` | `kind` | Additional data |
 | --- | --- | --- | --- |
-| Present tracked regular file | `tracked` | `regular` | Raw worktree byte size and index mode/object identity |
-| Present non-ignored untracked regular file | `untracked` | `regular` | Raw worktree byte size |
+| Present tracked regular file | `tracked` | `regular` | Raw worktree byte size, filesystem identity, and index mode/object identity |
+| Present non-ignored untracked regular file | `untracked` | `regular` | Raw worktree byte size and filesystem identity |
 | Tracked path absent at the deletion snapshot | `deleted` | `missing` | Index mode/object identity |
 | Sparse-checkout path absent with the skip-worktree bit | `tracked` | `missing` | Index mode/object identity and `skip_worktree = true` |
 | Leaf symlink | `tracked` or `untracked` | `symlink` | Link text read with `readlink`; target is not followed |
@@ -45,7 +45,9 @@ Later current-content checks exclude `deleted` entries, while ratchet logic may 
 
 ## Filesystem safety and races
 
-Worktree inspection uses `lstat`. Every parent component is checked before the leaf so an existing intermediate symlink or Windows junction cannot redirect inspection outside the repository. A leaf symlink is recorded without opening its target. Phase 3 content reads must add a centralized no-follow open strategy because a hostile concurrent replacement between parent inspection and leaf access remains an operating-system-level time-of-check/time-of-use race.
+Worktree inspection uses `lstat`. Every parent component is checked before the leaf so an existing intermediate symlink or Windows junction cannot redirect inspection outside the repository. A leaf symlink is recorded without opening its target. Regular entries retain mode, device, inode, size, modification time, and change time as their snapshot identity.
+
+`read_worktree_bytes()` is the only public current-content reader. It delegates to `worktree.py`, rechecks parents, uses descriptor-relative no-follow and nonblocking opens, compares descriptor identity before and after the raw read, and bounds reading to the snapshot size plus one byte. Same-size replacement, in-place mutation, concurrent growth, type changes, and symlink or junction redirection therefore fail as `GIT005`; unrelated open or read failures use `GIT009`. A platform without the required secure open primitives fails closed instead of using a path-following fallback. The [file and context budget contract](../specs/file-budgets-v1.md) defines how one verified read is shared by later checks.
 
 A tracked path already listed by the deletion view becomes `deleted` plus `missing`. A path that disappears, appears, or changes through an intermediate component after the relevant Git view produces `GIT005`; an unrelated filesystem access failure produces `GIT009`. The engine does not retry into a mixed snapshot or lock the user's worktree.
 
@@ -71,4 +73,4 @@ Tree metadata is sorted independently of Git output. Regular, executable, and sy
 | `GIT006` | A requested base ref is empty, missing, unavailable, or does not resolve to a commit |
 | `GIT007` | A base tree or selected base blob is unavailable or has the wrong object type |
 | `GIT008` | The index contains unresolved merge stages |
-| `GIT009` | Filesystem metadata inspection failed for a reason other than an observed state change |
+| `GIT009` | Filesystem metadata or content access failed, including absence of a secure no-follow open primitive |
