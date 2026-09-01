@@ -6,7 +6,7 @@ This contract defines deterministic file classification, plaintext detection, by
 
 Budget evaluation receives a parsed policy, one Git-visible inventory snapshot, a snapshot-verified content reader, and an explicit evaluation date. It does not consult the wall clock, network, locale, filesystem enumeration order, or filename extensions. Inventory paths, assessments, retained text documents, and diagnostics are explicitly sorted.
 
-Every policy pattern is compiled once before evaluation. The content reader is invoked at most once for each regular file that is effectively scanned or explicitly requested for text retention. A retained path is classified and decoded even when its size policy is unscanned, but it receives no byte-limit state or size diagnostic. A caller identifies paths needed for later Markdown parsing; text for a scanned path comes from the same raw read used for content classification and byte accounting.
+Every policy pattern is compiled once before evaluation. The content reader is invoked at most once for each regular file that is effectively scanned, explicitly requested for text retention, or requires ordinary-oversize classification while file-size ratcheting is enabled. A retained path is classified and decoded even when its size policy is unscanned, but it receives no byte-limit state or size diagnostic. An ordinary-oversized authored path is likewise classified once even when an intentional exception disables effective scan, preserving the historical ratchet without a later reopen. A caller identifies paths needed for later Markdown parsing; text for a scanned path comes from the same raw read used for content classification and byte accounting.
 
 ## Classification and ordinary limits
 
@@ -42,7 +42,7 @@ For a plaintext scanned file with warning threshold `W`, hard threshold `H`, and
 - `W < S <= H` produces advisory `CTX001`.
 - `S > H` produces blocking `CTX002`.
 
-Only the strongest file diagnostic is emitted. In particular, exceeding the hard limit produces `CTX002` without an additional warning diagnostic. Exact equality with the hard threshold remains an advisory warning because it is already above the warning threshold but does not exceed the hard threshold.
+Only the strongest file diagnostic is emitted. In particular, exceeding the hard limit produces `CTX002` without an additional warning diagnostic. Exact equality with the hard threshold remains an advisory warning because it is already above the warning threshold but does not exceed the hard threshold. Budget evaluation does not assume historical state; final run diagnostics suppress `CTX002` only after the [file ratchet](ratchets-v1.md#size-diagnostic-reconciliation) proves that exact path is non-growing migration debt. The immutable hard assessment remains available to audit and explain.
 
 ## Context sets
 
@@ -56,7 +56,7 @@ Context thresholds use the same strict comparison as file thresholds: a total ab
 
 ## Audit and explain data
 
-Each file assessment exposes inventory state, classification, rule and pattern provenance, selected override, selected exception, ordinary and effective scan decisions, ordinary and effective thresholds, raw size when available, content state when read, and threshold state for plaintext. Largest governed files sort by descending raw size with path as the tie-breaker. Classification counts retain every explicit kind.
+Each file assessment exposes inventory state, classification, rule and pattern provenance, selected override, selected exception, ordinary and effective scan decisions, ordinary and effective thresholds, raw size when available, content state and SHA-256 identity when read, and threshold state for plaintext. Largest governed files sort by descending raw size with path as the tie-breaker. Classification counts retain every explicit kind.
 
 Explain resolution works for both inventoried and nonexistent canonical paths. It returns the same rule, override, exception, ordinary/effective policy, and context-set membership that evaluation would use; an assessment is attached only when the path exists in the supplied evaluation.
 

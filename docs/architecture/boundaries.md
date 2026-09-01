@@ -10,6 +10,7 @@ src/repo_context/
 ├── __main__.py
 ├── cli.py
 ├── config.py
+├── debt.py
 ├── diagnostics.py
 ├── document_checks.py
 ├── docs.py
@@ -21,6 +22,9 @@ src/repo_context/
 ├── markdown_links.py
 ├── matcher.py
 ├── model.py
+├── policy_comparison.py
+├── policy_domains.py
+├── policy_ratchet.py
 ├── ratchet.py
 ├── report.py
 ├── repository_errors.py
@@ -54,7 +58,9 @@ cli -> runner -> checks -> inventory/config/model -> standard library
 - `document_checks.py` evaluates graph structure, targets, entrypoints, and reachability without discovering files or performing I/O.
 - `size_policy.py` compiles patterns and resolves rule, override, and exception provenance without reading repository content.
 - `sizes.py` classifies plaintext and evaluates file and context-set budgets through an injected snapshot reader. Its complete behavior is defined by the [version 1 file and context budget contract](../specs/file-budgets-v1.md).
-- `ratchet.py` compares current policy and current files with the base revision.
+- `debt.py` strictly parses, captures, and renders the first-adoption migration sidecar without repository access.
+- `ratchet.py` compares current authored files with injected Git or manifest baselines and reconciles proven migration debt with raw size diagnostics.
+- `policy_ratchet.py` owns ordered file-rule and override comparison and assembles the complete policy result. `policy_domains.py` compares documentation, entrypoint, context, ratchet-setting, and exception guarantees; `policy_comparison.py` contains their shared typed value and diagnostic helpers.
 - `diagnostics.py` defines stable diagnostic identities, locations, severity, and structured payloads.
 - `report.py` renders text, JSON, and SARIF without changing diagnostic meaning.
 - `repository_errors.py` owns the shared structured-error boundary for repository helpers without importing the inventory facade.

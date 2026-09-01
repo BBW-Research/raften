@@ -19,7 +19,7 @@ from repo_context.inventory import (
     open_repository,
     worktree_path,
 )
-from repo_context.model import BaseRevision
+from repo_context.model import BaseRevision, GitFileMode, GitObjectType
 from tests.support.repository import RepositoryFixture
 
 
@@ -310,20 +310,39 @@ class GitOutputValidationTests(unittest.TestCase):
         object_id = b"a" * 40
         reversed_tree = (
             b"100644 blob " + object_id + b"\tz.txt\x00"
+            b"040000 tree " + object_id + b"\tnested\x00"
             b"100644 blob " + object_id + b"\ta.txt\x00"
         )
         with tempfile.TemporaryDirectory() as directory:
             handle = RepositoryHandle(Path(directory))
             revision = BaseRevision("main", "b" * 40)
-            with patch("repo_context.inventory._run_git", return_value=reversed_tree):
+            with patch("repo_context.inventory._run_git", return_value=reversed_tree) as run:
                 entries = list_base_tree(handle, revision)
-            self.assertEqual(tuple(entry.path for entry in entries), ("a.txt", "z.txt"))
+            self.assertEqual(tuple(entry.path for entry in entries), ("a.txt", "nested", "z.txt"))
+            self.assertEqual(entries[1].mode, GitFileMode.TREE)
+            self.assertEqual(entries[1].object_type, GitObjectType.TREE)
+            self.assertEqual(
+                run.call_args.kwargs["arguments"],
+                ("ls-tree", "-r", "-t", "-z", "--full-tree", revision.commit_id),
+            )
             with patch(
                 "repo_context.inventory._run_git",
                 return_value=reversed_tree[:-1],
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     list_base_tree(handle, revision)
+        self.assertEqual(raised.exception.diagnostics[0].code, "GIT003")
+
+    def test_tree_mode_is_rejected_in_current_index_records(self) -> None:
+        record = b"H 040000 " + b"a" * 40 + b" 0\tdirectory\x00"
+        with tempfile.TemporaryDirectory() as directory:
+            handle = RepositoryHandle(Path(directory))
+            with patch(
+                "repo_context.inventory._run_git",
+                side_effect=(record, b"", b""),
+            ):
+                with self.assertRaises(RepositoryAccessError) as raised:
+                    inventory_worktree(handle)
         self.assertEqual(raised.exception.diagnostics[0].code, "GIT003")
 
     def test_failure_evaluation_is_globally_path_sorted_across_sources(self) -> None:

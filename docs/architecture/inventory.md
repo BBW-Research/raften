@@ -56,10 +56,10 @@ A tracked path already listed by the deletion view becomes `deleted` plus `missi
 Base access never checks out a tree and never writes the worktree or index. `GIT_NO_REPLACE_OBJECTS=1` makes validated commit and blob identities exact even when the repository has local replacement refs:
 
 1. `git rev-parse --verify --end-of-options REF^{commit}` resolves the requested ref to a commit object identity and prevents option injection.
-2. `git ls-tree -r -z --full-tree COMMIT_ID` returns complete blob and gitlink metadata with NUL-framed paths.
+2. `git ls-tree -r -t -z --full-tree COMMIT_ID` returns complete tree, blob, and gitlink metadata with NUL-framed paths.
 3. `git cat-file blob OBJECT_ID` reads a selected blob lazily by validated object identity.
 
-Tree metadata is sorted independently of Git output. Regular, executable, and symlink entries have blob objects; a gitlink has a commit object and cannot be read as a blob. Blob bytes are returned exactly, including NUL or invalid UTF-8, because content classification belongs to a later phase. Base-operation tests preserve byte-identical index content, selected dirty worktree bytes, deletion and symlink state, and porcelain status; the status probe itself disables optional locks.
+Base metadata is sorted independently of Git output. Directories use mode `040000` with tree objects, regular, executable, and symlink entries have blob objects, and a gitlink has a commit object. Trees and gitlinks cannot be read as blobs. Blob bytes are returned exactly, including NUL or invalid UTF-8, because content classification belongs to a later phase. Base-operation tests preserve byte-identical index content, selected dirty worktree bytes, deletion and symlink state, and porcelain status; the status probe itself disables optional locks.
 
 ## Diagnostic identities
 

@@ -149,21 +149,25 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Tasks
 
-- [ ] Compare current oversized authored files with base-revision blobs.
-- [ ] Reject newly oversized paths, files whose base versions were ordinary-sized, and any oversized file that grows relative to its base bytes.
-- [ ] Automatically remove migration status when a file falls within its ordinary limit.
-- [ ] Ensure a partial reduction becomes the next ceiling without updating a manual map.
-- [ ] Compare current and base policies for increased limits, weakened overrides, expanded unscanned rules, removed documentation roots, removed graph requirements, removed entrypoint targets, weakened context sets, disabled ratchets, and broadened exceptions.
-- [ ] Define deterministic behavior when the base commit has no policy, the base ref is all zeroes, the base ref is shallow or missing, or the file changed type.
-- [ ] Implement the migration-debt manifest used only by first-adoption `init --capture-debt`.
-- [ ] Test renames as delete-plus-add unless reliable identity can be inferred without heuristic behavior.
+- [x] Compare current oversized authored files with base-revision blobs.
+- [x] Reject newly oversized paths, files whose base versions were ordinary-sized, and any oversized file that grows relative to its base bytes.
+- [x] Automatically remove migration status when a file falls within its ordinary limit.
+- [x] Ensure a partial reduction becomes the next ceiling without updating a manual map.
+- [x] Compare current and base policies for increased limits, weakened overrides, expanded unscanned rules, removed documentation roots, removed graph requirements, removed entrypoint targets, weakened context sets, disabled ratchets, and broadened exceptions.
+- [x] Define deterministic behavior when the base commit has no policy, the base ref is all zeroes, the base ref is shallow or missing, or the file changed type.
+- [x] Implement the migration-debt manifest used only by first-adoption `init --capture-debt`.
+- [x] Test renames as delete-plus-add unless reliable identity can be inferred without heuristic behavior.
 
 ### Gate
 
-- [ ] A legacy file reduced from 100 KiB to 60 KiB cannot return to 61 KiB in the next comparison.
-- [ ] A clean repository cannot add its first oversized authored file.
-- [ ] Policy weakening produces `RAT` diagnostics independently of current-state violations.
-- [ ] Base comparisons never modify the worktree or index.
+- [x] A legacy file reduced from 100 KiB to 60 KiB cannot return to 61 KiB in the next comparison.
+- [x] A clean repository cannot add its first oversized authored file.
+- [x] Policy weakening produces `RAT` diagnostics independently of current-state violations.
+- [x] Base comparisons never modify the worktree or index.
+
+### Phase 5 completion evidence
+
+[Phase 5 completion evidence](standalone-tool-evidence.md#phase-5-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 6: Complete CLI, reports, audit, explain, and init
 

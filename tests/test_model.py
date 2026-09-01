@@ -19,6 +19,13 @@ from repo_context.model import (
     InventorySource,
     Link,
     LinkKind,
+    MigrationDebtEntry,
+    MigrationDebtManifest,
+    MigrationStatus,
+    FileRatchetAssessment,
+    FileRatchetEvaluation,
+    RatchetBaselineSource,
+    RatchetUnavailableReason,
     RunResult,
     RunStatus,
     Severity,
@@ -98,6 +105,32 @@ class ImmutableModelTests(unittest.TestCase):
         self.assertEqual(result.diagnostics[0].details, (("size_bytes", 100),))
         with self.assertRaises(FrozenInstanceError):
             result.status = RunStatus.INTERNAL_ERROR  # type: ignore[misc]
+
+    def test_phase_five_debt_and_ratchet_records_are_immutable(self) -> None:
+        self.assertEqual(
+            RatchetUnavailableReason.ZERO_SENTINEL.value,
+            "zero_sentinel",
+        )
+        debt_entry = MigrationDebtEntry("legacy.txt", 100, "sha256:" + "a" * 64)
+        manifest = MigrationDebtManifest(1, (debt_entry,))
+        file_result = FileRatchetAssessment(
+            "legacy.txt",
+            60,
+            50,
+            100,
+            "git:" + "b" * 40,
+            100,
+            RatchetBaselineSource.GIT,
+            MigrationStatus.DEBT,
+        )
+        evaluation = FileRatchetEvaluation(RatchetBaselineSource.GIT, (file_result,), ())
+
+        for record in (debt_entry, manifest, file_result, evaluation):
+            with self.subTest(record=type(record).__name__):
+                self.assertTrue(is_dataclass(record))
+                self.assertTrue(hasattr(type(record), "__slots__"))
+                with self.assertRaises(FrozenInstanceError):
+                    setattr(record, fields(record)[0].name, "changed")
 
     def test_inventory_and_base_git_records_preserve_typed_metadata(self) -> None:
         deleted = InventoryEntry(

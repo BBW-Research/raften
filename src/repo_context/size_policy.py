@@ -149,6 +149,23 @@ def resolve_effective_policy(
     )
 
 
+def effective_policy_error(policy: EffectiveFilePolicy) -> str | None:
+    """Return the shared fail-closed validation error for one resolved policy."""
+
+    exception = policy.exception_match
+    if (
+        exception is not None
+        and exception.exception.warn_bytes is not None
+        and not policy.effective_scan
+    ):
+        return "exception byte limits do not govern an effectively unscanned path"
+    if policy.effective_scan and (
+        policy.effective_warn_bytes is None or policy.effective_hard_bytes is None
+    ):
+        return "effective scanned policy has no complete byte limits"
+    return None
+
+
 def context_names_for_path(compiled: CompiledSizePolicy, path: str) -> tuple[str, ...]:
     return tuple(
         item.context.name

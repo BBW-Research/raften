@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from collections.abc import Callable, Sequence
 from datetime import date
@@ -43,6 +44,7 @@ from repo_context.size_policy import (
     CompiledSizePolicy,
     compile_size_policy,
     context_names_for_path,
+    effective_policy_error,
     exception_is_expired,
     resolve_effective_policy,
 )
@@ -180,7 +182,7 @@ def _evaluate_file(
             (diagnostic,),
             None,
         )
-    inconsistency = _effective_policy_error(policy)
+    inconsistency = effective_policy_error(policy)
     if inconsistency is not None:
         diagnostic = policy_diagnostic(
             CFG_EFFECTIVE_POLICY,
@@ -194,8 +196,16 @@ def _evaluate_file(
             (diagnostic,),
             None,
         )
+    ratchet_classification = (
+        compiled.policy.ratchet.compare_file_sizes
+        and policy.kind is FileKind.AUTHORED
+        and policy.ordinary_scan
+        and policy.ordinary_hard_bytes is not None
+        and size_bytes is not None
+        and size_bytes > policy.ordinary_hard_bytes
+    )
     if entry.kind is not WorktreeKind.REGULAR or (
-        not policy.effective_scan and not retain_text
+        not policy.effective_scan and not retain_text and not ratchet_classification
     ):
         return (
             FileAssessment(entry, policy, content_state, size_bytes, None),
@@ -203,7 +213,9 @@ def _evaluate_file(
             None,
         )
 
-    classified = classify_content(read_content(entry))
+    raw = read_content(entry)
+    classified = classify_content(raw)
+    content_identity = f"sha256:{hashlib.sha256(raw).hexdigest()}"
     document = None
     limit_state = None
     diagnostics: tuple[Diagnostic, ...] = ()
@@ -228,25 +240,11 @@ def _evaluate_file(
             classified.state,
             classified.size_bytes,
             limit_state,
+            content_identity,
         ),
         diagnostics,
         document,
     )
-
-
-def _effective_policy_error(policy: EffectiveFilePolicy) -> str | None:
-    exception = policy.exception_match
-    if (
-        exception is not None
-        and exception.exception.warn_bytes is not None
-        and not policy.effective_scan
-    ):
-        return "exception byte limits do not govern an effectively unscanned path"
-    if policy.effective_scan and (
-        policy.effective_warn_bytes is None or policy.effective_hard_bytes is None
-    ):
-        return "effective scanned policy has no complete byte limits"
-    return None
 
 
 def _file_limit_diagnostic(

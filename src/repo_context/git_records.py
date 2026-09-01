@@ -35,6 +35,12 @@ def parse_index_entries(output: bytes) -> dict[str, GitIndexMetadata]:
                 record_index=record_index,
             )
         mode = _decode_mode(raw_mode, "list-index", record_index)
+        if mode is GitFileMode.TREE:
+            malformed_git_output(
+                "list-index",
+                "Git returned a tree mode in an index record",
+                record_index=record_index,
+            )
         object_id = decode_object_id(
             raw_object_id,
             operation="list-index",
@@ -275,7 +281,9 @@ def _require_mode_type_pair(
     record_index: int,
 ) -> None:
     expected = (
-        GitObjectType.COMMIT
+        GitObjectType.TREE
+        if mode is GitFileMode.TREE
+        else GitObjectType.COMMIT
         if mode is GitFileMode.GITLINK
         else GitObjectType.BLOB
     )
