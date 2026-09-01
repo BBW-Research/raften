@@ -132,6 +132,38 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
                 )
         self.assertEqual(offenders, [])
 
+    def test_markdown_and_documentation_graph_have_no_repository_io_dependency(self) -> None:
+        forbidden_modules = {
+            "os",
+            "pathlib",
+            "subprocess",
+            "repo_context.inventory",
+            "repo_context.worktree",
+        }
+        offenders: list[tuple[str, str]] = []
+        for name in (
+            "markdown.py",
+            "markdown_lines.py",
+            "markdown_links.py",
+            "docs.py",
+            "document_checks.py",
+        ):
+            source_path = PACKAGE / name
+            tree = ast.parse(source_path.read_text(encoding="utf-8"), name)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imported = tuple(alias.name for alias in node.names)
+                elif isinstance(node, ast.ImportFrom):
+                    imported = (node.module or "",)
+                else:
+                    continue
+                offenders.extend(
+                    (name, module)
+                    for module in imported
+                    if module in forbidden_modules
+                )
+        self.assertEqual(offenders, [])
+
 
 if __name__ == "__main__":
     unittest.main()

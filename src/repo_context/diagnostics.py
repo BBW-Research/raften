@@ -27,6 +27,17 @@ FILE_HARD_BYTES = "CTX002"
 CONTEXT_MEMBER_MISSING = "CTX003"
 CONTEXT_WARN_BYTES = "CTX004"
 CONTEXT_HARD_BYTES = "CTX005"
+DOC_AUTHORED_SYMLINK = "DOC001"
+DOC_TEXT_UNAVAILABLE = "DOC002"
+DOC_MISSING_DIRECTORY_INDEX = "DOC003"
+DOC_MISSING_SIBLING_LINK = "DOC004"
+DOC_MISSING_CHILD_INDEX_LINK = "DOC005"
+DOC_MISSING_ENTRYPOINT = "DOC006"
+DOC_MISSING_ENTRYPOINT_LINK = "DOC007"
+DOC_UNSAFE_DESTINATION = "DOC008"
+DOC_LOCAL_TARGET_MISSING = "DOC009"
+DOC_FRAGMENT_MISSING = "DOC010"
+DOC_UNREACHABLE = "DOC011"
 GIT_INVALID_ROOT = "GIT001"
 GIT_COMMAND = "GIT002"
 GIT_MALFORMED_OUTPUT = "GIT003"
@@ -84,6 +95,8 @@ def policy_diagnostic(
     message: str,
     *,
     path: str | None = None,
+    line: int | None = None,
+    column: int | None = None,
     field_path: str | None = None,
     details: tuple[tuple[str, JsonValue], ...] = (),
     hint: str | None = None,
@@ -92,7 +105,7 @@ def policy_diagnostic(
         code=code,
         severity=severity,
         message=message,
-        location=None if path is None else SourceLocation(path),
+        location=None if path is None else SourceLocation(path, line, column),
         field_path=field_path,
         details=details,
         hint=hint,

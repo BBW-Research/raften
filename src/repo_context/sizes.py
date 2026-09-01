@@ -194,7 +194,9 @@ def _evaluate_file(
             (diagnostic,),
             None,
         )
-    if entry.kind is not WorktreeKind.REGULAR or not policy.effective_scan:
+    if entry.kind is not WorktreeKind.REGULAR or (
+        not policy.effective_scan and not retain_text
+    ):
         return (
             FileAssessment(entry, policy, content_state, size_bytes, None),
             (),
@@ -205,7 +207,7 @@ def _evaluate_file(
     document = None
     limit_state = None
     diagnostics: tuple[Diagnostic, ...] = ()
-    if classified.state is ContentState.PLAINTEXT:
+    if classified.state is ContentState.PLAINTEXT and policy.effective_scan:
         limit_state = _limit_state(
             classified.size_bytes,
             _required_limit(policy.effective_warn_bytes),
@@ -213,12 +215,12 @@ def _evaluate_file(
         )
         diagnostic = _file_limit_diagnostic(entry, policy, classified.size_bytes, limit_state)
         diagnostics = () if diagnostic is None else (diagnostic,)
-        if retain_text:
-            document = TextDocument(
-                entry.path,
-                _required_text(classified),
-                classified.size_bytes,
-            )
+    if classified.state is ContentState.PLAINTEXT and retain_text:
+        document = TextDocument(
+            entry.path,
+            _required_text(classified),
+            classified.size_bytes,
+        )
     return (
         FileAssessment(
             entry,

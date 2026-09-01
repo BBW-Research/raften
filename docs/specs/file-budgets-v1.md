@@ -6,7 +6,7 @@ This contract defines deterministic file classification, plaintext detection, by
 
 Budget evaluation receives a parsed policy, one Git-visible inventory snapshot, a snapshot-verified content reader, and an explicit evaluation date. It does not consult the wall clock, network, locale, filesystem enumeration order, or filename extensions. Inventory paths, assessments, retained text documents, and diagnostics are explicitly sorted.
 
-Every policy pattern is compiled once before evaluation. The content reader is invoked at most once for each effectively scanned regular file. A caller may identify plaintext paths whose decoded text should be retained for later Markdown parsing; that text comes from the same raw read used for content classification and byte accounting.
+Every policy pattern is compiled once before evaluation. The content reader is invoked at most once for each regular file that is effectively scanned or explicitly requested for text retention. A retained path is classified and decoded even when its size policy is unscanned, but it receives no byte-limit state or size diagnostic. A caller identifies paths needed for later Markdown parsing; text for a scanned path comes from the same raw read used for content classification and byte accounting.
 
 ## Classification and ordinary limits
 

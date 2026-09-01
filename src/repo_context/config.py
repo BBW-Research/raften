@@ -323,6 +323,12 @@ class _PolicyParser:
                 "documentation.check_fragments",
                 "fragment checks require local target checks",
             )
+        if flags["allow_authored_symlinks"] is True:
+            self.validator.add(
+                CFG_INCONSISTENT,
+                "documentation.allow_authored_symlinks",
+                "version 1 cannot safely read authored Markdown through symlinks",
+            )
         if roots is None or exclude is None or any(value is None for value in flags.values()):
             return None
         return DocumentationSettings(roots=roots, exclude=exclude, **flags)

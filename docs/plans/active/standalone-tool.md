@@ -122,24 +122,28 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Tasks
 
-- [ ] Write tests for supported inline and reference-style Markdown links before implementing the parser.
-- [ ] Ignore links in inline code, fenced code blocks, and HTML comments.
-- [ ] Normalize angle-bracket destinations, percent encoding, queries, directory targets, and fragments safely.
-- [ ] Extract headings, explicit IDs, and deterministic GitHub-style slugs. Specify duplicate-heading suffix behavior in tests.
-- [ ] Check local file targets and fragments. Never open a resolved path outside the repository.
-- [ ] Discover every governed Markdown file below each configured root directory.
-- [ ] Add all ancestor directories to the hierarchical index model, fixing the source checker's intermediate-directory gap.
-- [ ] Require directory indexes, sibling links, and immediate child-index links according to policy.
-- [ ] Traverse from every configured root and report unreachable documents.
-- [ ] Keep images and other local assets distinct from navigation edges while still checking configured local assets when supported.
-- [ ] Decide whether the standard-library parser is sufficient. Add a CommonMark dependency only through an accepted decision and current dependency review.
+- [x] Write tests for supported inline and reference-style Markdown links before implementing the parser.
+- [x] Ignore links in inline code, fenced code blocks, and HTML comments.
+- [x] Normalize angle-bracket destinations, percent encoding, queries, directory targets, and fragments safely.
+- [x] Extract headings, explicit IDs, and deterministic GitHub-style slugs. Specify duplicate-heading suffix behavior in tests.
+- [x] Check local file targets and fragments. Never open a resolved path outside the repository.
+- [x] Discover every governed Markdown file below each configured root directory.
+- [x] Add all ancestor directories to the hierarchical index model, fixing the source checker's intermediate-directory gap.
+- [x] Require directory indexes, sibling links, and immediate child-index links according to policy.
+- [x] Traverse from every configured root and report unreachable documents.
+- [x] Keep images and other local assets distinct from navigation edges while still checking configured local assets when supported.
+- [x] Decide whether the standard-library parser is sufficient. Add a CommonMark dependency only through an accepted decision and current dependency review.
 
 ### Gate
 
-- [ ] Documentation fixtures cover nested empty ancestors, sibling docs, child indexes, multiple roots, excluded docs, circular links, orphan docs, directory links, Unicode paths, escaped destinations, reference links, headings, duplicate headings, and broken fragments.
-- [ ] The new engine intentionally differs from the seed on the known ancestor and parsing defects.
-- [ ] Graph results are deterministic and independent of filesystem order.
-- [ ] The repository's own documentation passes the new graph checks.
+- [x] Documentation fixtures cover nested empty ancestors, sibling docs, child indexes, multiple roots, excluded docs, circular links, orphan docs, directory links, Unicode paths, escaped destinations, reference links, headings, duplicate headings, and broken fragments.
+- [x] The new engine intentionally differs from the seed on the known ancestor and parsing defects.
+- [x] Graph results are deterministic and independent of filesystem order.
+- [x] The repository's own documentation passes the new graph checks.
+
+### Phase 4 completion evidence
+
+[Phase 4 completion evidence](standalone-tool-evidence.md#phase-4-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 5: Implement file and policy ratchets
 

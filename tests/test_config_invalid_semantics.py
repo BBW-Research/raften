@@ -230,6 +230,18 @@ class PathAndDocumentationInvariantTests(ConfigurationAssertions):
         text = replace_once(ROOT_POLICY_TEXT, "check_local_targets = true", "check_local_targets = false")
         self.assert_policy_diagnostic(text, CFG_INCONSISTENT, "documentation.check_fragments")
 
+    def test_authored_document_symlink_following_is_not_supported(self) -> None:
+        text = replace_once(
+            ROOT_POLICY_TEXT,
+            "allow_authored_symlinks = false",
+            "allow_authored_symlinks = true",
+        )
+        self.assert_policy_diagnostic(
+            text,
+            CFG_INCONSISTENT,
+            "documentation.allow_authored_symlinks",
+        )
+
 
 class EntrypointAndContextInvariantTests(ConfigurationAssertions):
     def test_entrypoint_paths_are_unique(self) -> None:

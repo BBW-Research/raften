@@ -5,6 +5,8 @@ from dataclasses import FrozenInstanceError, fields, is_dataclass
 from datetime import date
 
 from repo_context.config import starter_policy
+from repo_context.docs import compile_documentation_policy, evaluate_documentation
+from repo_context.markdown import parse_markdown
 from repo_context.model import (
     BaseRevision,
     BaseTreeEntry,
@@ -21,6 +23,7 @@ from repo_context.model import (
     RunStatus,
     Severity,
     SourceLocation,
+    TextDocument,
     WorktreeKind,
     WorktreeIdentity,
 )
@@ -156,6 +159,47 @@ class ImmutableModelTests(unittest.TestCase):
             evaluation.contexts[0].members[0],
             evaluation.documents[0],
             explanation,
+        )
+        for record in records:
+            with self.subTest(record=type(record).__name__):
+                self.assertTrue(is_dataclass(record))
+                self.assertTrue(hasattr(type(record), "__slots__"))
+                with self.assertRaises(FrozenInstanceError):
+                    setattr(record, fields(record)[0].name, "changed")
+
+    def test_phase_four_markdown_and_graph_records_are_immutable(self) -> None:
+        index_text = "# Docs\n[Guide](guide.md)\n"
+        guide_text = "# Guide\n"
+        parsed = parse_markdown("docs/index.md", index_text)
+        entries = (
+            InventoryEntry(
+                "docs/index.md",
+                InventorySource.TRACKED,
+                WorktreeKind.REGULAR,
+                size_bytes=len(index_text.encode("utf-8")),
+            ),
+            InventoryEntry(
+                "docs/guide.md",
+                InventorySource.TRACKED,
+                WorktreeKind.REGULAR,
+                size_bytes=len(guide_text.encode("utf-8")),
+            ),
+        )
+        graph = evaluate_documentation(
+            compile_documentation_policy(starter_policy()),
+            entries,
+            (
+                TextDocument("docs/index.md", index_text, len(index_text.encode("utf-8"))),
+                TextDocument("docs/guide.md", guide_text, len(guide_text.encode("utf-8"))),
+            ),
+        )
+        records = (
+            parsed,
+            parsed.links[0],
+            parsed.anchors[0],
+            graph,
+            graph.directories[0],
+            graph.edges[0],
         )
         for record in records:
             with self.subTest(record=type(record).__name__):
