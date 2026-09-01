@@ -209,7 +209,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 - [ ] Finalize package metadata, license, versioning policy, changelog process, and supported Python matrix.
 - [ ] Build wheel and source distribution in an isolated environment.
 - [ ] Add an optional zipapp or equivalent vendorable artifact if it can remain dependency-free and deterministic.
-- [ ] Verify installation and execution on macOS, Linux, and Windows with Python 3.12 and 3.13.
+- [ ] Verify installation and execution on macOS and Linux with Python 3.12 and 3.13.
 - [ ] Document three consumption modes: installed package, pinned zipapp, and vendored source with a project-local wrapper.
 - [ ] Create migration instructions from the scene-maker JSON format to v1 TOML.
 - [ ] Pilot in `scene-maker`, `nano-dllm`, and `research-vault` using separate project policies.

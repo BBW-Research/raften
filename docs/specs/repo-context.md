@@ -283,7 +283,7 @@ Never execute repository files, Markdown, configuration values, hooks, or genera
 
 ## Compatibility and distribution
 
-Support Python 3.12 and 3.13 on macOS, Linux, and Windows before the first stable release. Local development and tests must continue to work through `PYTHONPATH=src` without package installation.
+Support Python 3.12 and 3.13 on macOS and Linux before the first stable release, as recorded in [decision 0005](../decisions/0005-supported-platforms.md). Local development and tests must continue to work through `PYTHONPATH=src` without package installation.
 
 The first release should produce a wheel and source distribution. An optional zipapp is desirable for vendored offline use. A consuming starter template may pin a release or vendor the package source, but its `scripts/context-check` wrapper remains the stable project interface.
 

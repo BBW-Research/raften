@@ -8,7 +8,7 @@ The standalone tool is release-ready only when every release-blocking item below
 - [ ] The v1 TOML parser rejects unknown keys, invalid types, unsafe paths, ambiguous rules, invalid limits, and broad exceptions.
 - [ ] Rule and override precedence is documented, deterministic, and covered by tests.
 - [ ] Runtime checks make no network requests and do not execute repository content.
-- [ ] Python 3.12 and 3.13 are supported on macOS, Linux, and Windows.
+- [ ] Python 3.12 and 3.13 are supported on macOS and Linux.
 
 ## File and context budgets
 
