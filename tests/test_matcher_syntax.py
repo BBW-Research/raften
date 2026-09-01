@@ -23,6 +23,8 @@ class ExactPathSyntaxTests(unittest.TestCase):
             "",
             "/absolute.md",
             "C:/absolute.md",
+            "docs/C:relative.md",
+            "docs/C:/absolute.md",
             "docs\\index.md",
             "docs//index.md",
             "docs/",
@@ -56,6 +58,8 @@ class PatternSyntaxTests(unittest.TestCase):
         patterns = (
             "",
             "/**/*.md",
+            "docs/C:*.md",
+            "docs/C:/**/*.md",
             "docs\\*.md",
             "docs//*.md",
             "docs/***.md",

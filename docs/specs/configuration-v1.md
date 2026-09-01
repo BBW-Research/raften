@@ -102,7 +102,7 @@ Configuration parsing does not consult the wall clock: the same bytes always pro
 
 All configured paths and patterns are nonempty repository-relative POSIX strings. They reject absolute and drive-qualified paths, backslashes, control characters, trailing or repeated separators, and `.` or `..` components. Exact paths also reject glob metacharacters.
 
-Patterns support `*`, `?`, `**`, and nonempty character classes such as `[abc]`, `[a-z]`, `[!abc]`, and `[**]`. Stars inside a character class are literals; outside a class, `**` must occupy a complete path component. Character classes may not be empty, nested, unclosed, unmatched, or contain malformed or descending ranges; a hyphen is literal only at a class boundary. Pattern interpretation is case-sensitive and belongs exclusively to `matcher.py`; parsing only validates syntax and static precedence properties.
+Patterns support `*`, `?`, `**`, and nonempty character classes such as `[abc]`, `[a-z]`, `[!abc]`, and `[**]`. Stars inside a character class are literals; outside a class, `**` must occupy a complete path component. Character classes may not be empty, nested, unclosed, unmatched, or contain malformed or descending ranges; a hyphen is literal only at a class boundary. Pattern interpretation is case-sensitive and belongs exclusively to `matcher.py`; parsing only validates syntax and static precedence properties. Full matching, recursive-component, Unicode, candidate-filename, and native-platform conversion behavior is defined by the [version 1 repository paths and globs contract](repository-paths-and-globs-v1.md).
 
 ## Configuration diagnostics
 

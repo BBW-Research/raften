@@ -20,6 +20,15 @@ CFG_LIMIT = "CFG012"
 CFG_INCONSISTENT = "CFG013"
 EXC_BROAD_SELECTOR = "EXC001"
 EXC_EXPIRED = "EXC002"
+GIT_INVALID_ROOT = "GIT001"
+GIT_COMMAND = "GIT002"
+GIT_MALFORMED_OUTPUT = "GIT003"
+GIT_UNSAFE_PATH = "GIT004"
+GIT_PATH_CHANGED = "GIT005"
+GIT_BASE_REVISION = "GIT006"
+GIT_BASE_OBJECT = "GIT007"
+GIT_UNMERGED_INDEX = "GIT008"
+GIT_FILESYSTEM = "GIT009"
 
 
 def config_diagnostic(
@@ -39,6 +48,24 @@ def config_diagnostic(
         message=message,
         location=SourceLocation(source_path, line, column),
         field_path=field_path,
+        details=details,
+        hint=hint,
+    )
+
+
+def operational_diagnostic(
+    code: str,
+    message: str,
+    *,
+    path: str | None = None,
+    details: tuple[tuple[str, JsonValue], ...] = (),
+    hint: str | None = None,
+) -> Diagnostic:
+    return Diagnostic(
+        code=code,
+        severity=Severity.ERROR,
+        message=message,
+        location=None if path is None else SourceLocation(path),
         details=details,
         hint=hint,
     )
