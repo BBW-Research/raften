@@ -40,9 +40,10 @@ def inspect_worktree_entry(
     source: InventorySource,
     index: GitIndexMetadata | None,
     listed_deleted: bool,
+    allow_missing: bool = False,
 ) -> InventoryEntry:
     target = join_worktree_path(root, path)
-    missing_allowed = listed_deleted or (
+    missing_allowed = allow_missing or listed_deleted or (
         index is not None and index.skip_worktree
     )
     parents_present = _inspect_parent_chain(

@@ -2,14 +2,15 @@
 
 ## Inputs
 
-A run has four explicit inputs:
+A pure run has five explicit inputs:
 
 1. Repository root.
 2. Policy file.
 3. Working-tree state, including Git-tracked and non-ignored untracked files.
 4. Optional base revision.
+5. Evaluation date for exception expiry.
 
-The same inputs must produce the same ordered diagnostics. Wall-clock time, locale, filesystem enumeration order, and network state must not affect results.
+The same inputs must produce the same ordered diagnostics. Pure engines never read a clock; the CLI either accepts `--evaluation-date` or captures one UTC date before calling the runner. Locale, filesystem enumeration order, and network state must not affect results.
 
 ## Canonical paths
 

@@ -53,6 +53,14 @@ from repo_context.size_policy import (
 ContentReader = Callable[[InventoryEntry], bytes]
 
 
+class SizePolicyError(ValueError):
+    """One or more path-specific effective-policy failures."""
+
+    def __init__(self, diagnostics: tuple[Diagnostic, ...]) -> None:
+        self.diagnostics = diagnostics
+        super().__init__(diagnostics[0].message)
+
+
 def classify_content(data: bytes) -> ClassifiedContent:
     """Classify exact raw bytes without normalizing encoding or line endings."""
 
@@ -108,16 +116,20 @@ def evaluate_sizes(
 
 
 def largest_governed_files(evaluation: SizeEvaluation) -> tuple[FileAssessment, ...]:
-    """Return classified regular files by descending raw size, then path."""
+    """Return every classified path, with unsized states after descending sizes."""
 
     return tuple(
         sorted(
             (
                 item
                 for item in evaluation.files
-                if item.policy is not None and item.size_bytes is not None
+                if item.policy is not None
             ),
-            key=lambda item: (-_required_size(item), item.entry.path),
+            key=lambda item: (
+                item.size_bytes is None,
+                -1 if item.size_bytes is None else -item.size_bytes,
+                item.entry.path,
+            ),
         )
     )
 
@@ -145,9 +157,16 @@ def explain_size_path(
             (item for item in evaluation.files if item.entry.path == path),
             None,
         )
+    policy = resolve_effective_policy(compiled, path, evaluation_date)
+    if policy is not None:
+        inconsistency = effective_policy_error(policy)
+        if inconsistency is not None:
+            raise SizePolicyError(
+                (_effective_policy_diagnostic(path, policy, inconsistency),)
+            )
     return FileExplanation(
         path=path,
-        policy=resolve_effective_policy(compiled, path, evaluation_date),
+        policy=policy,
         context_sets=context_names_for_path(compiled, path),
         assessment=assessment,
     )
@@ -184,13 +203,7 @@ def _evaluate_file(
         )
     inconsistency = effective_policy_error(policy)
     if inconsistency is not None:
-        diagnostic = policy_diagnostic(
-            CFG_EFFECTIVE_POLICY,
-            Severity.ERROR,
-            inconsistency,
-            path=entry.path,
-            details=_policy_details(policy),
-        )
+        diagnostic = _effective_policy_diagnostic(entry.path, policy, inconsistency)
         return (
             FileAssessment(entry, policy, content_state, size_bytes, None),
             (diagnostic,),
@@ -279,6 +292,20 @@ def _file_limit_diagnostic(
                 None if policy.exception_match is None else policy.exception_match.exception_index,
             ),
         ),
+    )
+
+
+def _effective_policy_diagnostic(
+    path: str,
+    policy: EffectiveFilePolicy,
+    message: str,
+) -> Diagnostic:
+    return policy_diagnostic(
+        CFG_EFFECTIVE_POLICY,
+        Severity.ERROR,
+        message,
+        path=path,
+        details=_policy_details(policy),
     )
 
 

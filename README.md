@@ -1,8 +1,8 @@
-# repo-context starter
+# repo-context
 
-This repository is an implementation starter for a standalone checker that keeps coding-agent repositories bounded, navigable, and economical to load into context windows.
+This repository builds a standalone checker that keeps coding-agent repositories bounded, navigable, and economical to load into context windows.
 
-It contains a verbatim snapshot of scene-maker's working `tools/check_repository_policy.py`, a clean policy that validates this repository, a target Python package skeleton, characterization tests, and a phase-by-phase Codex build contract. The standalone engine is **not finished** in this starter: `scripts/context-check` uses the source snapshot while `repo-context check`, `audit`, `explain`, and `init` remain deliberate stubs.
+The standalone `check`, `audit`, `explain`, and guarded `init` commands are implemented under `src/repo_context/` and run locally without installation or network access. The verbatim scene-maker checker remains the transitional `scripts/context-check` oracle until the Phase 7 self-hosting switch.
 
 ## Start here
 

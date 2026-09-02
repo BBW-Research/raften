@@ -22,10 +22,12 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
                 "decode_git_path",
                 "find_base_entry",
                 "inventory_worktree",
+                "inspect_repository_path",
                 "list_base_tree",
                 "open_repository",
                 "read_base_blob",
                 "read_worktree_bytes",
+                "repository_is_clean",
                 "resolve_base_revision",
                 "validate_git_repository_path",
                 "worktree_path",
@@ -193,6 +195,101 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
                     (name, module)
                     for module in imported
                     if module in forbidden_modules
+                )
+        self.assertEqual(offenders, [])
+
+    def test_runner_and_initialization_do_not_depend_on_presentation(self) -> None:
+        forbidden_modules = {
+            "repo_context.cli",
+            "repo_context.report",
+            "repo_context.report_common",
+            "repo_context.report_data",
+            "repo_context.report_emergency",
+            "repo_context.report_json",
+            "repo_context.report_sarif",
+            "repo_context.report_text",
+        }
+        offenders: list[tuple[str, str]] = []
+        for name in (
+            "runner.py",
+            "initialization.py",
+            "init_recovery.py",
+            "init_safety.py",
+            "init_transaction.py",
+        ):
+            source_path = PACKAGE / name
+            tree = ast.parse(source_path.read_text(encoding="utf-8"), name)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imported = tuple(alias.name for alias in node.names)
+                elif isinstance(node, ast.ImportFrom):
+                    imported = (node.module or "",)
+                else:
+                    continue
+                offenders.extend(
+                    (name, module)
+                    for module in imported
+                    if module in forbidden_modules
+                )
+        self.assertEqual(offenders, [])
+
+    def test_report_modules_are_pure_projections_without_repository_access(self) -> None:
+        forbidden_modules = {
+            "os",
+            "pathlib",
+            "subprocess",
+            "repo_context.cli",
+            "repo_context.initialization",
+            "repo_context.inventory",
+            "repo_context.runner",
+            "repo_context.worktree",
+        }
+        offenders: list[tuple[str, str]] = []
+        for name in (
+            "report.py",
+            "report_common.py",
+            "report_data.py",
+            "report_emergency.py",
+            "report_json.py",
+            "report_sarif.py",
+            "report_text.py",
+        ):
+            source_path = PACKAGE / name
+            tree = ast.parse(source_path.read_text(encoding="utf-8"), name)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imported = tuple(alias.name for alias in node.names)
+                elif isinstance(node, ast.ImportFrom):
+                    imported = (node.module or "",)
+                else:
+                    continue
+                offenders.extend(
+                    (name, module)
+                    for module in imported
+                    if module in forbidden_modules
+                )
+        self.assertEqual(offenders, [])
+
+    def test_output_format_modules_do_not_depend_on_each_other(self) -> None:
+        modules = {
+            "report_json.py": "repo_context.report_json",
+            "report_sarif.py": "repo_context.report_sarif",
+            "report_text.py": "repo_context.report_text",
+        }
+        offenders: list[tuple[str, str]] = []
+        for name, own_module in modules.items():
+            tree = ast.parse((PACKAGE / name).read_text(encoding="utf-8"), name)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imported = tuple(alias.name for alias in node.names)
+                elif isinstance(node, ast.ImportFrom):
+                    imported = (node.module or "",)
+                else:
+                    continue
+                offenders.extend(
+                    (name, module)
+                    for module in imported
+                    if module in modules.values() and module != own_module
                 )
         self.assertEqual(offenders, [])
 

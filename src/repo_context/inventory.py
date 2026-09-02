@@ -12,6 +12,7 @@ from repo_context.diagnostics import (
     GIT_BASE_REVISION,
     GIT_COMMAND,
     GIT_INVALID_ROOT,
+    GIT_UNSAFE_PATH,
 )
 from repo_context.git_executable import resolve_git_executable
 from repo_context.git_records import (
@@ -51,10 +52,12 @@ __all__ = (
     "decode_git_path",
     "find_base_entry",
     "inventory_worktree",
+    "inspect_repository_path",
     "list_base_tree",
     "open_repository",
     "read_base_blob",
     "read_worktree_bytes",
+    "repository_is_clean",
     "resolve_base_revision",
     "validate_git_repository_path",
     "worktree_path",
@@ -183,6 +186,39 @@ def inventory_worktree(repository: RepositoryHandle) -> InventorySnapshot:
     return InventorySnapshot(
         repository=repository,
         entries=tuple(sorted(entries, key=lambda item: item.path)),
+    )
+
+
+def inspect_repository_path(
+    repository: RepositoryHandle,
+    path: RepositoryPath,
+) -> InventoryEntry:
+    """Snapshot one repo-contained path without requiring Git visibility."""
+
+    error = validate_git_repository_path(path)
+    if error is not None:
+        _fail(
+            GIT_UNSAFE_PATH,
+            "requested repository path is unsafe or noncanonical",
+            details=(("path", path), ("reason", error)),
+        )
+    return _inspect_worktree_entry(
+        repository.root,
+        path,
+        source=InventorySource.UNTRACKED,
+        index=None,
+        listed_deleted=False,
+        allow_missing=True,
+    )
+
+
+def repository_is_clean(repository: RepositoryHandle) -> bool:
+    """Return whether tracked, index, and nonignored-untracked state is clean."""
+
+    return not _run_git(
+        repository.root,
+        operation="status",
+        arguments=("status", "--porcelain=v1", "-z", "--untracked-files=all"),
     )
 
 
