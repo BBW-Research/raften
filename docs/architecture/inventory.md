@@ -18,7 +18,7 @@ Ambient `GIT_*` variables are removed. Prompts, optional locks, lazy fetching of
 
 `core.excludesFile` is explicitly neutralized. `core.fsmonitor` and `core.hooksPath` point at the platform null device so an executable configured by the repository cannot run during index refresh or as a hook. A null-device pathname is used instead of the newer Boolean `core.fsmonitor = false` spelling because Git 2.35.1 and earlier interpret Boolean text as a hook pathname. The untracked cache is disabled so current directory enumeration is authoritative rather than dependent on cached extension state. Consequently `--exclude-standard` means repository-owned `.gitignore` files and `.git/info/exclude`, not a user-global or externally configured ignore file. Repository-local ignore rules still apply, while a tracked path remains inventoried even if a later ignore rule covers it.
 
-The boundary requires Git features used by the documented argument vectors, including `rev-parse --end-of-options`. Distribution validation will establish the supported Git-version floor; the engine does not weaken ref safety for an older executable.
+Version 1 supports Git 2.39.5 or newer. This conservative floor is the oldest Git version exercised by the release matrix and supplies every feature used by the documented argument vectors, including `rev-parse --end-of-options`; the engine does not weaken ref safety for an older executable.
 
 ## Current inventory
 

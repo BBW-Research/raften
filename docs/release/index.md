@@ -2,7 +2,7 @@
 
 ## Support contract
 
-The first stable release supports CPython 3.12 and 3.13 on macOS and Linux. Windows is not qualified. Runtime behavior requires Python, Git, and only the Python standard library; building distributions uses the separately reviewed and hash-locked release environment in `requirements/release.txt`.
+The first stable release supports CPython 3.12 and 3.13 on macOS and Linux. Windows is not qualified. Runtime behavior requires Git 2.39.5 or newer, as defined by the [repository inventory boundary](../architecture/inventory.md), plus only the Python standard library; building distributions uses the separately reviewed and hash-locked release environment in `requirements/release.txt`.
 
 The public distribution is `repo-context-policy`, the import package is `repo_context`, and the stable command is `repo-context`. Version 1.0.0 is the first stable artifact version. The project license, copyright holder, repository URLs, and repository ownership settings must still be settled before publication. The package version has one authoritative source in `repo_context.__version__`; release tags and changelog headings must use the same PEP 440 version. Stable versions follow `MAJOR.MINOR.PATCH`, with major increments for incompatible CLI, configuration, or machine-output changes.
 
