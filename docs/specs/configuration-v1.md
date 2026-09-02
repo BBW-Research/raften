@@ -4,7 +4,7 @@
 
 Human-facing `name`, `reason`, `owner`, `rationale`, and `tracking_reference` values must be nonblank and reject C0, DEL, and C1 control characters whenever supplied.
 
-The root [starter policy](../../repo-context.toml) is the normative serialized example. `repo_context.config.render_starter_policy()` returns that project-owned template byte-for-byte; the implementation does not contain a general-purpose TOML writer.
+The package-owned `repo_context.config.render_starter_policy()` bytes are the normative generic serialized example; the implementation does not contain a general-purpose TOML writer. The root [adopted policy](../../repo-context.toml) began from that template and may add repository-specific classifications or tighter limits without changing the generic initializer output.
 
 ## Root keys
 
