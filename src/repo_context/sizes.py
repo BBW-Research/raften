@@ -115,6 +115,32 @@ def evaluate_sizes(
     )
 
 
+def content_paths_for_evaluation(
+    compiled: CompiledSizePolicy,
+    entries: Sequence[InventoryEntry],
+    *,
+    evaluation_date: date,
+    retain_text_paths: frozenset[str] = frozenset(),
+) -> frozenset[str]:
+    """Return regular paths whose bytes the corresponding evaluation will read."""
+
+    paths: set[str] = set()
+    for entry in entries:
+        policy = resolve_effective_policy(compiled, entry.path, evaluation_date)
+        if policy is None or effective_policy_error(policy) is not None:
+            continue
+        size_bytes = entry.size_bytes if entry.kind is WorktreeKind.REGULAR else None
+        if _requires_content(
+            compiled,
+            entry,
+            policy,
+            size_bytes,
+            entry.path in retain_text_paths,
+        ):
+            paths.add(entry.path)
+    return frozenset(paths)
+
+
 def largest_governed_files(evaluation: SizeEvaluation) -> tuple[FileAssessment, ...]:
     """Return every classified path, with unsized states after descending sizes."""
 
@@ -209,16 +235,12 @@ def _evaluate_file(
             (diagnostic,),
             None,
         )
-    ratchet_classification = (
-        compiled.policy.ratchet.compare_file_sizes
-        and policy.kind is FileKind.AUTHORED
-        and policy.ordinary_scan
-        and policy.ordinary_hard_bytes is not None
-        and size_bytes is not None
-        and size_bytes > policy.ordinary_hard_bytes
-    )
-    if entry.kind is not WorktreeKind.REGULAR or (
-        not policy.effective_scan and not retain_text and not ratchet_classification
+    if not _requires_content(
+        compiled,
+        entry,
+        policy,
+        size_bytes,
+        retain_text,
     ):
         return (
             FileAssessment(entry, policy, content_state, size_bytes, None),
@@ -257,6 +279,26 @@ def _evaluate_file(
         ),
         diagnostics,
         document,
+    )
+
+
+def _requires_content(
+    compiled: CompiledSizePolicy,
+    entry: InventoryEntry,
+    policy: EffectiveFilePolicy,
+    size_bytes: int | None,
+    retain_text: bool,
+) -> bool:
+    ratchet_classification = (
+        compiled.policy.ratchet.compare_file_sizes
+        and policy.kind is FileKind.AUTHORED
+        and policy.ordinary_scan
+        and policy.ordinary_hard_bytes is not None
+        and size_bytes is not None
+        and size_bytes > policy.ordinary_hard_bytes
+    )
+    return entry.kind is WorktreeKind.REGULAR and (
+        policy.effective_scan or retain_text or ratchet_classification
     )
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import errno
+import hashlib
 import os
 import stat
 from pathlib import Path
@@ -132,6 +133,44 @@ def read_regular_bytes(root: Path, entry: InventoryEntry) -> bytes:
             pass
 
 
+def hash_regular_blob(root: Path, entry: InventoryEntry, algorithm: str) -> str:
+    """Hash one regular snapshot as a Git blob without retaining its bytes."""
+
+    if entry.kind is not WorktreeKind.REGULAR:
+        raise ValueError("worktree blob hashes require a regular inventory entry")
+    if entry.identity is None:
+        raise ValueError("regular inventory entry lacks snapshot identity")
+    _require_current_identity(root, entry, "hash-lstat")
+    try:
+        descriptor = _open_snapshot_file(root, entry.path)
+    except OSError as error:
+        _require_current_identity(root, entry, "hash-open-recheck")
+        if _is_path_change_error(error):
+            _path_changed(entry.path, entry.source, "path changed before content hash")
+        _filesystem_error(entry.path, "hash-open", error)
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or _identity(before) != entry.identity:
+            _path_changed(entry.path, entry.source, "path identity changed before content hash")
+        digest, observed_size = _hash_descriptor(
+            descriptor,
+            entry.identity.size_bytes,
+            algorithm,
+        )
+        after = os.fstat(descriptor)
+        if _identity(after) != entry.identity or observed_size != entry.identity.size_bytes:
+            _path_changed(entry.path, entry.source, "file changed during content hash")
+        _require_current_identity(root, entry, "hash-post-lstat")
+        return digest
+    except OSError as error:
+        _filesystem_error(entry.path, "hash", error)
+    finally:
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
+
+
 def _inspect_parent_chain(
     root: Path,
     path: str,
@@ -243,6 +282,25 @@ def _read_descriptor(descriptor: int, expected_size: int) -> bytes:
         chunks.append(chunk)
         remaining -= len(chunk)
     return b"".join(chunks)
+
+
+def _hash_descriptor(
+    descriptor: int,
+    expected_size: int,
+    algorithm: str,
+) -> tuple[str, int]:
+    digest = hashlib.new(algorithm)
+    digest.update(f"blob {expected_size}\0".encode("ascii"))
+    observed_size = 0
+    remaining = expected_size + 1
+    while remaining:
+        chunk = os.read(descriptor, min(1024 * 1024, remaining))
+        if not chunk:
+            break
+        digest.update(chunk)
+        observed_size += len(chunk)
+        remaining -= len(chunk)
+    return digest.hexdigest(), observed_size
 
 
 def _is_path_change_error(error: OSError) -> bool:

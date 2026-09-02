@@ -1,5 +1,7 @@
 # Policy, workflow, and release surfaces require review from the repository owner.
+/.codex/ @taiqihe
 /.github/ @taiqihe
+/AGENTS.md @taiqihe
 /CHANGELOG.md @taiqihe
 /LICENSE @taiqihe
 /NOTICE @taiqihe
