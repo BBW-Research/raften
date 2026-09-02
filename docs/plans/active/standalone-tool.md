@@ -43,7 +43,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 0 completion evidence
 
-[Phase 0 completion evidence](standalone-tool-evidence.md#phase-0-completion-evidence) is retained in the companion evidence log.
+[Phase 0 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-0-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 1: Define immutable models and strict configuration
 
@@ -66,7 +66,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 1 completion evidence
 
-[Phase 1 completion evidence](standalone-tool-evidence.md#phase-1-completion-evidence) is retained in the companion evidence log.
+[Phase 1 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-1-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 2: Build deterministic inventory and matcher semantics
 
@@ -91,7 +91,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 2 completion evidence
 
-[Phase 2 completion evidence](standalone-tool-evidence.md#phase-2-completion-evidence) is retained in the companion evidence log.
+[Phase 2 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-2-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 3: Implement classification, file budgets, and context sets
 
@@ -116,7 +116,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 3 completion evidence
 
-[Phase 3 completion evidence](standalone-tool-evidence.md#phase-3-completion-evidence) is retained in the companion evidence log.
+[Phase 3 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-3-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 4: Implement Markdown extraction and documentation graph
 
@@ -143,7 +143,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 4 completion evidence
 
-[Phase 4 completion evidence](standalone-tool-evidence.md#phase-4-completion-evidence) is retained in the companion evidence log.
+[Phase 4 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-4-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 5: Implement file and policy ratchets
 
@@ -167,28 +167,32 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 5 completion evidence
 
-[Phase 5 completion evidence](standalone-tool-evidence.md#phase-5-completion-evidence) is retained in the companion evidence log.
+[Phase 5 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-5-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 6: Complete CLI, reports, audit, explain, and init
 
 ### Tasks
 
-- [ ] Replace command stubs with runner integration while preserving the documented arguments and exit codes.
-- [ ] Implement concise text output with deterministic order and one final summary.
-- [ ] Implement versioned JSON output whose diagnostics and audit records are stable enough for automation.
-- [ ] Implement SARIF output for blocking and advisory diagnostics with real locations only.
-- [ ] Make `audit` non-mutating and successful despite policy violations while still failing on invalid configuration or repository access.
-- [ ] Implement `explain PATH` with rule provenance, override precedence, scan decision, limits, context sets, graph membership, migration status, and exception status.
-- [ ] Implement `init` with safe no-overwrite default, deterministic starter policy, clean-repository refusal, optional migration-debt capture, and no automatic broad exclusions.
-- [ ] Add CLI integration tests for stdout/stderr separation, broken pipes, unknown commands, invalid formats, relative repository paths, and execution outside the repository.
-- [ ] Add `--version` from package metadata or a single authoritative version constant.
+- [x] Replace command stubs with runner integration while preserving the documented arguments and exit codes.
+- [x] Implement concise text output with deterministic order and one final summary.
+- [x] Implement versioned JSON output whose diagnostics and audit records are stable enough for automation.
+- [x] Implement SARIF output for blocking and advisory diagnostics with real locations only.
+- [x] Make `audit` non-mutating and successful despite policy violations while still failing on invalid configuration or repository access.
+- [x] Implement `explain PATH` with rule provenance, override precedence, scan decision, limits, context sets, graph membership, migration status, and exception status.
+- [x] Implement `init` with safe no-overwrite default, deterministic starter policy, clean-repository refusal, optional migration-debt capture, and no automatic broad exclusions.
+- [x] Add CLI integration tests for stdout/stderr separation, broken pipes, unknown commands, invalid formats, relative repository paths, and execution outside the repository.
+- [x] Add `--version` from package metadata or a single authoritative version constant.
 
 ### Gate
 
-- [ ] All four public commands work end to end.
-- [ ] Exit codes match the spec.
-- [ ] Text, JSON, and SARIF outputs pass schema or golden tests.
-- [ ] No expected user error emits a Python traceback.
+- [x] All four public commands work end to end.
+- [x] Exit codes match the spec.
+- [x] Text, JSON, and SARIF outputs pass schema or golden tests.
+- [x] No expected user error emits a Python traceback.
+
+### Phase 6 completion evidence
+
+[Phase 6 completion evidence](standalone-tool-evidence-phase-6.md) is retained in the companion evidence log.
 
 ## Phase 7: Self-host and retire the transitional path
 

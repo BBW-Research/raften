@@ -49,6 +49,8 @@ Worktree inspection uses `lstat`. Every parent component is checked before the l
 
 `read_worktree_bytes()` is the only public current-content reader. It delegates to `worktree.py`, rechecks parents, uses descriptor-relative no-follow and nonblocking opens, compares descriptor identity before and after the raw read, and bounds reading to the snapshot size plus one byte. Same-size replacement, in-place mutation, concurrent growth, type changes, and symlink or junction redirection therefore fail as `GIT005`; unrelated open or read failures use `GIT009`. A platform without the required secure open primitives fails closed instead of using a path-following fallback. The [file and context budget contract](../specs/file-budgets-v1.md) defines how one verified read is shared by later checks.
 
+`inspect_repository_path()` creates the same no-follow snapshot record for one canonical repo-contained config or sidecar path without requiring Git visibility. It returns an explicit missing record rather than following or guessing. `repository_is_clean()` runs isolated NUL-mode porcelain status and considers the index, tracked worktree, and nonignored-untracked set; initialization calls it before evaluation and immediately before mutation.
+
 A tracked path already listed by the deletion view becomes `deleted` plus `missing`. A path that disappears, appears, or changes through an intermediate component after the relevant Git view produces `GIT005`; an unrelated filesystem access failure produces `GIT009`. The engine does not retry into a mixed snapshot or lock the user's worktree.
 
 ## Base revisions and objects

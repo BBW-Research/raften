@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import contextlib
 import io
+import tomllib
 import unittest
+from pathlib import Path
 
 from repo_context.cli import build_parser, main
 
@@ -21,12 +23,23 @@ class CliSmokeTests(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertIn("repo-context", stdout.getvalue())
 
-    def test_unimplemented_command_fails_explicitly(self) -> None:
+    def test_invalid_explicit_repository_is_a_structured_failure(self) -> None:
         stderr = io.StringIO()
         with contextlib.redirect_stderr(stderr):
-            result = main(["check"])
+            result = main(["check", "--repo", "/does/not/exist"])
         self.assertEqual(result, 2)
-        self.assertIn("not implemented", stderr.getvalue())
+        self.assertIn("GIT001", stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_package_metadata_reads_the_single_runtime_version_constant(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        metadata = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+        self.assertNotIn("version", metadata["project"])
+        self.assertIn("version", metadata["project"]["dynamic"])
+        self.assertEqual(
+            metadata["tool"]["setuptools"]["dynamic"]["version"],
+            {"attr": "repo_context.__version__"},
+        )
 
 
 if __name__ == "__main__":

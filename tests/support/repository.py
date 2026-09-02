@@ -216,8 +216,12 @@ class RepositoryFixture:
         self,
         *arguments: str,
         cwd: Path | None = None,
+        environment_overrides: Mapping[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        environment = isolated_environment(PYTHONPATH=str(ROOT / "src"))
+        overrides = {"PYTHONPATH": str(ROOT / "src")}
+        if environment_overrides is not None:
+            overrides.update(environment_overrides)
+        environment = isolated_environment(**overrides)
         return subprocess.run(
             [sys.executable, "-m", "repo_context", *arguments],
             cwd=self.root if cwd is None else cwd,

@@ -58,7 +58,7 @@ Context thresholds use the same strict comparison as file thresholds: a total ab
 
 Each file assessment exposes inventory state, classification, rule and pattern provenance, selected override, selected exception, ordinary and effective scan decisions, ordinary and effective thresholds, raw size when available, content state and SHA-256 identity when read, and threshold state for plaintext. Largest governed files sort by descending raw size with path as the tie-breaker. Classification counts retain every explicit kind.
 
-Explain resolution works for both inventoried and nonexistent canonical paths. It returns the same rule, override, exception, ordinary/effective policy, and context-set membership that evaluation would use; an assessment is attached only when the path exists in the supplied evaluation.
+Audit retains every governed inventory state. Sized paths sort by descending raw size with path as the tie-breaker; deleted, symlink, and other states without a raw size follow in path order. Explain resolution works for both inventoried and nonexistent canonical paths. It returns the same rule, override, exception, ordinary/effective policy, and context-set membership that evaluation would use; an assessment is attached only when the path exists in the supplied evaluation.
 
 ## Diagnostic identities
 

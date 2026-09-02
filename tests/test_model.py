@@ -26,14 +26,13 @@ from repo_context.model import (
     FileRatchetEvaluation,
     RatchetBaselineSource,
     RatchetUnavailableReason,
-    RunResult,
-    RunStatus,
     Severity,
     SourceLocation,
     TextDocument,
     WorktreeKind,
     WorktreeIdentity,
 )
+from repo_context.run_model import CommandFailure, RunStatus
 from repo_context.sizes import compile_size_policy, evaluate_sizes, explain_size_path
 
 
@@ -93,15 +92,13 @@ class ImmutableModelTests(unittest.TestCase):
             location=location,
             details=(("size_bytes", 100),),
         )
-        result = RunResult(
-            status=RunStatus.COMPLETE,
+        result = CommandFailure(
+            status=RunStatus.OPERATIONAL_ERROR,
             diagnostics=(diagnostic,),
-            inventory=(inventory,),
-            links=(link,),
         )
-        self.assertEqual(result.inventory[0].source, InventorySource.TRACKED)
-        self.assertEqual(result.inventory[0].index, metadata)
-        self.assertEqual(result.links[0].kind, LinkKind.NAVIGATION)
+        self.assertEqual(inventory.source, InventorySource.TRACKED)
+        self.assertEqual(inventory.index, metadata)
+        self.assertEqual(link.kind, LinkKind.NAVIGATION)
         self.assertEqual(result.diagnostics[0].details, (("size_bytes", 100),))
         with self.assertRaises(FrozenInstanceError):
             result.status = RunStatus.INTERNAL_ERROR  # type: ignore[misc]

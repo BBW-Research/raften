@@ -1,0 +1,2 @@
+NOTE RAT001 <global>: file-size ratchet comparison is unavailable {"reason":"base_ref_absent"} Hint: supply a resolvable base revision or capture first-adoption debt
+Summary: 0 errors, 0 warnings, 1 note.

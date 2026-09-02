@@ -126,13 +126,6 @@ class Severity(StrEnum):
     NOTE = "note"
 
 
-class RunStatus(StrEnum):
-    COMPLETE = "complete"
-    CONFIGURATION_ERROR = "configuration_error"
-    OPERATIONAL_ERROR = "operational_error"
-    INTERNAL_ERROR = "internal_error"
-
-
 @dataclass(frozen=True, slots=True)
 class ExactSelector:
     path: RepositoryPath
@@ -488,11 +481,3 @@ class FileExplanation:
     policy: EffectiveFilePolicy | None
     context_sets: tuple[str, ...]
     assessment: FileAssessment | None
-
-
-@dataclass(frozen=True, slots=True)
-class RunResult:
-    status: RunStatus
-    diagnostics: tuple[Diagnostic, ...]
-    inventory: tuple[InventoryEntry, ...] = ()
-    links: tuple[Link, ...] = ()

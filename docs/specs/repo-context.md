@@ -61,7 +61,7 @@ The installed executable is `repo-context`.
 Run blocking checks and return a policy exit code.
 
 ```text
-repo-context check [--repo PATH] [--config PATH] [--base-ref REF] [--format text|json|sarif]
+repo-context check [--repo PATH] [--config PATH] [--base-ref REF] [--evaluation-date YYYY-MM-DD] [--format text|json|sarif]
 ```
 
 Defaults:
@@ -70,13 +70,14 @@ Defaults:
 - `--config`: `repo-context.toml` relative to the repository root.
 - `--format`: `text`.
 - `--base-ref`: absent; current-state checks still run, while ratchet comparisons requiring history are reported as unavailable rather than guessed.
+- `--evaluation-date`: current UTC calendar date captured once; an explicit canonical date makes expiry evaluation reproducible.
 
 ### `repo-context audit`
 
 Produce a non-mutating inventory and trend report. Hard violations remain visible, but the command exits successfully unless configuration or repository access fails.
 
 ```text
-repo-context audit [--repo PATH] [--config PATH] [--base-ref REF] [--format text|json]
+repo-context audit [--repo PATH] [--config PATH] [--base-ref REF] [--evaluation-date YYYY-MM-DD] [--format text|json]
 ```
 
 The report includes largest governed files, files above warning thresholds, migration debt, documentation depth and fan-out, unreachable documents, context-set totals, classification counts, exception status, and changes from the base revision when supplied.
@@ -86,10 +87,10 @@ The report includes largest governed files, files above warning thresholds, migr
 Explain exactly how one repository-relative path is handled.
 
 ```text
-repo-context explain PATH [--repo PATH] [--config PATH] [--format text|json]
+repo-context explain PATH [--repo PATH] [--config PATH] [--base-ref REF] [--evaluation-date YYYY-MM-DD] [--format text|json]
 ```
 
-The explanation includes matched rule, rule order, kind, scan status, effective thresholds, matching override, context-set membership, documentation-graph membership, migration status, and exception record.
+The explanation includes matched rule, rule order, kind, scan status, effective thresholds, matching override, context-set membership, documentation-graph membership, migration status, and exception record. `--base-ref` enables exact Git or first-adoption migration status; without it history remains explicitly unavailable rather than inferred.
 
 ### `repo-context init`
 
@@ -100,6 +101,8 @@ repo-context init [--repo PATH] [--config PATH] [--capture-debt] [--force]
 ```
 
 Without `--capture-debt`, initialization fails when current authored files exceed the generated ordinary limits. With `--capture-debt`, the command records a deterministic baseline manifest containing current oversized file sizes and content identities. It must never add broad exclusions automatically. The manifest schema and config-derived sidecar path are defined by the [version 1 ratchet contract](ratchets-v1.md#first-adoption-manifest).
+
+Initialization requires a clean repository before evaluation and again before writing. It never follows destination symlinks. `--force` replaces only existing regular initialization artifacts and never bypasses dirty-state or uncaptured-debt refusal. A capture writes a versioned sidecar even when it has zero entries; a non-capture run refuses to leave a stale sidecar silently.
 
 ### Exit codes
 
@@ -273,7 +276,7 @@ Initial code families:
 
 Codes are assigned in the implementation phase and then treated as public API. Tests assert codes and structured fields, not only prose.
 
-Text output is concise and sorted. JSON has an explicit schema version. SARIF maps paths and positions without fabricating source locations. Summary counts are derived from diagnostics rather than maintained separately.
+Text output is concise and sorted. JSON has an explicit schema version. SARIF maps paths and positions without fabricating source locations. Summary counts are derived from diagnostics rather than maintained separately. Exact stream, escaping, audit-metric, explain-filtering, initialization, and machine-schema behavior is defined by the [version 1 commands and output contract](output-v1.md).
 
 ## Performance and safety
 

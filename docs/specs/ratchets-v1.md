@@ -39,11 +39,11 @@ Budget evaluation retains the raw `LimitState.HARD` assessment and initially emi
 
 ## Base availability
 
-An absent base ref and a nonempty ref consisting only of ASCII `0` are distinct unavailable states. Both permit current-state checks, produce nonblocking `RAT001` with a structured reason, and never invoke Git. Any all-zero length is accepted to preserve the established CI sentinel behavior.
+When file-size comparison is enabled, an absent base ref and a nonempty ref consisting only of ASCII `0` are distinct unavailable states. Both permit current-state checks, produce nonblocking `RAT001` with a structured reason, and never invoke Git. Any all-zero length is accepted to preserve the established CI sentinel behavior. A policy that disables file-size comparison has no requested comparison and therefore emits no unavailability note.
 
 A nonzero requested ref must resolve to an available commit through the isolated inventory boundary. A missing ref, a commit unavailable in shallow history, or another resolution failure is operational `GIT006`; the engine never fetches or guesses. An unavailable tree, selected blob, or wrong object type is operational `GIT007`.
 
-The base policy is read as exact blob bytes and parsed with a source label containing the commit identity and policy path. Invalid base policy bytes produce configuration diagnostics at that source. When a resolved base commit has no policy, a valid current first-adoption manifest may supply the baseline; without that manifest the requested historical comparison is operational `GIT007`. A base config path present as a non-regular object is `GIT007`, not first adoption. Once the base contains a policy, the Git tree and blobs take precedence and any current migration manifest is ignored.
+The base policy is read as exact blob bytes and parsed with a source label containing the commit identity and policy path. Invalid base policy bytes produce configuration diagnostics at that source. When a resolved base commit has no policy and current file comparison is enabled, a valid current first-adoption manifest may supply the baseline; without that manifest the requested historical comparison is operational `GIT007`. A disabled current comparison needs no first-adoption manifest when the base has no policy. A base config path present as a non-regular object is `GIT007`, not first adoption. Once the base contains a policy, the Git tree and blobs take precedence and any current migration manifest is ignored.
 
 ## First-adoption manifest
 
