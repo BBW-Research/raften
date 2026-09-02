@@ -7,3 +7,4 @@
 - [0005: Support macOS and Linux for the first stable release](0005-supported-platforms.md)
 - [0006: Build releases from a hash-locked offline wheelhouse](0006-offline-release-toolchain.md)
 - [0007: Preserve the repo-context CLI under a distinct distribution name](0007-distribution-name.md)
+- [0008: License the project under MIT in the BBW-Research repository](0008-project-license-and-owner.md)

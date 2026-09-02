@@ -222,7 +222,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Tasks
 
-- [ ] Finalize package metadata, license, versioning policy, changelog process, and supported Python matrix.
+- [x] Finalize package metadata, license, versioning policy, changelog process, and supported Python matrix.
 - [x] Build wheel and source distribution in an isolated environment.
 - [x] Add an optional zipapp or equivalent vendorable artifact if it can remain dependency-free and deterministic.
 - [x] Verify installation and execution on macOS and Linux with Python 3.12 and 3.13.

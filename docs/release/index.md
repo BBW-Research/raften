@@ -4,7 +4,7 @@
 
 The first stable release supports CPython 3.12 and 3.13 on macOS and Linux. Windows is not qualified. Runtime behavior requires Git 2.39.5 or newer, as defined by the [repository inventory boundary](../architecture/inventory.md), plus only the Python standard library; building distributions uses the separately reviewed and hash-locked release environment in `requirements/release.txt`.
 
-The public distribution is `repo-context-policy`, the import package is `repo_context`, and the stable command is `repo-context`. Version 1.0.0 is the first stable artifact version. The project license, copyright holder, repository URLs, and repository ownership settings must still be settled before publication. The package version has one authoritative source in `repo_context.__version__`; release tags and changelog headings must use the same PEP 440 version. Stable versions follow `MAJOR.MINOR.PATCH`, with major increments for incompatible CLI, configuration, or machine-output changes.
+The public distribution is `repo-context-policy`, the import package is `repo_context`, and the stable command is `repo-context`. Version 1.0.0 is the first stable artifact version. The project is MIT licensed by BBW-Research, and its canonical repository is `https://github.com/BBW-Research/repo-context`. The package version has one authoritative source in `repo_context.__version__`; release tags and changelog headings must use the same PEP 440 version. Stable versions follow `MAJOR.MINOR.PATCH`, with major increments for incompatible CLI, configuration, or machine-output changes.
 
 ## Build and qualify
 
@@ -44,11 +44,11 @@ Copy the release `repo-context-<version>.pyz` into a project-controlled tools di
 $ python3 tools/repo-context-<version>.pyz check --repo .
 ```
 
-The zipapp contains only `repo_context` Python sources and a generated entrypoint. It requires no installation and is byte-identical when built from the same source with the same `SOURCE_DATE_EPOCH`. The consuming repository's `scripts/context-check` should name the pinned file explicitly rather than select a moving download.
+The zipapp contains the `repo_context` Python sources, a generated entrypoint, `LICENSE`, and `NOTICE`. It requires no installation and is byte-identical when built from the same source with the same `SOURCE_DATE_EPOCH`. The consuming repository's `scripts/context-check` should name the pinned file explicitly rather than select a moving download.
 
 ### Vendored source
 
-Copy the reviewed `src/repo_context` directory to a versioned project location such as `vendor/repo-context/src/repo_context`, retain the upstream license and provenance record, and make the project-local wrapper select only that source tree:
+Copy the reviewed `src/repo_context` directory to a versioned project location such as `vendor/repo-context/src/repo_context`, retain both `LICENSE` and `NOTICE`, and make the project-local wrapper select only that source tree:
 
 ```sh
 #!/bin/sh
@@ -67,4 +67,4 @@ Add user-visible changes to the `Unreleased` section of `CHANGELOG.md` in the sa
 
 The eventual GitHub repository must require the stable `Required repository policy` check on the default branch. Require pull requests, at least one approving review, dismissal of stale approvals, approval of the most recent reviewable push, conversation resolution, and administrator enforcement. Do not select individual matrix job names as required checks; the stable aggregator owns that interface while the matrix may evolve.
 
-Add ownership review for `/repo-context.toml`, `/.github/workflows/`, `/requirements/release.txt`, `/scripts/build-release`, `/scripts/fetch-release-tools`, `/scripts/qualify-artifacts`, `/scripts/qualify-linux`, `/release_tools/`, `/pyproject.toml`, `/CHANGELOG.md`, `/LICENSE`, and `/NOTICE`. A real GitHub owner cannot be recorded until the repository organization or user and responsible team are known. Confirm these settings through the hosting provider after the remote exists; workflow text alone cannot establish branch protection or ownership enforcement.
+Add ownership review for `/repo-context.toml`, `/.github/workflows/`, `/requirements/release.txt`, `/scripts/build-release`, `/scripts/fetch-release-tools`, `/scripts/qualify-artifacts`, `/scripts/qualify-linux`, `/release_tools/`, `/pyproject.toml`, `/CHANGELOG.md`, `/LICENSE`, and `/NOTICE`. The repository belongs under `BBW-Research`, but GitHub requires a writable user or visible writable team—not an organization handle alone—as the CODEOWNERS principal. Confirm that identity and these settings through the hosting provider after the remote exists; workflow text alone cannot establish branch protection or ownership enforcement.

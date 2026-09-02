@@ -81,6 +81,10 @@ def _verify_wheel(path: Path, expected_name: str, expected_version: str) -> None
             raise ValueError("wheel project name does not match release metadata")
         if metadata["Version"] != expected_version:
             raise ValueError("wheel version does not match release metadata")
+        if metadata["License-Expression"] != "MIT":
+            raise ValueError("wheel must declare the MIT license expression")
+        if tuple(metadata.get_all("License-File") or ()) != ("LICENSE", "NOTICE"):
+            raise ValueError("wheel must declare exactly LICENSE and NOTICE")
         python_specifiers = tuple(
             item.strip()
             for item in (metadata["Requires-Python"] or "").split(",")
@@ -107,6 +111,8 @@ def _verify_wheel(path: Path, expected_name: str, expected_version: str) -> None
         required = {"repo_context/__init__.py", "repo_context/cli.py"}
         if not required.issubset(names):
             raise ValueError("wheel is missing required package modules")
+        if not any(name.endswith(".dist-info/licenses/LICENSE") for name in names):
+            raise ValueError("wheel is missing the project license")
         if not any(name.endswith(".dist-info/licenses/NOTICE") for name in names):
             raise ValueError("wheel is missing the upstream license notice")
 
@@ -125,6 +131,7 @@ def _verify_sdist(path: Path, expected_name: str, expected_version: str) -> None
             raise ValueError("sdist root does not match release metadata")
         required = {
             f"{root}/CHANGELOG.md",
+            f"{root}/LICENSE",
             f"{root}/README.md",
             f"{root}/NOTICE",
             f"{root}/pyproject.toml",
@@ -149,8 +156,9 @@ def _verify_zipapp(path: Path) -> None:
         _verify_member_names(names)
         if names != tuple(sorted(names)):
             raise ValueError("zipapp entries must be sorted")
-        if "NOTICE" not in names or "__main__.py" not in names or "repo_context/cli.py" not in names:
-            raise ValueError("zipapp is missing its entrypoint or package")
+        required = {"LICENSE", "NOTICE", "__main__.py", "repo_context/cli.py"}
+        if not required.issubset(names):
+            raise ValueError("zipapp is missing its entrypoint, package, or legal files")
         if any(entry.compress_type != zipfile.ZIP_STORED for entry in archive.infolist()):
             raise ValueError("zipapp entries must use deterministic stored encoding")
         if len({entry.date_time for entry in archive.infolist()}) != 1:

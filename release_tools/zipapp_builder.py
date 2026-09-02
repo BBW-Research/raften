@@ -21,15 +21,19 @@ def build_zipapp(source_root: Path, destination: Path, *, epoch: int) -> tuple[s
     package = source_root / "repo_context"
     if not package.is_dir() or not (package / "__init__.py").is_file():
         raise ValueError(f"source root does not contain repo_context: {source_root}")
-    notice = source_root.parent / "NOTICE"
-    if not notice.is_file() or notice.is_symlink():
-        raise ValueError(f"source tree does not contain a regular NOTICE: {notice}")
+    legal_files: dict[str, Path] = {}
+    for name in ("LICENSE", "NOTICE"):
+        path = source_root.parent / name
+        if not path.is_file() or path.is_symlink():
+            raise ValueError(f"source tree does not contain a regular {name}: {path}")
+        legal_files[name] = path
     if destination.exists() or destination.is_symlink():
         raise FileExistsError(destination)
     if not _MINIMUM_ZIP_EPOCH <= epoch <= _MAXIMUM_ZIP_EPOCH:
         raise ValueError("zipapp epoch must be representable by the ZIP timestamp format")
 
-    entries: dict[str, bytes] = {"NOTICE": notice.read_bytes(), "__main__.py": _MAIN}
+    entries = {name: path.read_bytes() for name, path in legal_files.items()}
+    entries["__main__.py"] = _MAIN
     for path in sorted(package.rglob("*.py")):
         if path.is_symlink():
             raise ValueError(f"zipapp source may not be a symlink: {path}")
