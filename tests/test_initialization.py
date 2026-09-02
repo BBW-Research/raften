@@ -9,7 +9,7 @@ from unittest import mock
 
 import repo_context.initialization as initialization
 import repo_context.init_transaction as transaction
-from repo_context.config import render_starter_policy
+from repo_context.config import load_policy, render_starter_policy
 from repo_context.debt import parse_debt_manifest
 from repo_context.run_model import CommandFailure, InitResult, RunStatus
 from tests.support.repository import RepositoryFixture
@@ -74,6 +74,25 @@ class InitializationTests(unittest.TestCase):
                 )
                 parsed = parse_debt_manifest(repository.path("repo-context.debt.json").read_bytes())
                 self.assertEqual(tuple(item.path for item in parsed.entries), expected_paths)
+
+    def test_custom_config_classifies_its_exact_debt_sidecar(self) -> None:
+        config_path = "config/project-policy.toml"
+        sidecar_path = "config/project-policy.debt.json"
+        with RepositoryFixture() as repository:
+            repository.write_text("config/source.txt", "source\n")
+            repository.commit("nested policy source")
+            outcome = initialization.initialize_repository(
+                repository.root,
+                config_path=config_path,
+                capture_debt=True,
+            )
+
+            self.assertIsInstance(outcome, InitResult)
+            assert isinstance(outcome, InitResult)
+            self.assertEqual(outcome.written_paths, (sidecar_path, config_path))
+            policy = load_policy(repository.path(config_path))
+            generated = next(rule for rule in policy.file_rules if rule.name == "generated-state")
+            self.assertEqual(generated.patterns[-1], sidecar_path)
 
     def test_existing_destinations_require_force_and_force_replaces_regular_files(self) -> None:
         with RepositoryFixture() as repository:

@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH= cd -P -- "$(dirname -- "$0")/.." && pwd -P)
+unset PYTHONHOME
+
+if [ "$#" -ne 2 ]; then
+  echo "usage: scripts/qualify-artifacts ARTIFACT_DIRECTORY WHEELHOUSE" >&2
+  exit 2
+fi
+
+ARTIFACTS=$1
+WHEELHOUSE=$2
+PYTHON=${PYTHON:-python3}
+VERSION=$(PYTHONPATH="$ROOT/src" "$PYTHON" -P -c 'import repo_context; print(repo_context.__version__)')
+PROJECT_NAME=$("$PYTHON" -I -c 'import pathlib, sys, tomllib; print(tomllib.loads(pathlib.Path(sys.argv[1]).read_text())["project"]["name"])' "$ROOT/pyproject.toml")
+
+PYTHONPATH="$ROOT" "$PYTHON" -P -m release_tools.qualification \
+  --artifacts "$ARTIFACTS" \
+  --wheelhouse "$WHEELHOUSE" \
+  --requirements "$ROOT/requirements/release.txt" \
+  --name "$PROJECT_NAME" \
+  --version "$VERSION"

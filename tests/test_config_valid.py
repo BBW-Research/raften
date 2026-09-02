@@ -54,13 +54,19 @@ class ValidConfigurationTests(unittest.TestCase):
             policy.file_rules,
             (
                 FileRule(
-                    name="lockfiles",
-                    patterns=("uv.lock", "**/uv.lock", "package-lock.json", "**/package-lock.json"),
+                    name="generated-state",
+                    patterns=(
+                        "uv.lock",
+                        "**/uv.lock",
+                        "package-lock.json",
+                        "**/package-lock.json",
+                        "repo-context.debt.json",
+                    ),
                     kind=FileKind.GENERATED,
                     scan=False,
                     warn_bytes=None,
                     hard_bytes=None,
-                    reason="Machine-generated dependency resolution data is not useful bootstrap context.",
+                    reason="Machine-generated dependency and migration state is validated by its owning tool.",
                 ),
                 FileRule("authored", ("**",), FileKind.AUTHORED, True, 20480, 25600),
             ),
@@ -265,6 +271,14 @@ class StarterTemplateTests(unittest.TestCase):
         self.assertEqual(parse_policy(render_starter_policy()), starter_policy())
         self.assertEqual(starter_policy(), parse_policy(STARTER_POLICY_BYTES))
 
+    def test_template_classifies_the_exact_custom_debt_sidecar(self) -> None:
+        rendered = render_starter_policy(debt_manifest_path="config/project-policy.debt.json")
+        policy = parse_policy(rendered)
+        debt_rule = next(rule for rule in policy.file_rules if rule.name == "generated-state")
+        self.assertEqual(debt_rule.patterns[-1], "config/project-policy.debt.json")
+        self.assertEqual(debt_rule.kind, FileKind.GENERATED)
+        self.assertFalse(debt_rule.scan)
+
 
 class AdoptedRootPolicyTests(unittest.TestCase):
     def test_root_policy_adds_project_specific_scanned_classifications(self) -> None:
@@ -290,6 +304,18 @@ class AdoptedRootPolicyTests(unittest.TestCase):
         self.assertEqual(fixtures.patterns, ("tests/fixtures/**",))
         self.assertTrue(fixtures.scan)
         self.assertEqual((fixtures.warn_bytes, fixtures.hard_bytes), (20480, 25600))
+
+        release_lock = rules["release-lock"]
+        self.assertEqual(release_lock.kind, FileKind.GENERATED)
+        self.assertEqual(release_lock.patterns, ("requirements/release.txt",))
+        self.assertTrue(release_lock.scan)
+        self.assertEqual((release_lock.warn_bytes, release_lock.hard_bytes), (20480, 25600))
+
+        legal = rules["legal-material"]
+        self.assertEqual(legal.kind, FileKind.LEGAL)
+        self.assertEqual(legal.patterns, ("LICENSE", "NOTICE"))
+        self.assertTrue(legal.scan)
+        self.assertEqual((legal.warn_bytes, legal.hard_bytes), (20480, 25600))
 
 
 if __name__ == "__main__":

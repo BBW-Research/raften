@@ -38,7 +38,7 @@ class FixedTableInvariantTests(ConfigurationAssertions):
 
 class FileRuleInvariantTests(ConfigurationAssertions):
     def test_file_rule_names_and_patterns_are_unique(self) -> None:
-        duplicate_name = replace_once(STARTER_POLICY_TEXT, 'name = "authored"', 'name = "lockfiles"')
+        duplicate_name = replace_once(STARTER_POLICY_TEXT, 'name = "authored"', 'name = "generated-state"')
         self.assert_policy_diagnostic(duplicate_name, CFG_DUPLICATE_NAME, "file_rule[1].name")
 
         duplicate_pattern = replace_once(
@@ -88,7 +88,7 @@ kind = "fixture"''',
     def test_unscanned_rules_require_a_reason_and_forbid_limits(self) -> None:
         missing_reason = replace_once(
             STARTER_POLICY_TEXT,
-            'reason = "Machine-generated dependency resolution data is not useful bootstrap context."\n',
+            'reason = "Machine-generated dependency and migration state is validated by its owning tool."\n',
             "",
         )
         self.assert_policy_diagnostic(missing_reason, CFG_MISSING_KEY, "file_rule[0].reason")
@@ -120,11 +120,11 @@ kind = "fixture"''',
                 self.assert_policy_diagnostic(text, CFG_LIMIT, field_path)
 
     def test_human_facing_rule_names_may_not_be_blank(self) -> None:
-        text = replace_once(STARTER_POLICY_TEXT, 'name = "lockfiles"', 'name = "   "')
+        text = replace_once(STARTER_POLICY_TEXT, 'name = "generated-state"', 'name = "   "')
         self.assert_policy_diagnostic(text, CFG_VALUE, "file_rule[0].name")
 
     def test_human_facing_values_reject_unicode_control_characters(self) -> None:
-        text = replace_once(STARTER_POLICY_TEXT, 'name = "lockfiles"', 'name = "\\u0085"')
+        text = replace_once(STARTER_POLICY_TEXT, 'name = "generated-state"', 'name = "\\u0085"')
         self.assert_policy_diagnostic(text, CFG_VALUE, "file_rule[0].name")
 
 

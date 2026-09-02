@@ -14,8 +14,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  policy:
-    runs-on: ubuntu-24.04
+  qualification:
+    name: Qualification (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-15
+        python:
+          - "3.12"
+          - "3.13"
     env:
       BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
     steps:
@@ -26,9 +36,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
-          python-version: "3.13"
+          python-version: ${{ matrix.python }}
       - name: Validate with the standalone engine
         run: scripts/validate
+      - name: Build and qualify release artifacts
+        run: |
+          scripts/fetch-release-tools "$RUNNER_TEMP/release-wheelhouse"
+          scripts/build-release "$RUNNER_TEMP/release-wheelhouse" "$RUNNER_TEMP/release-artifacts"
+          scripts/qualify-artifacts "$RUNNER_TEMP/release-artifacts" "$RUNNER_TEMP/release-wheelhouse"
+
+  links:
+    name: Offline documentation links
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
       - name: Check local links without network requests
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8
         with:
@@ -38,3 +60,19 @@ jobs:
             --config lychee.toml
             README.md AGENTS.md ARCHITECTURE.md docs
           fail: true
+
+  required:
+    name: Required repository policy
+    if: always()
+    needs:
+      - qualification
+      - links
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every qualification result
+        env:
+          LINK_RESULT: ${{ needs.links.result }}
+          QUALIFICATION_RESULT: ${{ needs.qualification.result }}
+        run: |
+          test "$LINK_RESULT" = success
+          test "$QUALIFICATION_RESULT" = success

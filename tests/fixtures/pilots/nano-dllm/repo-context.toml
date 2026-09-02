@@ -1,0 +1,70 @@
+version = 1
+
+[repository]
+inventory = "git-visible"
+encoding = "utf-8"
+follow_symlinks = false
+
+[output]
+default_format = "text"
+stable_sort = true
+
+[[file_rule]]
+name = "generated-state"
+patterns = ["uv.lock", "**/uv.lock", "package-lock.json", "**/package-lock.json", "repo-context.debt.json"]
+kind = "generated"
+scan = false
+reason = "Machine-generated dependency and migration state is validated by its owning tool."
+
+[[file_rule]]
+name = "authored"
+patterns = ["**"]
+kind = "authored"
+scan = true
+warn_bytes = 20480
+hard_bytes = 25600
+
+[[path_override]]
+path = "AGENTS.md"
+warn_bytes = 8192
+hard_bytes = 12288
+
+[[path_override]]
+path = "README.md"
+warn_bytes = 12288
+hard_bytes = 16384
+
+[documentation]
+roots = ["docs/index.md"]
+exclude = []
+require_directory_indexes = false
+require_sibling_links = false
+require_child_index_links = false
+require_root_reachability = false
+check_local_targets = true
+check_fragments = true
+allow_authored_symlinks = false
+
+[[entrypoint]]
+path = "README.md"
+required_targets = ["docs/README.md"]
+
+[[context_set]]
+name = "bootstrap"
+paths = ["AGENTS.md", "README.md", "docs/README.md"]
+warn_bytes = 49152
+hard_bytes = 65536
+
+[ratchet]
+compare_file_sizes = true
+forbid_new_oversize = true
+forbid_limit_increases = true
+forbid_exclusion_expansion = true
+forbid_removed_documentation_roots = true
+forbid_removed_entrypoint_targets = true
+
+[exceptions]
+require_reason = true
+require_owner = true
+require_tracking_reference = true
+allow_expired = false

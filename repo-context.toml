@@ -36,6 +36,24 @@ hard_bytes = 25600
 reason = "Checked-in expected outputs and compatibility inputs remain governed as test fixtures."
 
 [[file_rule]]
+name = "release-lock"
+patterns = ["requirements/release.txt"]
+kind = "generated"
+scan = true
+warn_bytes = 20480
+hard_bytes = 25600
+reason = "The hash-locked release dependency snapshot is machine-managed but remains size-governed."
+
+[[file_rule]]
+name = "legal-material"
+patterns = ["LICENSE", "NOTICE"]
+kind = "legal"
+scan = true
+warn_bytes = 20480
+hard_bytes = 25600
+reason = "Project licensing and retained upstream notices are legal material that remains size-governed."
+
+[[file_rule]]
 name = "authored"
 patterns = ["**"]
 kind = "authored"

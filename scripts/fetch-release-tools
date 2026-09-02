@@ -1,0 +1,32 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH= cd -P -- "$(dirname -- "$0")/.." && pwd -P)
+unset PYTHONHOME
+
+if [ "$#" -ne 1 ]; then
+  echo "usage: scripts/fetch-release-tools WHEELHOUSE" >&2
+  exit 2
+fi
+
+WHEELHOUSE=$1
+if [ -e "$WHEELHOUSE" ] && [ ! -d "$WHEELHOUSE" ]; then
+  echo "wheelhouse is not a directory: $WHEELHOUSE" >&2
+  exit 2
+fi
+mkdir -p -- "$WHEELHOUSE"
+if [ -n "$(find "$WHEELHOUSE" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+  echo "wheelhouse must be empty: $WHEELHOUSE" >&2
+  exit 2
+fi
+
+PYTHON=${PYTHON:-python3}
+PIP_DISABLE_PIP_VERSION_CHECK=1 \
+PIP_CONFIG_FILE=/dev/null \
+PIP_NO_CACHE_DIR=1 \
+  "$PYTHON" -I -m pip --isolated download \
+  --dest "$WHEELHOUSE" \
+  --no-deps \
+  --only-binary=:all: \
+  --require-hashes \
+  --requirement "$ROOT/requirements/release.txt"
