@@ -44,7 +44,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 0 completion evidence
 
-[Phase 0 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-0-completion-evidence) is retained in the companion evidence log.
+[Phase 0 completion evidence](standalone-tool-evidence-phase-0.md#phase-0-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 1: Define immutable models and strict configuration
 
@@ -67,7 +67,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 1 completion evidence
 
-[Phase 1 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-1-completion-evidence) is retained in the companion evidence log.
+[Phase 1 completion evidence](standalone-tool-evidence-phase-1.md#phase-1-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 2: Build deterministic inventory and matcher semantics
 
@@ -92,7 +92,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 2 completion evidence
 
-[Phase 2 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-2-completion-evidence) is retained in the companion evidence log.
+[Phase 2 completion evidence](standalone-tool-evidence-phase-2.md#phase-2-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 3: Implement classification, file budgets, and context sets
 
@@ -117,7 +117,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 3 completion evidence
 
-[Phase 3 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-3-completion-evidence) is retained in the companion evidence log.
+[Phase 3 completion evidence](standalone-tool-evidence-phase-3.md#phase-3-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 4: Implement Markdown extraction and documentation graph
 
@@ -144,7 +144,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 4 completion evidence
 
-[Phase 4 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-4-completion-evidence) is retained in the companion evidence log.
+[Phase 4 completion evidence](standalone-tool-evidence-phase-4.md#phase-4-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 5: Implement file and policy ratchets
 
@@ -168,7 +168,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Phase 5 completion evidence
 
-[Phase 5 completion evidence](standalone-tool-evidence-phases-0-5.md#phase-5-completion-evidence) is retained in the companion evidence log.
+[Phase 5 completion evidence](standalone-tool-evidence-phase-5.md#phase-5-completion-evidence) is retained in the companion evidence log.
 
 ## Phase 6: Complete CLI, reports, audit, explain, and init
 
@@ -250,7 +250,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 - Interface: release 1.0.0 provides `repo-context check`, `audit`, `explain`, and guarded `init`; the configuration schema and JSON output schema are both version 1.
 - Dependencies: runtime uses only CPython's standard library plus Git 2.39.5 or newer. Distribution builds use the separately reviewed, hash-locked `build`, `packaging`, `pyproject-hooks`, and `setuptools` artifacts because standards-compliant wheel and sdist construction is a release concern rather than a runtime concern.
 - Compatibility: the frozen scene-maker checker remains a byte-verified characterization oracle. The [compatibility report](../../reference/scene-maker-compatibility.md) classifies equivalent results and intentional fixes for ancestor discovery, Markdown parsing, base handling, and unsafe paths; no comparison defect remains.
-- Validation: the current local suite contains 513 tests and passes under CPython 3.12 and 3.13 on macOS, with one host-capability skip. Pinned Debian Bookworm containers pass the complete artifact-era 512-test suite without skips on both versions, and the four-entry native Ubuntu/macOS GitHub matrix plus offline link validation passes in [workflow run 33629864145](https://github.com/BBW-Research/repo-context/actions/runs/33629864145).
+- Validation: the current local suite contains 522 tests and passes under CPython 3.12 and 3.13 on macOS, with one host-capability skip. Pinned Debian Bookworm containers pass the complete artifact-era 512-test suite without skips on both versions, and the four-entry native Ubuntu/macOS GitHub matrix plus offline link validation passes in [workflow run 33629864145](https://github.com/BBW-Research/repo-context/actions/runs/33629864145).
 - Self-hosting: `scripts/context-check`, `scripts/validate`, bootstrap, and CI select `src/repo_context` rather than the oracle. A freshly unpacked archive validates offline, and comparison against the reviewed policy baseline has no blocking or ratchet diagnostic.
 - Pilots: scene-maker, NanoDLLM, and Research Vault pass at the recorded commits with zero blocking diagnostics and no project-specific engine branch. Exact policy, debt, performance, and context-size evidence is retained in the [pilot report](../../pilots/index.md).
 - Release identity: the qualified MIT candidate was exported from exact clean commit `c67b394601fcaedad6cb69c852f0f4bb940788ec`; its wheel, source archive, zipapp, and checksum hashes are recorded in the [Phase 8 evidence](standalone-tool-evidence-phase-8.md). `BBW-Research/repo-context` is private, `@taiqihe` has administrator access, GitHub reports no CODEOWNERS error, and protected `main` requires pull requests, one current code-owner approval, resolved conversations, and the stable `Required repository policy` check with administrator enforcement.

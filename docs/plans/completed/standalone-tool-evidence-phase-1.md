@@ -1,0 +1,16 @@
+# Standalone tool phase 1 evidence
+
+This companion to the [completed standalone-tool plan](standalone-tool.md) retains phase evidence so the executable checklist remains compact. Evidence moved here only after its phase gate was complete.
+
+## Phase 1 completion evidence
+
+- Completed: 2026-09-01.
+- Models: frozen, slotted records and immutable tuple collections cover the complete policy surface plus inventory entries, source locations, links, diagnostics, and run results. Exact and pattern selectors are distinct union variants, preventing dual-selector parser states.
+- Configuration: the UTF-8 `tomllib` boundary validates exact table shapes, types, canonical paths, repository-pattern syntax, ordered file rules, the mandatory final scanned authored catch-all, deterministic override specificity, documentation dependencies, context sets, ratchets, and governed intentional exceptions. Configuration failures use stable `CFG001` through `CFG013` and `EXC001` identities with unambiguous field paths and deterministic source/position/code ordering.
+- Serialization: At Phase 1 completion, `render_starter_policy()` returned a package-owned byte template that was LF-normalized, final-newline-terminated, byte-identical to the then-current root policy, and model-equivalent after parsing. Phase 7 later separated that generic initializer template from this repository's adopted self-host policy. No general TOML writer or runtime dependency was added.
+- Contract: `docs/specs/configuration-v1.md` is the authoritative exact schema for table shapes, static precedence, path and pattern syntax, exceptions, and diagnostic identities. The product and architecture documents link to it rather than duplicating the detailed contract.
+- Tests: 70 Phase 1 tests cover every immutable record family, complete root-policy projection, optional record defaults, template round trips, strict shape/type failures, every semantic invariant, malformed path and pattern cases, ambiguity proofs, exception governance, side-effect isolation, and diagnostic identity/order. The full 144-test repository suite passes on Python 3.12.14 and 3.13.13, including warnings-as-errors probes.
+- Validation: `scripts/validate`, the transitional policy check with `--base-ref HEAD`, hostile ambient Git-variable execution, and offline Lychee validation pass. The frozen checker remains byte-identical at `bb796f2304f3692089a5e87cef55a7fbe3e7c4c9521d6d2299b738a84f7ebd11`.
+- Review: the read-only reviewer found and verified fixes for wildcard-aligned disjointness, literal stars inside character classes, public diagnostic sort order, Unicode C1 controls, and exact schema wording. The final review reports no findings and confirms config/model code has no CLI, reporting, Git, scanning, or matcher-bypass dependency.
+- Remaining work: Phase 2 owns repository-root validation, Git inventory, base blobs, canonical platform path normalization, and actual glob matching. Phase 1 intentionally implements only pattern syntax and conservative static ambiguity analysis.
+- Risks: static ambiguity analysis intentionally rejects equal-specificity overrides unless disjointness is provable from aligned literals. Exception expiry against an evaluation date remains a deterministic run-time check; parsing validates date types and chronology without consulting the wall clock.

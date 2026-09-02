@@ -94,7 +94,7 @@ def _commit_timestamp(root: Path, commit_id: str) -> int:
             [
                 git,
                 "-c",
-                f"core.fsmonitor={os.devnull}",
+                "core.fsmonitor=false",
                 "-c",
                 f"core.hooksPath={os.devnull}",
                 "show",

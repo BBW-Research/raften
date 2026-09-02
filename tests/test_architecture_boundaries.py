@@ -231,6 +231,7 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
             "markdown.py",
             "markdown_lines.py",
             "markdown_links.py",
+            "markdown_normalization.py",
             "docs.py",
             "document_checks.py",
         ):
@@ -265,6 +266,7 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
         for name in (
             "runner.py",
             "initialization.py",
+            "init_preparation.py",
             "init_recovery.py",
             "init_safety.py",
             "init_transaction.py",

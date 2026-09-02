@@ -1,3 +1,0 @@
-# Read-only correctness and regression review.
-read_only = true
-description = "Review implementation, tests, diagnostics, and policy semantics without editing."

@@ -4,9 +4,15 @@ All user-visible changes to `repo-context` are recorded here. Version headings u
 
 ## Unreleased
 
+### Fixed
+
+- Disable Git filesystem monitors with the supported Boolean configuration instead of making current Git attempt to execute the platform null device.
+- Replace the porcelain cleanliness probe with a raw index, `HEAD`, and worktree comparison that never executes repository-configured content filters, streams uninspected blobs, and verifies inspected blobs during one-file-at-a-time evaluation.
+
 ### Changed
 
 - Archived the completed standalone-tool plan and recorded the private repository's hosted CI, CODEOWNERS, and protected-branch controls.
+- Split near-limit implementation, test, and completion-evidence files by responsibility; removed malformed repository-specific Codex agent definitions; and extended ownership to agent guidance and configuration.
 
 ## 1.0.0 - 2026-09-02
 

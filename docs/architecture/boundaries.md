@@ -18,6 +18,7 @@ src/repo_context/
 ├── git_executable.py
 ├── git_records.py
 ├── inventory.py
+├── init_preparation.py
 ├── init_recovery.py
 ├── init_safety.py
 ├── init_transaction.py
@@ -25,6 +26,7 @@ src/repo_context/
 ├── markdown.py
 ├── markdown_lines.py
 ├── markdown_links.py
+├── markdown_normalization.py
 ├── matcher.py
 ├── model.py
 ├── policy_comparison.py
@@ -64,11 +66,11 @@ runner -> initialization -> inventory/config/model
 - `git_records.py` purely decodes and validates NUL-delimited index, path, tree, and object records. It has no subprocess or worktree access.
 - `inventory.py` is the public repository facade and the only module that invokes Git or reads base-revision blobs. Its exact root, snapshot, and base-object contract is documented in [Repository inventory](inventory.md).
 - `command_paths.py` validates public repository-relative path arguments once and converts failures into stable configuration diagnostics, distinguishing strict configured paths from native candidate paths such as the filename accepted by `explain`.
-- `initialization.py` owns first-adoption policy, debt, and clean-state orchestration; `init_safety.py` anchors the validated root and no-follow parent chain, `init_transaction.py` owns atomic artifact preparation and activation, and `init_recovery.py` owns artifact identities, ownership-guarded cleanup, and rollback. Initialization is exposed through the runner facade rather than imported directly by the CLI.
+- `initialization.py` owns first-adoption policy, debt, and clean-state orchestration; `init_safety.py` anchors the validated root and no-follow parent chain, `init_preparation.py` owns destination preflight and artifact staging, `init_transaction.py` coordinates atomic activation and error translation, and `init_recovery.py` owns artifact identities, ownership-guarded cleanup, and rollback. Initialization is exposed through the runner facade rather than imported directly by the CLI.
 - `matcher.py` owns the [version 1 repository path and glob semantics](../specs/repository-paths-and-globs-v1.md). No other module may call `fnmatch` or invent matching behavior.
 - `markdown.py` extracts normalized local links and anchors. It does not decide policy violations.
 - `markdown_lines.py` defines the LF, CRLF, and CR physical-line model shared by Markdown extraction.
-- `markdown_links.py` implements supported inline/reference syntax and safe local-destination normalization without repository access.
+- `markdown_links.py` implements supported inline/reference syntax, while `markdown_normalization.py` owns reference-label and safe local-destination normalization without repository access.
 - `docs.py` builds the documentation graph and emits document diagnostics.
 - `document_checks.py` evaluates graph structure, targets, entrypoints, and reachability without discovering files or performing I/O.
 - `size_policy.py` compiles patterns and resolves rule, override, and exception provenance without reading repository content.

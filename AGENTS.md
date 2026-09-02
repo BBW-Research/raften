@@ -26,7 +26,7 @@ When lower-authority material conflicts with a higher-authority contract, preser
 3. Add or tighten tests before refactoring behavior inherited from scene-maker.
 4. Make the smallest coherent change that closes the phase acceptance gate.
 5. Run `scripts/validate` before claiming completion.
-6. Update the active plan with completed work, remaining work, and newly discovered risks.
+6. Update the relevant plan or completion evidence when behavior, accepted state, or material risks change.
 
 ## Durable invariants
 
@@ -48,8 +48,8 @@ When lower-authority material conflicts with a higher-authority contract, preser
 - Self-hosted policy check: `scripts/context-check`.
 - Target CLI smoke test: `PYTHONPATH=src python3 -m repo_context --help`.
 
-## Subagents
+## Parallel work
 
-- Use explorer and reviewer agents for parallel read-only work.
+- Use parallel agents only for independent read-only exploration or review.
 - Do not run multiple writing agents against the same working tree.
-- A reviewer should inspect each completed implementation phase before the next phase begins.
+- Have a read-only reviewer inspect substantive implementation changes before merge.

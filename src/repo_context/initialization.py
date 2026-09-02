@@ -15,25 +15,27 @@ from repo_context.diagnostics import (
     INIT_REPOSITORY_DIRTY,
     operational_diagnostic,
 )
+from repo_context.init_recovery import _Artifact
 from repo_context.init_safety import (
     InitializationError,
     _fail,
     _open_root_anchor,
     _require_safe_install_primitives,
 )
-from repo_context.init_transaction import _Artifact, _write_artifacts
+from repo_context.init_transaction import _write_artifacts
 from repo_context.inventory import (
     RepositoryAccessError,
     RepositoryHandle,
+    capture_clean_repository,
     inventory_worktree,
     open_repository,
-    read_worktree_bytes,
-    repository_is_clean,
+    read_index_verified_worktree_bytes,
+    repository_remains_clean,
 )
-from repo_context.model import MigrationDebtManifest, SizeEvaluation
+from repo_context.model import InventoryEntry, MigrationDebtManifest, SizeEvaluation
 from repo_context.run_model import CommandFailure, InitOutcome, InitResult, RunStatus
 from repo_context.size_policy import compile_size_policy
-from repo_context.sizes import evaluate_sizes
+from repo_context.sizes import content_paths_for_evaluation, evaluate_sizes
 
 
 def initialize_repository(
@@ -91,17 +93,44 @@ def _initialize_anchored(
     capture_debt: bool,
     force: bool,
 ) -> InitResult:
-    _require_clean(repository)
     manifest_path = debt_manifest_path(config_path)
     snapshot = inventory_worktree(repository)
     excluded = frozenset({config_path, manifest_path})
     entries = tuple(entry for entry in snapshot.entries if entry.path not in excluded)
-    sizes = evaluate_sizes(
-        compile_size_policy(starter_policy()),
+    compiled = compile_size_policy(starter_policy())
+    content_paths = content_paths_for_evaluation(
+        compiled,
         entries,
-        lambda entry: read_worktree_bytes(repository, entry),
         evaluation_date=date.min,
     )
+    clean_capture = capture_clean_repository(
+        repository,
+        snapshot=snapshot,
+        defer_content_paths=content_paths,
+    )
+    if clean_capture is None:
+        _fail_dirty()
+    clean_state = clean_capture.state
+    pending_content = set(clean_capture.deferred_content_paths)
+    del clean_capture
+
+    def read_verified_content(entry: InventoryEntry) -> bytes:
+        if entry.path not in pending_content:
+            raise RuntimeError("size evaluation requested unexpected content")
+        data = read_index_verified_worktree_bytes(repository, entry)
+        if data is None:
+            _fail_dirty()
+        pending_content.remove(entry.path)
+        return data
+
+    sizes = evaluate_sizes(
+        compiled,
+        entries,
+        read_verified_content,
+        evaluation_date=date.min,
+    )
+    if pending_content:
+        raise RuntimeError("size evaluation did not consume expected content")
     manifest = capture_debt_manifest(sizes.files)
     if manifest.entries and not capture_debt:
         _fail_debt_required(manifest, sizes)
@@ -115,7 +144,8 @@ def _initialize_anchored(
             render_starter_policy(debt_manifest_path=manifest_path),
         )
     )
-    _require_clean(repository)
+    if not repository_remains_clean(repository, clean_state):
+        _fail_dirty()
     absence_guards = (
         ()
         if capture_debt
@@ -137,9 +167,7 @@ def _initialize_anchored(
     )
 
 
-def _require_clean(repository: RepositoryHandle) -> None:
-    if repository_is_clean(repository):
-        return
+def _fail_dirty() -> Never:
     _fail(
         INIT_REPOSITORY_DIRTY,
         "initialization requires a clean index and worktree",
