@@ -2,8 +2,8 @@
 
 - [Architecture](architecture/index.md): module boundaries, dependency direction, and policy data model.
 - [Decisions](decisions/index.md): accepted design choices that constrain implementation.
-- [Implementation plans](plans/index.md): current execution state and phase gates.
-- [Codex prompts](prompts/index.md): ready-to-run implementation instructions.
+- [Implementation plans](plans/index.md): active work and completed phase records.
+- [Codex prompts](prompts/index.md): retained implementation assignments.
 - [Quality](quality/index.md): acceptance criteria and test strategy.
 - [Reference](reference/index.md): scene-maker source behavior and extraction notes.
 - [Release and consumption](release/index.md): offline artifact builds, qualification, versioning, and supported consumption modes.

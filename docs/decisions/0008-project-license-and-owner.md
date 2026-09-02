@@ -18,4 +18,4 @@ Use `BBW-Research/repo-context` as the canonical GitHub repository identity and 
 - Every wheel, source distribution, zipapp, and vendored-source handoff includes both `LICENSE` and `NOTICE`.
 - Package core metadata declares the SPDX expression `MIT` and lists both legal files through PEP 639 metadata.
 - The GitHub organization is not itself a valid CODEOWNERS principal; `@taiqihe` is the selected individual owner.
-- Hosted ownership enforcement still requires an existing remote repository, explicit write access for `@taiqihe`, and enabled code-owner review in the default-branch protection rule.
+- The private `BBW-Research/repo-context` remote grants `@taiqihe` administrator access and enables code-owner review in the default-branch protection rule.

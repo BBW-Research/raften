@@ -1,4 +1,4 @@
-# Standalone tool Phase 6 evidence
+# Standalone tool Phase 6 completion evidence
 
 - Completed: 2026-09-02.
 - Command orchestration: `runner.py` selects the current TOML policy, Git base policy, first-adoption debt manifest, or deterministic unavailable-baseline state without consulting the network or wall clock. One inventory snapshot and per-path content cache feed size, Markdown, ratchet, audit, and explain evaluation, while current config and sidecar reads use the same descriptor-relative no-follow boundary.

@@ -1,4 +1,4 @@
-# Standalone tool Phase 7 evidence
+# Standalone tool Phase 7 completion evidence
 
 - Completed: 2026-09-02.
 - Self-hosting: `scripts/context-check` exports only the repository `src` directory and launches `python3 -P -m repo_context check --repo "$ROOT"`, so normal local, bootstrap, and CI policy checks select the standalone engine without installation and ignore ambient `PYTHONPATH` or a hostile package in the caller's working directory. `scripts/validate` compiles production and test code but no longer treats the frozen oracle as a production module. CI retains full history and the existing event-derived `BASE_REF` behavior.
