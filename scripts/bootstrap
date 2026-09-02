@@ -1,9 +1,10 @@
 #!/bin/sh
 set -eu
 
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH= cd -P -- "$(dirname -- "$0")/.." && pwd -P)
 
-if ! git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+TOP_LEVEL=$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || true)
+if [ "$TOP_LEVEL" != "$ROOT" ]; then
   git -C "$ROOT" init -q
 fi
 

@@ -36,7 +36,7 @@ When lower-authority material conflicts with a higher-authority contract, preser
 - All diagnostics are stable, sorted, and testable. Human-readable wording may improve without changing diagnostic identity.
 - Git-visible authored text is governed by default. Generated, vendored, lock, fixture, and legal material must be classified explicitly rather than hidden behind broad exclusions.
 - Policy limits may tighten but must not silently weaken relative to a configured base revision.
-- `tools/check_repository_policy.py` is the frozen bootstrap oracle copied from scene-maker. Do not edit it before the self-hosting phase; add behavior to `src/repo_context/` instead.
+- `tools/check_repository_policy.py` is the frozen test oracle copied from scene-maker. Do not edit it; production behavior belongs in `src/repo_context/`.
 - Never add project-specific exemptions to shared engine code.
 - Keep every authored code and documentation file below the repository policy ceiling. Split by responsibility, not merely to satisfy byte counts.
 
@@ -45,7 +45,7 @@ When lower-authority material conflicts with a higher-authority contract, preser
 - Full local validation: `scripts/validate`.
 - Tests only: `scripts/test`.
 - Bootstrap a freshly unpacked archive: `scripts/bootstrap`.
-- Transitional policy check: `scripts/context-check`.
+- Self-hosted policy check: `scripts/context-check`.
 - Target CLI smoke test: `PYTHONPATH=src python3 -m repo_context --help`.
 
 ## Subagents

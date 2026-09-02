@@ -2,7 +2,7 @@
 
 This repository builds a standalone checker that keeps coding-agent repositories bounded, navigable, and economical to load into context windows.
 
-The standalone `check`, `audit`, `explain`, and guarded `init` commands are implemented under `src/repo_context/` and run locally without installation or network access. The verbatim scene-maker checker remains the transitional `scripts/context-check` oracle until the Phase 7 self-hosting switch.
+The standalone `check`, `audit`, `explain`, and guarded `init` commands are implemented under `src/repo_context/` and run locally without installation or network access. `scripts/context-check`, local validation, bootstrap, and CI use this engine; the verbatim scene-maker checker remains only as a characterized test oracle.
 
 ## Start here
 
@@ -14,7 +14,7 @@ scripts/bootstrap
 
 That initializes a local Git repository when needed and runs the offline validation suite. No package installation is required for the starter.
 
-To hand the implementation to Codex, use [`docs/prompts/codex-build.md`](docs/prompts/codex-build.md). Codex should then work through [`docs/plans/active/standalone-tool.md`](docs/plans/active/standalone-tool.md) until the self-hosted tool replaces the bootstrap checker.
+The remaining release work is tracked in [`docs/plans/active/standalone-tool.md`](docs/plans/active/standalone-tool.md). The original end-to-end Codex assignment remains under [`docs/prompts/codex-build.md`](docs/prompts/codex-build.md).
 
 Useful commands:
 

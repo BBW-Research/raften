@@ -2,4 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-exec python3 "$ROOT/tools/check_repository_policy.py" "$@"
+PYTHONPATH="$ROOT/src"
+export PYTHONPATH
+
+exec python3 -P -m repo_context check --repo "$ROOT" "$@"

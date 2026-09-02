@@ -38,6 +38,20 @@ class SeedProvenanceTests(unittest.TestCase):
                 if "sha256" in record:
                     self.assertEqual(hashlib.sha256(data).hexdigest(), record["sha256"])
 
+    def test_clean_json_policy_is_fixture_scoped_after_self_hosting(self) -> None:
+        manifest = json.loads(SOURCE_MANIFEST.read_text(encoding="utf-8"))
+        retired = manifest["retired_adaptations"]
+        self.assertIn("config/repository_policy.v1.json", retired)
+        self.assertFalse((ROOT / "config/repository_policy.v1.json").exists())
+        fixture = ROOT / "tests/fixtures/seed/clean-policy.json"
+        self.assertIn(fixture.relative_to(ROOT).as_posix(), manifest["adapted_files"])
+        recorded_hash = manifest["adapted_file_hashes"][
+            fixture.relative_to(ROOT).as_posix()
+        ]["sha256"]
+        self.assertEqual(hashlib.sha256(fixture.read_bytes()).hexdigest(), recorded_hash)
+        policy = json.loads(fixture.read_text(encoding="utf-8"))
+        self.assertEqual(policy["legacy_oversize"], {})
+
 
 if __name__ == "__main__":
     unittest.main()

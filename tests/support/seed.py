@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
-from pathlib import Path
 from types import ModuleType
 
-
-ROOT = Path(__file__).resolve().parents[2]
-SEED_PATH = ROOT / "tools" / "check_repository_policy.py"
-BOOTSTRAP_POLICY_PATH = ROOT / "config" / "repository_policy.v1.json"
+from tests.support.paths import ROOT, SEED_PATH
 
 
 def load_seed() -> ModuleType:
