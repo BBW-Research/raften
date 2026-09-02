@@ -146,6 +146,31 @@ class ReleaseQualificationTests(unittest.TestCase):
         self.assertIn("scripts/qualify-artifacts", workflow)
         self.assertIn("name: Required repository policy", workflow)
 
+    def test_codeowners_assigns_every_sensitive_path_to_the_repository_owner(self) -> None:
+        codeowners = (ROOT / ".github" / "CODEOWNERS").read_text(encoding="utf-8")
+        entries = {
+            fields[0]: fields[1:]
+            for line in codeowners.splitlines()
+            if (fields := line.split()) and not fields[0].startswith("#")
+        }
+        expected_patterns = {
+            "/.github/",
+            "/CHANGELOG.md",
+            "/LICENSE",
+            "/NOTICE",
+            "/pyproject.toml",
+            "/release_tools/",
+            "/repo-context.toml",
+            "/requirements/release.txt",
+            "/scripts/build-release",
+            "/scripts/fetch-release-tools",
+            "/scripts/qualify-artifacts",
+            "/scripts/qualify-linux",
+        }
+
+        self.assertEqual(set(entries), expected_patterns)
+        self.assertTrue(all(owners == ["@taiqihe"] for owners in entries.values()))
+
     def test_release_scripts_keep_acquisition_separate_from_offline_builds(self) -> None:
         acquisition = (ROOT / "scripts" / "fetch-release-tools").read_text(encoding="utf-8")
         build = (ROOT / "scripts" / "build-release").read_text(encoding="utf-8")

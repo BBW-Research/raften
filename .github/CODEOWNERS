@@ -1,0 +1,13 @@
+# Policy, workflow, and release surfaces require review from the repository owner.
+/.github/ @taiqihe
+/CHANGELOG.md @taiqihe
+/LICENSE @taiqihe
+/NOTICE @taiqihe
+/pyproject.toml @taiqihe
+/release_tools/ @taiqihe
+/repo-context.toml @taiqihe
+/requirements/release.txt @taiqihe
+/scripts/build-release @taiqihe
+/scripts/fetch-release-tools @taiqihe
+/scripts/qualify-artifacts @taiqihe
+/scripts/qualify-linux @taiqihe
