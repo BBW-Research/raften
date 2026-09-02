@@ -1,8 +1,9 @@
 # Build the standalone repo-context tool
 
-- Status: active
+- Status: completed
 - Owner: Codex implementation agent
 - Started: 2026-08-31
+- Completed: 2026-09-02
 - Source oracle: scene-maker commit `9e792124bc61f55150416b8bf803862c6c634c78`
 - Completion authority: `docs/quality/acceptance.md`
 
@@ -231,27 +232,26 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 - [x] Pilot in `scene-maker`, `nano-dllm`, and `research-vault` using separate project policies.
 - [x] Record false positives, performance, context-debt findings, and policy features that genuinely generalize.
 - [x] Do not add project-specific behavior to the engine during pilots; add configuration or a separately justified generic feature.
-- [ ] Configure the eventual GitHub repository's required CI check, branch protection, and ownership review for policy, workflow, and release files.
+- [x] Configure the GitHub repository's required CI check, branch protection, and ownership review for policy, workflow, and release files.
 
 ### Gate
 
 - [x] Distribution artifacts install and run from clean environments.
 - [x] Three pilot repositories pass or have explicit monotonic migration debt.
-- [ ] No release-blocking acceptance item remains unchecked.
-- [ ] This plan is moved to a completed-plan location with a concise final report.
+- [x] No release-blocking acceptance item remains unchecked.
+- [x] This plan is moved to a completed-plan location with a concise final report.
 
-### Phase 8 progress evidence
+### Phase 8 completion evidence
 
-[Phase 8 qualification evidence](standalone-tool-evidence-phase-8.md) records the completed artifact, platform, pilot, and acceptance work plus the remaining publication blockers.
+[Phase 8 qualification evidence](standalone-tool-evidence-phase-8.md) records the completed artifact, platform, pilot, hosted-CI, and repository-control work.
 
-## Required final report
+## Final report
 
-When all phases are complete, update this document or its completed successor with:
-
-- Final CLI and configuration version.
-- Runtime and development dependencies with rationale.
-- Compatibility and intended-difference summary relative to scene-maker.
-- Test counts and supported platforms.
-- Self-hosting evidence.
-- Pilot results and remaining non-blocking work.
-- Exact release or commit identifier.
+- Interface: release 1.0.0 provides `repo-context check`, `audit`, `explain`, and guarded `init`; the configuration schema and JSON output schema are both version 1.
+- Dependencies: runtime uses only CPython's standard library plus Git 2.39.5 or newer. Distribution builds use the separately reviewed, hash-locked `build`, `packaging`, `pyproject-hooks`, and `setuptools` artifacts because standards-compliant wheel and sdist construction is a release concern rather than a runtime concern.
+- Compatibility: the frozen scene-maker checker remains a byte-verified characterization oracle. The [compatibility report](../../reference/scene-maker-compatibility.md) classifies equivalent results and intentional fixes for ancestor discovery, Markdown parsing, base handling, and unsafe paths; no comparison defect remains.
+- Validation: the current local suite contains 513 tests and passes under CPython 3.12 and 3.13 on macOS, with one host-capability skip. Pinned Debian Bookworm containers pass the complete artifact-era 512-test suite without skips on both versions, and the four-entry native Ubuntu/macOS GitHub matrix plus offline link validation passes in [workflow run 33629864145](https://github.com/BBW-Research/repo-context/actions/runs/33629864145).
+- Self-hosting: `scripts/context-check`, `scripts/validate`, bootstrap, and CI select `src/repo_context` rather than the oracle. A freshly unpacked archive validates offline, and comparison against the reviewed policy baseline has no blocking or ratchet diagnostic.
+- Pilots: scene-maker, NanoDLLM, and Research Vault pass at the recorded commits with zero blocking diagnostics and no project-specific engine branch. Exact policy, debt, performance, and context-size evidence is retained in the [pilot report](../../pilots/index.md).
+- Release identity: the qualified MIT candidate was exported from exact clean commit `c67b394601fcaedad6cb69c852f0f4bb940788ec`; its wheel, source archive, zipapp, and checksum hashes are recorded in the [Phase 8 evidence](standalone-tool-evidence-phase-8.md). `BBW-Research/repo-context` is private, `@taiqihe` has administrator access, GitHub reports no CODEOWNERS error, and protected `main` requires pull requests, one current code-owner approval, resolved conversations, and the stable `Required repository policy` check with administrator enforcement.
+- Remaining non-blocking work: the repository intentionally remains private for now. No tag, package-index publication, or trusted publisher has been created; those require a separate publication request and a fresh build and qualification from the selected exact release commit. Four existing files remain above advisory thresholds but below hard ceilings, and one macOS filename-capability test may skip on filesystems that cannot represent its byte sequence.

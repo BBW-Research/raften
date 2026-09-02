@@ -4,6 +4,10 @@ All user-visible changes to `repo-context` are recorded here. Version headings u
 
 ## Unreleased
 
+### Changed
+
+- Archived the completed standalone-tool plan and recorded the private repository's hosted CI, CODEOWNERS, and protected-branch controls.
+
 ## 1.0.0 - 2026-09-02
 
 ### Added

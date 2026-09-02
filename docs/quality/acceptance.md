@@ -65,4 +65,4 @@ The standalone tool is release-ready only when every release-blocking item below
 - [x] A vendorable offline distribution path is documented and tested.
 - [x] Migration from the scene-maker JSON policy is documented.
 - [x] `scene-maker`, `nano-dllm`, and `research-vault` have been piloted without adding project-specific engine branches.
-- [ ] The eventual repository protects the required CI check and policy-sensitive files through repository settings and ownership review.
+- [x] The repository protects the required CI check and policy-sensitive files through repository settings and ownership review.
