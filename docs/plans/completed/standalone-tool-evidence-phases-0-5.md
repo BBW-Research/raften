@@ -1,6 +1,6 @@
 # Standalone tool phases 0–5 evidence
 
-This companion to the [active standalone-tool plan](standalone-tool.md) retains completed phase evidence so the executable checklist remains compact. Evidence moves here only after its phase gate is complete.
+This companion to the [completed standalone-tool plan](standalone-tool.md) retains phase evidence so the executable checklist remains compact. Evidence moved here only after its phase gate was complete.
 
 ## Phase 0 completion evidence
 

@@ -1,6 +1,6 @@
 # Codex assignment: build repo-context to completion
 
-Use the following as the implementation assignment for Codex in this repository.
+Status: completed on 2026-09-02. The original implementation assignment is retained below as an execution record.
 
 ---
 
@@ -14,10 +14,10 @@ Read, in order:
 4. `docs/decisions/index.md` and all accepted decisions
 5. `docs/quality/index.md` and its linked documents
 6. `docs/reference/scene-maker-seed.md`
-7. `docs/plans/active/standalone-tool.md`
+7. `docs/plans/completed/standalone-tool.md`
 8. `tools/check_repository_policy.py` and `reference/scene-maker/SOURCE.json`
 
-Then execute `docs/plans/active/standalone-tool.md` phase by phase until every release-blocking item in `docs/quality/acceptance.md` is satisfied.
+Then execute `docs/plans/completed/standalone-tool.md` phase by phase until every release-blocking item in `docs/quality/acceptance.md` is satisfied.
 
 Non-negotiable constraints:
 
@@ -54,8 +54,8 @@ Required final state:
 - Distribution artifacts build and install in clean environments for the supported Python versions and platforms.
 - Migration guidance exists for scene-maker's JSON policy.
 - Pilot findings for `scene-maker`, `nano-dllm`, and `research-vault` are recorded without introducing project-specific engine branches.
-- The active plan contains a final report and no unchecked release-blocking work.
+- The completed plan contains a final report and no unchecked release-blocking work.
 
-Run `scripts/validate` now to establish the starter baseline, then begin Phase 0.
+The assignment is complete; consult the completed plan and its evidence before follow-up changes.
 
 ---
