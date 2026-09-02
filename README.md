@@ -37,3 +37,7 @@ repo-context init
 See the [documentation index](docs/index.md) for the specification, architecture, decisions, acceptance criteria, test matrix, and source provenance.
 
 The [release and consumption guide](docs/release/index.md) covers hash-locked offline builds, native and Docker qualification, installed wheels, pinned zipapps, and vendored source wrappers. The distribution name is `repo-context-policy`; the command and import package remain `repo-context` and `repo_context`.
+
+## License
+
+`repo-context` is released under the [MIT License](LICENSE). The [upstream notice](NOTICE) retains the license and provenance of the scene-maker source from which part of the tool was derived.

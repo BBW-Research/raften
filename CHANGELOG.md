@@ -10,3 +10,4 @@ All user-visible changes to `repo-context` are recorded here. Version headings u
 
 - Initial standalone CLI with strict version 1 TOML policy, deterministic diagnostics, file and policy ratchets, documentation graph validation, audit and explain reports, and safe first-adoption initialization.
 - Hash-locked isolated wheel and source-distribution builds, deterministic dependency-free zipapp output, and clean-environment qualification on macOS and Linux with Python 3.12 and 3.13.
+- MIT project licensing by BBW-Research with the upstream scene-maker license and provenance retained in every distribution format.

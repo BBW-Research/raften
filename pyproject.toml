@@ -8,6 +8,8 @@ dynamic = ["version"]
 description = "Repository context budgets, documentation reachability, and policy ratchets for coding-agent projects."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE"]
 dependencies = []
 authors = [
   {name = "Repo Context contributors"},
@@ -28,6 +30,11 @@ classifiers = [
 
 [project.scripts]
 repo-context = "repo_context.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/BBW-Research/repo-context"
+Issues = "https://github.com/BBW-Research/repo-context/issues"
+Repository = "https://github.com/BBW-Research/repo-context"
 
 [tool.setuptools.packages.find]
 where = ["src"]

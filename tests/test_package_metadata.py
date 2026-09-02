@@ -13,9 +13,22 @@ class PackageMetadataTests(unittest.TestCase):
         project = metadata["project"]
         self.assertEqual(project["name"], "repo-context-policy")
         self.assertEqual(project["dynamic"], ["version"])
+        self.assertEqual(project["license"], "MIT")
+        self.assertEqual(project["license-files"], ["LICENSE", "NOTICE"])
         self.assertEqual(metadata["project"]["scripts"], {"repo-context": "repo_context.cli:main"})
         self.assertEqual(metadata["tool"]["setuptools"]["dynamic"]["version"]["attr"], "repo_context.__version__")
         self.assertEqual(__version__, "1.0.0")
+
+    def test_metadata_uses_the_canonical_repository_identity(self) -> None:
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+        self.assertEqual(
+            project["urls"],
+            {
+                "Homepage": "https://github.com/BBW-Research/repo-context",
+                "Issues": "https://github.com/BBW-Research/repo-context/issues",
+                "Repository": "https://github.com/BBW-Research/repo-context",
+            },
+        )
 
     def test_metadata_declares_the_exact_runtime_support_contract(self) -> None:
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]

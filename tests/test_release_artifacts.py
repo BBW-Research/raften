@@ -108,6 +108,22 @@ class ReleaseArtifactTests(unittest.TestCase):
                     expected_version="1.0.0",
                 )
 
+    def test_verifier_rejects_a_wheel_without_the_project_license(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            self._wheel(
+                output / "repo_context_policy-1.0.0-py3-none-any.whl",
+                include_project_license=False,
+            )
+            self._sdist(output / "repo_context_policy-1.0.0.tar.gz")
+            build_zipapp(ROOT / "src", output / "repo-context-1.0.0.pyz", epoch=1_788_220_800)
+            with self.assertRaisesRegex(ValueError, "missing the project license"):
+                verify_artifacts(
+                    output,
+                    expected_name="repo-context-policy",
+                    expected_version="1.0.0",
+                )
+
     def test_qualification_stages_candidate_bytes_before_using_them(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -130,11 +146,20 @@ class ReleaseArtifactTests(unittest.TestCase):
                 originals,
             )
 
-    def _wheel(self, path: Path, *, unsafe: bool = False) -> None:
+    def _wheel(
+        self,
+        path: Path,
+        *,
+        unsafe: bool = False,
+        include_project_license: bool = True,
+    ) -> None:
         metadata = """Metadata-Version: 2.4
 Name: repo-context-policy
 Version: 1.0.0
 Requires-Python: <3.14,>=3.12
+License-Expression: MIT
+License-File: LICENSE
+License-File: NOTICE
 Classifier: Operating System :: MacOS
 Classifier: Operating System :: POSIX :: Linux
 Classifier: Programming Language :: Python :: 3.12
@@ -156,6 +181,11 @@ fixture
                 "Wheel-Version: 1.0\nTag: py3-none-any\n",
             )
             archive.writestr("repo_context_policy-1.0.0.dist-info/RECORD", "")
+            if include_project_license:
+                archive.writestr(
+                    "repo_context_policy-1.0.0.dist-info/licenses/LICENSE",
+                    "license\n",
+                )
             archive.writestr("repo_context_policy-1.0.0.dist-info/licenses/NOTICE", "notice\n")
             if unsafe:
                 archive.writestr("../escape", "x")
@@ -164,6 +194,7 @@ fixture
         root = "repo_context_policy-1.0.0"
         files = {
             f"{root}/CHANGELOG.md": b"# Changelog\n",
+            f"{root}/LICENSE": b"license\n",
             f"{root}/README.md": b"# fixture\n",
             f"{root}/NOTICE": b"notice\n",
             f"{root}/pyproject.toml": b"[project]\nname='repo-context-policy'\n",
