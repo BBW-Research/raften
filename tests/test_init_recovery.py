@@ -4,6 +4,7 @@ import unittest
 from unittest import mock
 
 import repo_context.initialization as initialization
+import repo_context.init_preparation as preparation
 import repo_context.init_transaction as transaction
 from repo_context.run_model import CommandFailure
 from tests.support.repository import RepositoryFixture
@@ -104,7 +105,7 @@ class InitializationRecoveryTests(unittest.TestCase):
         with RepositoryFixture() as repository:
             repository.write_text("repo-context.toml", "old policy\n")
             repository.commit("existing policy")
-            write_all = transaction._write_all
+            write_all = preparation._write_all
 
             def replace_temporary_during_write(descriptor, data):
                 write_all(descriptor, data)
@@ -114,9 +115,9 @@ class InitializationRecoveryTests(unittest.TestCase):
                     raise OSError("injected write failure")
 
             with (
-                mock.patch.object(transaction.secrets, "token_hex", return_value=token),
+                mock.patch.object(preparation.secrets, "token_hex", return_value=token),
                 mock.patch.object(
-                    transaction,
+                    preparation,
                     "_write_all",
                     side_effect=replace_temporary_during_write,
                 ),

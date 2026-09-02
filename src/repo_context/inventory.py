@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import subprocess
 from dataclasses import dataclass
@@ -28,10 +29,12 @@ from repo_context.git_records import (
 from repo_context.model import (
     BaseRevision,
     BaseTreeEntry,
+    GitFileMode,
     GitObjectType,
     InventoryEntry,
     InventorySource,
     RepositoryPath,
+    WorktreeKind,
 )
 from repo_context.repository_errors import (
     RepositoryAccessError,
@@ -39,6 +42,7 @@ from repo_context.repository_errors import (
     malformed_git_output as _malformed,
 )
 from repo_context.worktree import (
+    hash_regular_blob as _hash_regular_blob,
     inspect_worktree_entry as _inspect_worktree_entry,
     join_worktree_path,
     read_regular_bytes as _read_regular_bytes,
@@ -76,6 +80,18 @@ class RepositoryHandle:
 class InventorySnapshot:
     repository: RepositoryHandle
     entries: tuple[InventoryEntry, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class CleanRepositoryState:
+    snapshot: InventorySnapshot
+    head_commit_id: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class CleanRepositoryCapture:
+    state: CleanRepositoryState
+    deferred_content_paths: tuple[RepositoryPath, ...]
 
 
 def open_repository(candidate: str | os.PathLike[str]) -> RepositoryHandle:
@@ -213,13 +229,207 @@ def inspect_repository_path(
 
 
 def repository_is_clean(repository: RepositoryHandle) -> bool:
-    """Return whether tracked, index, and nonignored-untracked state is clean."""
+    """Compare raw tracked, index, and nonignored-untracked state safely."""
 
-    return not _run_git(
-        repository.root,
-        operation="status",
-        arguments=("status", "--porcelain=v1", "-z", "--untracked-files=all"),
+    return capture_clean_repository(repository) is not None
+
+
+def capture_clean_repository(
+    repository: RepositoryHandle,
+    *,
+    snapshot: InventorySnapshot | None = None,
+    defer_content_paths: frozenset[RepositoryPath] = frozenset(),
+) -> CleanRepositoryCapture | None:
+    """Capture clean metadata while optionally deferring selected blob reads."""
+
+    selected_snapshot = inventory_worktree(repository) if snapshot is None else snapshot
+    if selected_snapshot.repository != repository:
+        raise ValueError("cleanliness snapshot belongs to a different repository")
+    snapshot = selected_snapshot
+    if any(entry.source is not InventorySource.TRACKED for entry in snapshot.entries):
+        return None
+    indexed = {
+        entry.path: entry.index
+        for entry in snapshot.entries
+        if entry.index is not None
+    }
+    head = _resolve_head_revision(repository)
+    if head is None:
+        if indexed:
+            return None
+    else:
+        committed = {
+            entry.path: (entry.mode, entry.object_id)
+            for entry in list_base_tree(repository, head)
+            if entry.object_type is not GitObjectType.TREE
+        }
+        current = {
+            path: (metadata.mode, metadata.object_id)
+            for path, metadata in indexed.items()
+        }
+        if current != committed:
+            return None
+    deferred_content: list[RepositoryPath] = []
+    for entry in snapshot.entries:
+        defer_content = entry.path in defer_content_paths
+        if not _worktree_entry_matches_index(
+            repository,
+            entry,
+            defer_regular_content=defer_content,
+        ):
+            return None
+        if (
+            defer_content
+            and entry.index is not None
+            and entry.index.mode in {GitFileMode.REGULAR, GitFileMode.EXECUTABLE}
+            and entry.kind is WorktreeKind.REGULAR
+        ):
+            deferred_content.append(entry.path)
+    return CleanRepositoryCapture(
+        CleanRepositoryState(
+            snapshot,
+            None if head is None else head.commit_id,
+        ),
+        tuple(deferred_content),
     )
+
+
+def read_index_verified_worktree_bytes(
+    repository: RepositoryHandle,
+    entry: InventoryEntry,
+) -> bytes | None:
+    """Read one regular snapshot and return bytes only when its index blob matches."""
+
+    metadata = entry.index
+    if (
+        metadata is None
+        or metadata.mode not in {GitFileMode.REGULAR, GitFileMode.EXECUTABLE}
+        or entry.kind is not WorktreeKind.REGULAR
+    ):
+        raise ValueError("index-verified reads require an indexed regular file")
+    data = read_worktree_bytes(repository, entry)
+    if _git_blob_id(data, len(metadata.object_id)) != metadata.object_id:
+        return None
+    return data
+
+
+def repository_remains_clean(
+    repository: RepositoryHandle,
+    baseline: CleanRepositoryState,
+) -> bool:
+    """Revalidate a clean snapshot by identity without rereading file content."""
+
+    if baseline.snapshot.repository != repository:
+        raise ValueError("cleanliness baseline belongs to a different repository")
+    if inventory_worktree(repository) != baseline.snapshot:
+        return False
+    head = _resolve_head_revision(repository)
+    return (None if head is None else head.commit_id) == baseline.head_commit_id
+
+
+def _resolve_head_revision(repository: RepositoryHandle) -> BaseRevision | None:
+    output = _run_git(
+        repository.root,
+        operation="resolve-head-revision",
+        arguments=("rev-parse", "--verify", "--quiet", "--end-of-options", "HEAD^{commit}"),
+        accepted_return_codes=frozenset({0, 1}),
+    )
+    if not output:
+        symbolic = _run_git(
+            repository.root,
+            operation="resolve-unborn-head",
+            arguments=("symbolic-ref", "--quiet", "HEAD"),
+            failure_message="HEAD is unavailable or malformed",
+        )
+        try:
+            branch_ref = symbolic.removesuffix(b"\n").decode("utf-8", errors="strict")
+        except UnicodeDecodeError:
+            _malformed(
+                "resolve-unborn-head",
+                "Git returned a non-UTF-8 symbolic HEAD",
+            )
+        if symbolic != branch_ref.encode("utf-8") + b"\n" or not branch_ref.startswith(
+            "refs/heads/"
+        ):
+            _malformed(
+                "resolve-unborn-head",
+                "Git returned a malformed unborn branch reference",
+            )
+        _run_git(
+            repository.root,
+            operation="verify-unborn-head",
+            arguments=("show-ref", "--verify", "--quiet", branch_ref),
+            failure_message="HEAD is unavailable or malformed",
+            accepted_return_codes=frozenset({1}),
+        )
+        return None
+    lines = output.splitlines()
+    if len(lines) != 1 or not output.endswith(b"\n"):
+        _malformed(
+            "resolve-head-revision",
+            "Git returned malformed HEAD revision output",
+        )
+    return BaseRevision(
+        requested_ref="HEAD",
+        commit_id=_decode_object_id(
+            lines[0],
+            operation="resolve-head-revision",
+            record_index=0,
+        ),
+    )
+
+
+def _worktree_entry_matches_index(
+    repository: RepositoryHandle,
+    entry: InventoryEntry,
+    *,
+    defer_regular_content: bool,
+) -> bool:
+    metadata = entry.index
+    if metadata is None:
+        return False
+    if metadata.mode is GitFileMode.GITLINK:
+        return False
+    if metadata.skip_worktree and entry.kind is WorktreeKind.MISSING:
+        return True
+    if metadata.mode in {GitFileMode.REGULAR, GitFileMode.EXECUTABLE}:
+        if entry.kind is not WorktreeKind.REGULAR or entry.identity is None:
+            return False
+        executable = bool(entry.identity.mode & 0o111)
+        expected_executable = metadata.mode is GitFileMode.EXECUTABLE
+        if os.name != "nt" and executable != expected_executable:
+            return False
+        if defer_regular_content:
+            return True
+        object_id = _hash_regular_blob(
+            repository.root,
+            entry,
+            _git_hash_algorithm(len(metadata.object_id)),
+        )
+    elif metadata.mode is GitFileMode.SYMLINK:
+        if entry.kind is not WorktreeKind.SYMLINK or entry.symlink_target is None:
+            return False
+        data = os.fsencode(entry.symlink_target)
+        object_id = _git_blob_id(data, len(metadata.object_id))
+    else:
+        return False
+    return object_id == metadata.object_id
+
+
+def _git_blob_id(data: bytes, hexadecimal_length: int) -> str:
+    algorithm = _git_hash_algorithm(hexadecimal_length)
+    digest = hashlib.new(algorithm)
+    digest.update(f"blob {len(data)}\0".encode("ascii"))
+    digest.update(data)
+    return digest.hexdigest()
+
+
+def _git_hash_algorithm(hexadecimal_length: int) -> str:
+    if hexadecimal_length == 40:
+        return "sha1"
+    if hexadecimal_length == 64:
+        return "sha256"
+    raise ValueError("unsupported Git object identity length")
 
 
 def resolve_base_revision(repository: RepositoryHandle, ref: str) -> BaseRevision:
@@ -317,6 +527,7 @@ def _run_git(
     arguments: tuple[str, ...],
     failure_code: str = GIT_COMMAND,
     failure_message: str = "Git command failed",
+    accepted_return_codes: frozenset[int] = frozenset({0}),
 ) -> bytes:
     try:
         git_executable, safe_path = resolve_git_executable(root)
@@ -334,7 +545,7 @@ def _run_git(
         "-c",
         f"core.excludesFile={os.devnull}",
         "-c",
-        f"core.fsmonitor={os.devnull}",
+        "core.fsmonitor=false",
         "-c",
         f"core.hooksPath={os.devnull}",
         "-c",
@@ -361,7 +572,7 @@ def _run_git(
                 ("error_type", type(error).__name__),
             ),
         )
-    if completed.returncode != 0:
+    if completed.returncode not in accepted_return_codes:
         _fail(
             failure_code,
             failure_message,

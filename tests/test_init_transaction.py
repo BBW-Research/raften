@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 import repo_context.initialization as initialization
+import repo_context.init_preparation as preparation
 import repo_context.init_transaction as transaction
 from repo_context.config import render_starter_policy
 from repo_context.debt import parse_debt_manifest
@@ -26,7 +27,7 @@ class InitializationTransactionTests(unittest.TestCase):
         with RepositoryFixture() as repository:
             repository.write_text(temporary, "owned temporary collision\n")
             repository.commit("temporary collision")
-            with mock.patch.object(transaction.secrets, "token_hex", return_value=token):
+            with mock.patch.object(preparation.secrets, "token_hex", return_value=token):
                 temp_outcome = initialization.initialize_repository(repository.root)
 
             self.assertIsInstance(temp_outcome, CommandFailure)
@@ -37,7 +38,7 @@ class InitializationTransactionTests(unittest.TestCase):
             repository.write_text("repo-context.toml", "old policy\n")
             repository.write_text(backup, "owned backup collision\n")
             repository.commit("backup collision")
-            with mock.patch.object(transaction.secrets, "token_hex", return_value=token):
+            with mock.patch.object(preparation.secrets, "token_hex", return_value=token):
                 backup_outcome = initialization.initialize_repository(
                     repository.root,
                     force=True,
@@ -50,7 +51,7 @@ class InitializationTransactionTests(unittest.TestCase):
         with RepositoryFixture() as repository:
             repository.write_text(rollback, "owned rollback collision\n")
             repository.commit("rollback collision")
-            with mock.patch.object(transaction.secrets, "token_hex", return_value=token):
+            with mock.patch.object(preparation.secrets, "token_hex", return_value=token):
                 rollback_outcome = initialization.initialize_repository(repository.root)
 
             self.assertIsInstance(rollback_outcome, CommandFailure)
@@ -96,8 +97,8 @@ class InitializationTransactionTests(unittest.TestCase):
             repository.commit("source")
             with mock.patch.object(
                 initialization,
-                "repository_is_clean",
-                side_effect=(True, False),
+                "repository_remains_clean",
+                return_value=False,
             ):
                 outcome = initialization.initialize_repository(repository.root)
 

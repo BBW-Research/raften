@@ -154,7 +154,9 @@ class ReleaseQualificationTests(unittest.TestCase):
             if (fields := line.split()) and not fields[0].startswith("#")
         }
         expected_patterns = {
+            "/.codex/",
             "/.github/",
+            "/AGENTS.md",
             "/CHANGELOG.md",
             "/LICENSE",
             "/NOTICE",
