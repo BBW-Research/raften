@@ -14,7 +14,7 @@ scripts/bootstrap
 
 That initializes a local Git repository when needed and runs the offline validation suite. No package installation is required for the starter.
 
-Release qualification and the remaining external ownership decisions are tracked in [`docs/plans/active/standalone-tool.md`](docs/plans/active/standalone-tool.md). The original end-to-end Codex assignment remains under [`docs/prompts/codex-build.md`](docs/prompts/codex-build.md).
+The completed build and release qualification record is retained in [`docs/plans/completed/standalone-tool.md`](docs/plans/completed/standalone-tool.md). The original end-to-end Codex assignment remains under [`docs/prompts/codex-build.md`](docs/prompts/codex-build.md).
 
 Useful commands:
 

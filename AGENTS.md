@@ -4,8 +4,8 @@
 
 - Start with the [documentation index](docs/index.md).
 - The product contract is `docs/specs/repo-context.md`.
-- The executable build sequence is `docs/plans/active/standalone-tool.md`.
-- The ready-to-run Codex assignment is `docs/prompts/codex-build.md`.
+- The completed executable build sequence is `docs/plans/completed/standalone-tool.md`.
+- The completed Codex assignment is retained in `docs/prompts/codex-build.md`.
 - Architecture boundaries are summarized in `ARCHITECTURE.md` and expanded under `docs/architecture/`.
 - The scene-maker source snapshot and known limitations are documented under `docs/reference/` and `reference/scene-maker/`.
 
@@ -21,8 +21,8 @@ When lower-authority material conflicts with a higher-authority contract, preser
 
 ## Default workflow
 
-1. Read the relevant spec, decision records, active phase, and source characterization before editing.
-2. Execute the next incomplete phase in `docs/plans/active/standalone-tool.md`; do not replace implementation with another plan.
+1. Read the relevant spec, decision records, implementation plan or completion evidence, and source characterization before editing.
+2. For follow-up work, read the completed plan and relevant evidence, then create a focused active plan only when phased execution is warranted.
 3. Add or tighten tests before refactoring behavior inherited from scene-maker.
 4. Make the smallest coherent change that closes the phase acceptance gate.
 5. Run `scripts/validate` before claiming completion.
