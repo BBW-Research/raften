@@ -5,13 +5,65 @@ import unittest
 from pathlib import Path
 
 from repo_context import inventory
-from tests.support.seed import ROOT
+from tests.support.paths import ROOT
 
 
 PACKAGE = ROOT / "src/repo_context"
 
 
+def _frozen_seed_references(source: str, filename: str) -> tuple[str, ...]:
+    references: list[str] = []
+    tree = ast.parse(source, filename)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported = tuple(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            imported = (node.module or "",)
+        else:
+            imported = ()
+        references.extend(
+            module
+            for module in imported
+            if module == "tools"
+            or module.startswith("tools.")
+            or module == "tests"
+            or module.startswith("tests.")
+        )
+        if (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and "check_repository_policy" in node.value
+        ):
+            references.append(node.value)
+    return tuple(references)
+
+
 class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
+    def test_production_does_not_import_or_reference_the_frozen_seed(self) -> None:
+        offenders: list[tuple[str, str]] = []
+        for source_path in sorted(PACKAGE.rglob("*.py")):
+            references = _frozen_seed_references(
+                source_path.read_text(encoding="utf-8"),
+                source_path.relative_to(PACKAGE).as_posix(),
+            )
+            offenders.extend(
+                (source_path.relative_to(PACKAGE).as_posix(), reference)
+                for reference in references
+            )
+        self.assertEqual(offenders, [])
+
+    def test_frozen_seed_scan_rejects_production_imports_from_tools_and_tests(self) -> None:
+        cases = (
+            ("import tools.check_repository_policy\n", "tools.check_repository_policy"),
+            ("from tests.support import seed\n", "tests.support"),
+        )
+        for source, expected in cases:
+            with self.subTest(source=source):
+                self.assertEqual(
+                    _frozen_seed_references(source, "synthetic.py"),
+                    (expected,),
+                )
+
     def test_inventory_facade_preserves_the_phase_two_public_api(self) -> None:
         self.assertEqual(
             inventory.__all__,

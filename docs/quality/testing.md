@@ -57,7 +57,7 @@ Text output uses focused golden files after replacing temporary paths and commit
 
 ### Self-hosting tests
 
-Run the built package over this repository and compare it with the bootstrap checker. Assert expected equivalence where behavior should carry forward and expected target-only diagnostics where defects were fixed. Add a test that scans production imports and rejects references to the frozen seed.
+Run the package over this repository and compare it with the frozen checker. Assert expected equivalence where behavior should carry forward and expected target-only diagnostics where defects were fixed. Scan production imports and string references to reject dependencies on the frozen seed. Exercise `scripts/bootstrap` from an unpacked tree without Git history or network access.
 
 ### Distribution tests
 
@@ -78,4 +78,4 @@ Track:
 
 ## Validation command
 
-`scripts/validate` is the required local gate. During the starter phase it runs the source checker, compile checks, tests, and `git diff --check`. During self-hosting it must switch to the new CLI without weakening any existing gate. CI additionally runs offline Lychee until the new local-link implementation has demonstrated equivalent or stronger coverage; retaining Lychee as an independent defense is acceptable.
+`scripts/validate` is the required local gate. It runs the standalone CLI through `scripts/context-check`, compile checks, tests, and `git diff --check`; source-oracle execution is confined to characterization and paired-compatibility tests. CI additionally runs offline Lychee as an independent defense.

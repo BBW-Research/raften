@@ -11,6 +11,8 @@ The bootstrap implementation is copied from `BBW-Research/scene-maker` at commit
 
 The working scene-maker workflow and Lychee configuration are preserved under `reference/scene-maker/`. The enormous scene-maker migration inventory is intentionally not copied; the starter policy contains no legacy oversized files.
 
+The completed [Phase 7 compatibility classification](scene-maker-compatibility.md) records every equivalent diagnostic and intended target improvement. No comparison defect remains.
+
 ## Seed behavior to preserve initially
 
 The source checker:

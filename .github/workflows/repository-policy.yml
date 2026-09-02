@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: "3.13"
-      - name: Validate repository
+      - name: Validate with the standalone engine
         run: scripts/validate
       - name: Check local links without network requests
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8

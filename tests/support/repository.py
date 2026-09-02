@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from tests.support.seed import BOOTSTRAP_POLICY_PATH, ROOT, SEED_PATH
+from tests.support.paths import ROOT, SEED_PATH
 
 
 FIXED_GIT_ENV = {
@@ -251,10 +251,6 @@ class RepositoryFixture:
             env=isolated_environment(),
             timeout=30,
         )
-
-
-def bootstrap_policy() -> dict[str, Any]:
-    return json.loads(BOOTSTRAP_POLICY_PATH.read_text(encoding="utf-8"))
 
 
 def normalize_temporary_path(output: str, repository: RepositoryFixture) -> str:

@@ -198,21 +198,25 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Tasks
 
-- [ ] Run the seed checker and new engine over the repository and all compatibility fixtures.
-- [ ] Classify every output difference as intended improvement, equivalent diagnostic, or defect.
-- [ ] Update `scripts/context-check` to invoke `PYTHONPATH=src python3 -m repo_context check` without requiring package installation.
-- [ ] Update CI to run the new engine with the existing base-ref behavior.
-- [ ] Keep the scene-maker checker as a frozen test oracle or move it byte-for-byte under a fixture path. Update provenance paths without changing contents.
-- [ ] Remove the bootstrap JSON policy only after the new TOML policy is authoritative and no script depends on it.
-- [ ] Make the new tool validate its own file budgets, documentation graph, bootstrap context set, and base ratchet.
-- [ ] Add a test ensuring production code does not import the frozen oracle.
+- [x] Run the seed checker and new engine over the repository and all compatibility fixtures.
+- [x] Classify every output difference as intended improvement, equivalent diagnostic, or defect.
+- [x] Update `scripts/context-check` to invoke `PYTHONPATH=src python3 -m repo_context check` without requiring package installation.
+- [x] Update CI to run the new engine with the existing base-ref behavior.
+- [x] Keep the scene-maker checker as a frozen test oracle or move it byte-for-byte under a fixture path. Update provenance paths without changing contents.
+- [x] Remove the bootstrap JSON policy only after the new TOML policy is authoritative and no script depends on it.
+- [x] Make the new tool validate its own file budgets, documentation graph, bootstrap context set, and base ratchet.
+- [x] Add a test ensuring production code does not import the frozen oracle.
 
 ### Gate
 
-- [ ] `scripts/validate` is green using only the standalone engine.
-- [ ] The old checker is not executed by normal local or CI workflows.
-- [ ] Intended behavior differences are documented and tested.
-- [ ] A clean clone or unpacked archive can bootstrap and validate offline.
+- [x] `scripts/validate` is green using only the standalone engine.
+- [x] The old checker is not selected as the repository validation engine by normal local or CI workflows; any execution is confined to characterization and paired-compatibility tests.
+- [x] Intended behavior differences are documented and tested.
+- [x] A clean clone or unpacked archive can bootstrap and validate offline.
+
+### Phase 7 completion evidence
+
+[Phase 7 completion evidence](standalone-tool-evidence-phase-7.md) is retained in the companion evidence log.
 
 ## Phase 8: Package, release, and pilot
 
