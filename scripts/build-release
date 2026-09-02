@@ -65,6 +65,8 @@ mkdir "$RELEASE_TMP/pip-tmp"
   PIP_NO_INDEX=1 \
   PIP_FIND_LINKS="$STAGED_WHEELHOUSE" \
   "$RELEASE_TMP/frontend/bin/python" -I -m pip --isolated install \
+    --no-index \
+    --find-links "$STAGED_WHEELHOUSE" \
     --no-deps \
     --require-hashes \
     --requirement "$RELEASE_SOURCE/requirements/release.txt"

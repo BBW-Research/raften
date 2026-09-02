@@ -154,6 +154,8 @@ class ReleaseQualificationTests(unittest.TestCase):
         self.assertIn("--require-hashes", acquisition)
         self.assertIn("PIP_NO_INDEX=1", build)
         self.assertIn("PIP_FIND_LINKS", build)
+        self.assertIn("--no-index", build)
+        self.assertIn('--find-links "$STAGED_WHEELHOUSE"', build)
         self.assertIn('"PIP_NO_INDEX": "1"', qualification)
         self.assertIn("stage_locked_wheelhouse", qualification)
         self.assertIn("release_tools.source_guard", build)
