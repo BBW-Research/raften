@@ -33,7 +33,7 @@ class JsonReportTests(unittest.TestCase):
             ("schema_version", "tool", "command", "status", "summary", "diagnostics", "data"),
         )
         self.assertEqual(document["schema_version"], 1)
-        self.assertEqual(document["tool"], {"name": "repo-context", "version": "0.0.0"})
+        self.assertEqual(document["tool"], {"name": "repo-context", "version": "1.0.0"})
         self.assertEqual(document["command"], "check")
         self.assertEqual(document["status"], "complete")
         self.assertEqual(document["summary"], {"errors": 0, "warnings": 0, "notes": 1})

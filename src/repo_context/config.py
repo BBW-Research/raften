@@ -12,7 +12,7 @@ from repo_context.config_records import (
     parse_exception_records,
 )
 from repo_context.config_rules import parse_file_rules, parse_path_overrides
-from repo_context.config_template import DEFAULT_POLICY_TOML
+from repo_context.config_template import DEFAULT_POLICY_TOML, render_policy_template
 from repo_context.config_validation import Validator
 from repo_context.config_values import parse_enum, parse_path_list, parse_pattern_list
 from repo_context.diagnostics import (
@@ -99,8 +99,10 @@ def load_policy(path: Path) -> Policy:
     return parse_policy(path.read_bytes(), source_path=path.as_posix())
 
 
-def render_starter_policy() -> bytes:
-    return DEFAULT_POLICY_TOML
+def render_starter_policy(*, debt_manifest_path: str = "repo-context.debt.json") -> bytes:
+    if debt_manifest_path == "repo-context.debt.json":
+        return DEFAULT_POLICY_TOML
+    return render_policy_template(debt_manifest_path)
 
 
 def starter_policy() -> Policy:

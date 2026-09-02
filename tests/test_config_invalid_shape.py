@@ -37,8 +37,8 @@ class StrictShapeTests(ConfigurationAssertions):
         )
         text = replace_once(
             text,
-            'reason = "Machine-generated dependency resolution data is not useful bootstrap context."\n',
-            'reason = "Machine-generated dependency resolution data is not useful bootstrap context."\nrule_typo = true\n',
+            'reason = "Machine-generated dependency and migration state is validated by its owning tool."\n',
+            'reason = "Machine-generated dependency and migration state is validated by its owning tool."\nrule_typo = true\n',
         )
         text = append_exception_record(
             text,
@@ -98,7 +98,7 @@ record_typo = true''',
         cases = (
             (replace_once(STARTER_POLICY_TEXT, 'inventory = "git-visible"\n', ""), "repository.inventory"),
             (replace_once(STARTER_POLICY_TEXT, 'default_format = "text"\n', ""), "output.default_format"),
-            (replace_once(STARTER_POLICY_TEXT, 'name = "lockfiles"\n', ""), "file_rule[0].name"),
+            (replace_once(STARTER_POLICY_TEXT, 'name = "generated-state"\n', ""), "file_rule[0].name"),
             (
                 replace_once(
                     STARTER_POLICY_TEXT,
@@ -162,7 +162,7 @@ scan = false''',
             (
                 replace_once(
                     STARTER_POLICY_TEXT,
-                    'patterns = ["uv.lock", "**/uv.lock", "package-lock.json", "**/package-lock.json"]',
+                    'patterns = ["uv.lock", "**/uv.lock", "package-lock.json", "**/package-lock.json", "repo-context.debt.json"]',
                     'patterns = "uv.lock"',
                 ),
                 "file_rule[0].patterns",

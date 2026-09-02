@@ -276,7 +276,7 @@ hard_bytes = 10000''',
         with RepositoryFixture() as repository:
             result = repository.run_target("--version")
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout, "repo-context 0.0.0\n")
+        self.assertEqual(result.stdout, "repo-context 1.0.0\n")
         self.assertEqual(result.stderr, "")
 
     def test_broken_pipe_is_quiet_and_preserves_semantic_exit(self) -> None:

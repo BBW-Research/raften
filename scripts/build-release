@@ -1,0 +1,98 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH= cd -P -- "$(dirname -- "$0")/.." && pwd -P)
+unset PYTHONHOME
+
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+  echo "usage: scripts/build-release WHEELHOUSE [OUTPUT_DIRECTORY]" >&2
+  exit 2
+fi
+
+WHEELHOUSE=$1
+OUTPUT=${2:-"$ROOT/dist"}
+if [ ! -d "$WHEELHOUSE" ]; then
+  echo "wheelhouse does not exist: $WHEELHOUSE" >&2
+  exit 2
+fi
+
+PYTHON=${PYTHON:-python3}
+RELEASE_TMP=$(mktemp -d)
+trap 'rm -rf -- "$RELEASE_TMP"' EXIT HUP INT TERM
+RELEASE_SOURCE=$RELEASE_TMP/source
+SOURCE_IDENTITY=$(PYTHONPATH="$ROOT/src:$ROOT" "$PYTHON" -P -m release_tools.source_guard \
+  --root "$ROOT" \
+  --export "$RELEASE_SOURCE")
+SOURCE_COMMIT=${SOURCE_IDENTITY%% *}
+COMMIT_EPOCH=${SOURCE_IDENTITY##* }
+STAGED_WHEELHOUSE=$RELEASE_TMP/wheelhouse
+PYTHONPATH="$RELEASE_SOURCE/src:$RELEASE_SOURCE" "$PYTHON" -P -m release_tools.wheelhouse \
+  --source "$WHEELHOUSE" \
+  --requirements "$RELEASE_SOURCE/requirements/release.txt" \
+  --destination "$STAGED_WHEELHOUSE"
+
+if [ -e "$OUTPUT" ] && [ ! -d "$OUTPUT" ]; then
+  echo "output is not a directory: $OUTPUT" >&2
+  exit 2
+fi
+mkdir -p -- "$OUTPUT"
+if [ -n "$(find "$OUTPUT" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+  echo "output directory must be empty: $OUTPUT" >&2
+  exit 2
+fi
+
+if [ -z "${SOURCE_DATE_EPOCH:-}" ]; then
+  SOURCE_DATE_EPOCH=$COMMIT_EPOCH
+fi
+case "$SOURCE_DATE_EPOCH" in
+  ''|*[!0-9]*)
+    echo "SOURCE_DATE_EPOCH must be a nonnegative integer" >&2
+    exit 2
+    ;;
+esac
+export SOURCE_DATE_EPOCH
+
+"$PYTHON" -I -m venv "$RELEASE_TMP/frontend"
+mkdir "$RELEASE_TMP/pip-tmp"
+/usr/bin/env -i \
+  PATH="$PATH" \
+  LC_ALL=C \
+  TMPDIR="$RELEASE_TMP/pip-tmp" \
+  SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" \
+  PIP_DISABLE_PIP_VERSION_CHECK=1 \
+  PIP_CONFIG_FILE=/dev/null \
+  PIP_NO_CACHE_DIR=1 \
+  PIP_NO_INDEX=1 \
+  PIP_FIND_LINKS="$STAGED_WHEELHOUSE" \
+  "$RELEASE_TMP/frontend/bin/python" -I -m pip --isolated install \
+    --no-deps \
+    --require-hashes \
+    --requirement "$RELEASE_SOURCE/requirements/release.txt"
+
+/usr/bin/env -i \
+  PATH="$PATH" \
+  LC_ALL=C \
+  TMPDIR="$RELEASE_TMP/pip-tmp" \
+  SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" \
+  PIP_DISABLE_PIP_VERSION_CHECK=1 \
+  PIP_CONFIG_FILE=/dev/null \
+  PIP_NO_CACHE_DIR=1 \
+  PIP_NO_INDEX=1 \
+  PIP_FIND_LINKS="$STAGED_WHEELHOUSE" \
+  "$RELEASE_TMP/frontend/bin/python" -I -m build \
+    --outdir "$OUTPUT" \
+    "$RELEASE_SOURCE"
+
+VERSION=$(PYTHONPATH="$RELEASE_SOURCE/src" "$PYTHON" -P -c 'import repo_context; print(repo_context.__version__)')
+PROJECT_NAME=$("$PYTHON" -I -c 'import pathlib, sys, tomllib; print(tomllib.loads(pathlib.Path(sys.argv[1]).read_text())["project"]["name"])' "$RELEASE_SOURCE/pyproject.toml")
+PYTHONPATH="$RELEASE_SOURCE" "$PYTHON" -P -m release_tools.zipapp_builder \
+  --source "$RELEASE_SOURCE/src" \
+  --output "$OUTPUT/repo-context-$VERSION.pyz" \
+  --epoch "$SOURCE_DATE_EPOCH"
+PYTHONPATH="$RELEASE_SOURCE" "$PYTHON" -P -m release_tools.artifacts \
+  --directory "$OUTPUT" \
+  --name "$PROJECT_NAME" \
+  --version "$VERSION"
+PYTHONPATH="$ROOT/src:$ROOT" "$PYTHON" -P -m release_tools.source_guard \
+  --root "$ROOT" \
+  --expected-commit "$SOURCE_COMMIT" >/dev/null

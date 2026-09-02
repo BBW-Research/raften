@@ -109,7 +109,12 @@ def _initialize_anchored(
     artifacts: list[_Artifact] = []
     if capture_debt:
         artifacts.append(_Artifact(manifest_path, render_debt_manifest(manifest)))
-    artifacts.append(_Artifact(config_path, render_starter_policy()))
+    artifacts.append(
+        _Artifact(
+            config_path,
+            render_starter_policy(debt_manifest_path=manifest_path),
+        )
+    )
     _require_clean(repository)
     absence_guards = (
         ()

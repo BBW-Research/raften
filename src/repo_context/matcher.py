@@ -50,6 +50,7 @@ PatternToken: TypeAlias = _LiteralToken | _StarToken | _QuestionToken | _ClassTo
 class PatternComponent:
     recursive: bool
     tokens: tuple[PatternToken, ...]
+    literal: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,7 +209,7 @@ def narrow_pattern_error(pattern: str) -> str | None:
 
 def _compile_component(component: str) -> PatternComponent:
     if component == "**":
-        return PatternComponent(recursive=True, tokens=())
+        return PatternComponent(recursive=True, tokens=(), literal=None)
     tokens: list[PatternToken] = []
     index = 0
     while index < len(component):
@@ -230,7 +231,8 @@ def _compile_component(component: str) -> PatternComponent:
         else:
             tokens.append(_LiteralToken(character))
             index += 1
-    return PatternComponent(recursive=False, tokens=tuple(tokens))
+    literal = component if not pattern_has_wildcards(component) else None
+    return PatternComponent(recursive=False, tokens=tuple(tokens), literal=literal)
 
 
 def _compile_class_ranges(content: str) -> tuple[tuple[str, str], ...]:
@@ -259,14 +261,17 @@ def _match_compiled(pattern: CompiledPattern, path: list[str]) -> bool:
         else:
             for path_index in range(path_count - 1, -1, -1):
                 current[path_index] = (
-                    _match_component(component.tokens, path[path_index])
+                    _match_component(component, path[path_index])
                     and following[path_index + 1]
                 )
         following = current
     return following[0]
 
 
-def _match_component(tokens: tuple[PatternToken, ...], value: str) -> bool:
+def _match_component(component: PatternComponent, value: str) -> bool:
+    if component.literal is not None:
+        return component.literal == value
+    tokens = component.tokens
     value_count = len(value)
     following = [False] * (value_count + 1)
     following[value_count] = True

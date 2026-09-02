@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH= cd -P -- "$(dirname -- "$0")/.." && pwd -P)
+
+if [ "$#" -ne 2 ]; then
+  echo "usage: scripts/qualify-linux ARTIFACT_DIRECTORY WHEELHOUSE" >&2
+  exit 2
+fi
+
+ARTIFACTS=$(CDPATH= cd -P -- "$1" && pwd -P)
+WHEELHOUSE=$(CDPATH= cd -P -- "$2" && pwd -P)
+
+for IMAGE in \
+  python:3.12.14-bookworm@sha256:581429e3df12d76e6af4be5ab7d0e7fc2013eb57dc23d2de691411c8efdbb970 \
+  python:3.13.14-bookworm@sha256:8b9a8b28d9cc221c6ab5d40e9cfcd99429959f6a8f5171612a99147975ab043f
+do
+  docker run --rm \
+    --pull=never \
+    --network=none \
+    --read-only \
+    --tmpfs /tmp:rw,exec,nosuid,nodev,size=512m \
+    --cap-drop=ALL \
+    --security-opt=no-new-privileges \
+    --mount "type=bind,source=$ROOT,target=/source,readonly" \
+    --mount "type=bind,source=$ARTIFACTS,target=/artifacts,readonly" \
+    --mount "type=bind,source=$WHEELHOUSE,target=/wheelhouse,readonly" \
+    "$IMAGE" \
+    sh -ceu '
+      mkdir /tmp/repository
+      cp -R /source/. /tmp/repository/
+      cd /tmp/repository
+      BASE_REF=HEAD scripts/validate
+      scripts/qualify-artifacts /artifacts /wheelhouse
+    '
+done

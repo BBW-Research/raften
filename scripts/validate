@@ -11,7 +11,7 @@ else
 fi
 
 PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
-  python3 -m compileall -q src tests
+  python3 -m compileall -q src release_tools tests
 scripts/test
 
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then

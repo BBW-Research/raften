@@ -48,7 +48,7 @@ def _run(arguments: list[str], *, cwd: Path):
 
 
 class RepositorySelfHostingTests(unittest.TestCase):
-    def test_root_policy_explicitly_classifies_scanned_vendor_and_fixture_paths(self) -> None:
+    def test_root_policy_explicitly_classifies_scanned_special_paths(self) -> None:
         outcome = run_repository(ROOT, evaluation_date=EVALUATION_DATE)
 
         self.assertIsInstance(outcome, RepositoryRun)
@@ -66,6 +66,8 @@ class RepositorySelfHostingTests(unittest.TestCase):
             ),
             "tests/fixtures/output/check-clean.txt": ("test-fixtures", FileKind.FIXTURE),
             "tests/fixtures/seed/clean-policy.json": ("test-fixtures", FileKind.FIXTURE),
+            "requirements/release.txt": ("release-lock", FileKind.GENERATED),
+            "NOTICE": ("legal-material", FileKind.LEGAL),
         }
         for path, (rule_name, kind) in expected.items():
             with self.subTest(path=path):
@@ -195,8 +197,8 @@ class RepositorySelfHostingTests(unittest.TestCase):
         self.assertIn('PYTHONPATH="$ROOT/src"', wrapper)
         self.assertNotIn("${PYTHONPATH", wrapper)
         validation = (ROOT / "scripts/validate").read_text(encoding="utf-8")
-        self.assertIn("compileall -q src tests", validation)
-        self.assertNotIn("compileall -q src tests tools", validation)
+        self.assertIn("compileall -q src release_tools tests", validation)
+        self.assertNotIn("compileall -q src release_tools tests tools", validation)
         workflow = (ROOT / ".github/workflows/repository-policy.yml").read_text(
             encoding="utf-8"
         )
