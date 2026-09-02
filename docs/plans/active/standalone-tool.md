@@ -223,22 +223,26 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 ### Tasks
 
 - [ ] Finalize package metadata, license, versioning policy, changelog process, and supported Python matrix.
-- [ ] Build wheel and source distribution in an isolated environment.
-- [ ] Add an optional zipapp or equivalent vendorable artifact if it can remain dependency-free and deterministic.
-- [ ] Verify installation and execution on macOS and Linux with Python 3.12 and 3.13.
-- [ ] Document three consumption modes: installed package, pinned zipapp, and vendored source with a project-local wrapper.
-- [ ] Create migration instructions from the scene-maker JSON format to v1 TOML.
-- [ ] Pilot in `scene-maker`, `nano-dllm`, and `research-vault` using separate project policies.
-- [ ] Record false positives, performance, context-debt findings, and policy features that genuinely generalize.
-- [ ] Do not add project-specific behavior to the engine during pilots; add configuration or a separately justified generic feature.
+- [x] Build wheel and source distribution in an isolated environment.
+- [x] Add an optional zipapp or equivalent vendorable artifact if it can remain dependency-free and deterministic.
+- [x] Verify installation and execution on macOS and Linux with Python 3.12 and 3.13.
+- [x] Document three consumption modes: installed package, pinned zipapp, and vendored source with a project-local wrapper.
+- [x] Create migration instructions from the scene-maker JSON format to v1 TOML.
+- [x] Pilot in `scene-maker`, `nano-dllm`, and `research-vault` using separate project policies.
+- [x] Record false positives, performance, context-debt findings, and policy features that genuinely generalize.
+- [x] Do not add project-specific behavior to the engine during pilots; add configuration or a separately justified generic feature.
 - [ ] Configure the eventual GitHub repository's required CI check, branch protection, and ownership review for policy, workflow, and release files.
 
 ### Gate
 
-- [ ] Distribution artifacts install and run from clean environments.
-- [ ] Three pilot repositories pass or have explicit monotonic migration debt.
+- [x] Distribution artifacts install and run from clean environments.
+- [x] Three pilot repositories pass or have explicit monotonic migration debt.
 - [ ] No release-blocking acceptance item remains unchecked.
 - [ ] This plan is moved to a completed-plan location with a concise final report.
+
+### Phase 8 progress evidence
+
+[Phase 8 qualification evidence](standalone-tool-evidence-phase-8.md) records the completed artifact, platform, pilot, and acceptance work plus the remaining publication blockers.
 
 ## Required final report
 
