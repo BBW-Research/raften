@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
+from repo_context.config import render_starter_policy
 
 
-ROOT = Path(__file__).resolve().parents[2]
-ROOT_POLICY_BYTES = (ROOT / "repo-context.toml").read_bytes()
-ROOT_POLICY_TEXT = ROOT_POLICY_BYTES.decode("utf-8")
+STARTER_POLICY_BYTES = render_starter_policy()
+STARTER_POLICY_TEXT = STARTER_POLICY_BYTES.decode("utf-8")
 
 
 def replace_once(text: str, old: str, new: str) -> str:

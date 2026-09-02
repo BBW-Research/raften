@@ -116,7 +116,7 @@ No traceback is printed for expected user or policy errors. Unexpected internal 
 
 The default file is `repo-context.toml`. Version 1 uses strict TOML parsed with Python's `tomllib`. Unknown keys are errors so misspellings cannot silently disable checks.
 
-The starter file at the repository root is the normative configuration example. The implementation must support these sections:
+The package-owned bytes returned by `repo_context.config.render_starter_policy()` are the normative generic configuration example used by initialization. A repository's root `repo-context.toml` is its adopted policy and may add project-specific classifications or tighter limits. The implementation must support these sections:
 
 - `version`
 - `repository`

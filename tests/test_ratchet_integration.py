@@ -25,7 +25,7 @@ from repo_context.model import GitFileMode
 from repo_context.policy_ratchet import compare_policies
 from repo_context.ratchet import evaluate_file_ratchet
 from repo_context.sizes import compile_size_policy, evaluate_sizes
-from tests.support.config import ROOT_POLICY_TEXT, replace_once
+from tests.support.config import STARTER_POLICY_TEXT, replace_once
 from tests.support.repository import RepositoryFixture, seed_policy
 from tests.support.seed import ROOT, SEED
 from tests.support.sizes import TODAY
@@ -33,7 +33,7 @@ from tests.support.sizes import TODAY
 
 def _policy_text() -> str:
     limited = replace_once(
-        ROOT_POLICY_TEXT,
+        STARTER_POLICY_TEXT,
         "warn_bytes = 20480\nhard_bytes = 25600",
         "warn_bytes = 40\nhard_bytes = 50",
     )
@@ -85,7 +85,10 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
             lambda entry: read_worktree_bytes(handle, entry),
             evaluation_date=TODAY,
         )
-        revision = resolve_base_revision(handle, "HEAD")
+        try:
+            revision = resolve_base_revision(handle, "HEAD")
+        except RepositoryAccessError as error:
+            self.skipTest(f"repository archive has no committed baseline: {error}")
         tree = list_base_tree(handle, revision)
         base_policy = _base_policy(handle, tree, revision.commit_id)
         files = evaluate_file_ratchet(
@@ -102,7 +105,7 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
 
     def test_policy_weakening_is_read_from_the_exact_base_blob_without_current_violations(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", ROOT_POLICY_TEXT)
+            repository.write_text("repo-context.toml", STARTER_POLICY_TEXT)
             repository.write_text("AGENTS.md", "x\n")
             repository.write_text("ARCHITECTURE.md", "x\n")
             repository.write_text("docs/index.md", "# Docs\n")
@@ -110,7 +113,7 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
             base_commit = repository.commit("base policy")
             repository.write_text(
                 "repo-context.toml",
-                replace_once(ROOT_POLICY_TEXT, "hard_bytes = 25600", "hard_bytes = 26000"),
+                replace_once(STARTER_POLICY_TEXT, "hard_bytes = 25600", "hard_bytes = 26000"),
             )
             status_before = repository.status_bytes()
             handle, current_policy, _snapshot, sizes = _evaluate(repository)

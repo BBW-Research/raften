@@ -31,15 +31,16 @@ from repo_context.model import (
     TextEncoding,
 )
 from tests.support.config import (
-    ROOT_POLICY_BYTES,
-    ROOT_POLICY_TEXT,
+    STARTER_POLICY_BYTES,
+    STARTER_POLICY_TEXT,
     append_exception_record,
 )
+from tests.support.paths import ROOT
 
 
 class ValidConfigurationTests(unittest.TestCase):
-    def test_root_policy_projects_every_section_into_typed_records(self) -> None:
-        policy = parse_policy(ROOT_POLICY_BYTES)
+    def test_starter_policy_projects_every_section_into_typed_records(self) -> None:
+        policy = parse_policy(STARTER_POLICY_BYTES)
         self.assertEqual(policy.version, 1)
         self.assertEqual(
             policy.repository,
@@ -117,7 +118,7 @@ class ValidConfigurationTests(unittest.TestCase):
         )
 
     def test_optional_repeatable_sections_default_to_empty_tuples(self) -> None:
-        text = ROOT_POLICY_TEXT
+        text = STARTER_POLICY_TEXT
         for start, end in (
             ("[[path_override]]\n", "[documentation]\n"),
             ("[[entrypoint]]\n", "[[context_set]]\n"),
@@ -132,7 +133,7 @@ class ValidConfigurationTests(unittest.TestCase):
         self.assertEqual(policy.context_sets, ())
 
     def test_context_patterns_and_exception_records_are_preserved_in_order(self) -> None:
-        text = ROOT_POLICY_TEXT.replace(
+        text = STARTER_POLICY_TEXT.replace(
             "[ratchet]\n",
             """[[context_set]]
 name = "fixtures"
@@ -177,7 +178,7 @@ hard_bytes = 40000""",
         self.assertEqual(policy.exceptions.records[1].expires_on, date(2026, 12, 31))
 
     def test_disjoint_equal_specificity_pattern_overrides_are_valid(self) -> None:
-        text = ROOT_POLICY_TEXT.replace(
+        text = STARTER_POLICY_TEXT.replace(
             "[documentation]\n",
             """[[path_override]]
 pattern = "source/*.txt"
@@ -197,7 +198,7 @@ hard_bytes = 200
         self.assertEqual(len(policy.path_overrides), 6)
 
     def test_later_literal_components_can_prove_pattern_overrides_disjoint(self) -> None:
-        text = ROOT_POLICY_TEXT.replace(
+        text = STARTER_POLICY_TEXT.replace(
             "[documentation]\n",
             '''[[path_override]]
 pattern = "docs/*/one.md"
@@ -217,7 +218,7 @@ hard_bytes = 200
         self.assertEqual(len(policy.path_overrides), 6)
 
     def test_stars_inside_a_character_class_are_literal_class_members(self) -> None:
-        text = ROOT_POLICY_TEXT.replace(
+        text = STARTER_POLICY_TEXT.replace(
             'pattern = "docs/**/index.md"',
             'pattern = "docs/[**].md"',
             1,
@@ -226,7 +227,7 @@ hard_bytes = 200
         self.assertEqual(policy.path_overrides[-1].selector, PatternSelector("docs/[**].md"))
 
     def test_independent_ratchet_flags_remain_parseable_when_disabled(self) -> None:
-        text = ROOT_POLICY_TEXT
+        text = STARTER_POLICY_TEXT
         for key in (
             "forbid_limit_increases",
             "forbid_exclusion_expansion",
@@ -241,7 +242,7 @@ hard_bytes = 200
     def test_loading_policy_does_not_scan_or_invoke_git(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "repo-context.toml"
-            path.write_bytes(ROOT_POLICY_BYTES)
+            path.write_bytes(STARTER_POLICY_BYTES)
             with (
                 mock.patch.object(subprocess, "run", side_effect=AssertionError("Git invoked")),
                 mock.patch.object(Path, "rglob", side_effect=AssertionError("repository scanned")),
@@ -252,17 +253,43 @@ hard_bytes = 200
 
 
 class StarterTemplateTests(unittest.TestCase):
-    def test_template_is_deterministic_and_matches_normative_root_policy(self) -> None:
+    def test_template_is_deterministic_and_normalized(self) -> None:
         first = render_starter_policy()
         second = render_starter_policy()
         self.assertIs(first, second)
-        self.assertEqual(first, ROOT_POLICY_BYTES)
+        self.assertEqual(first, STARTER_POLICY_BYTES)
         self.assertTrue(first.endswith(b"\n"))
         self.assertNotIn(b"\r\n", first)
 
-    def test_template_round_trip_matches_root_model(self) -> None:
+    def test_template_round_trip_matches_starter_model(self) -> None:
         self.assertEqual(parse_policy(render_starter_policy()), starter_policy())
-        self.assertEqual(starter_policy(), parse_policy(ROOT_POLICY_BYTES))
+        self.assertEqual(starter_policy(), parse_policy(STARTER_POLICY_BYTES))
+
+
+class AdoptedRootPolicyTests(unittest.TestCase):
+    def test_root_policy_adds_project_specific_scanned_classifications(self) -> None:
+        policy = load_policy(ROOT / "repo-context.toml")
+        self.assertNotEqual(policy, starter_policy())
+        rules = {rule.name: rule for rule in policy.file_rules}
+
+        frozen = rules["frozen-scene-maker"]
+        self.assertEqual(frozen.kind, FileKind.VENDORED)
+        self.assertEqual(
+            frozen.patterns,
+            (
+                "tools/check_repository_policy.py",
+                "reference/scene-maker/repository-policy.yml",
+                "reference/scene-maker/lychee.toml",
+            ),
+        )
+        self.assertTrue(frozen.scan)
+        self.assertEqual((frozen.warn_bytes, frozen.hard_bytes), (20480, 25600))
+
+        fixtures = rules["test-fixtures"]
+        self.assertEqual(fixtures.kind, FileKind.FIXTURE)
+        self.assertEqual(fixtures.patterns, ("tests/fixtures/**",))
+        self.assertTrue(fixtures.scan)
+        self.assertEqual((fixtures.warn_bytes, fixtures.hard_bytes), (20480, 25600))
 
 
 if __name__ == "__main__":

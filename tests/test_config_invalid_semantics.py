@@ -17,7 +17,7 @@ from repo_context.diagnostics import (
     EXC_BROAD_SELECTOR,
     config_diagnostic_sort_key,
 )
-from tests.support.config import ROOT_POLICY_TEXT, append_exception_record, replace_once
+from tests.support.config import STARTER_POLICY_TEXT, append_exception_record, replace_once
 from tests.support.config_assertions import ConfigurationAssertions
 
 
@@ -28,21 +28,21 @@ def insert_before(text: str, marker: str, addition: str) -> str:
 
 class FixedTableInvariantTests(ConfigurationAssertions):
     def test_repository_may_not_enable_global_symlink_following(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, "follow_symlinks = false", "follow_symlinks = true")
+        text = replace_once(STARTER_POLICY_TEXT, "follow_symlinks = false", "follow_symlinks = true")
         self.assert_policy_diagnostic(text, CFG_INCONSISTENT, "repository.follow_symlinks")
 
     def test_output_may_not_disable_stable_sorting(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, "stable_sort = true", "stable_sort = false")
+        text = replace_once(STARTER_POLICY_TEXT, "stable_sort = true", "stable_sort = false")
         self.assert_policy_diagnostic(text, CFG_INCONSISTENT, "output.stable_sort")
 
 
 class FileRuleInvariantTests(ConfigurationAssertions):
     def test_file_rule_names_and_patterns_are_unique(self) -> None:
-        duplicate_name = replace_once(ROOT_POLICY_TEXT, 'name = "authored"', 'name = "lockfiles"')
+        duplicate_name = replace_once(STARTER_POLICY_TEXT, 'name = "authored"', 'name = "lockfiles"')
         self.assert_policy_diagnostic(duplicate_name, CFG_DUPLICATE_NAME, "file_rule[1].name")
 
         duplicate_pattern = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             'patterns = ["**"]',
             'patterns = ["uv.lock", "**"]',
         )
@@ -53,12 +53,12 @@ class FileRuleInvariantTests(ConfigurationAssertions):
         )
 
     def test_file_rule_requires_one_dedicated_catch_all(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, 'patterns = ["**"]', 'patterns = ["**/*.py"]')
+        text = replace_once(STARTER_POLICY_TEXT, 'patterns = ["**"]', 'patterns = ["**/*.py"]')
         self.assert_policy_diagnostic(text, CFG_CATCH_ALL, "file_rule")
 
     def test_catch_all_must_be_the_final_file_rule(self) -> None:
         text = insert_before(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             "[[path_override]]\n",
             '''[[file_rule]]
 name = "generated-reports"
@@ -71,7 +71,7 @@ reason = "Reproducible reports are classified explicitly."''',
 
     def test_catch_all_must_be_scanned_and_authored(self) -> None:
         text = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             '''name = "authored"
 patterns = ["**"]
 kind = "authored"''',
@@ -82,36 +82,36 @@ kind = "fixture"''',
         self.assert_policy_diagnostic(text, CFG_CATCH_ALL, "file_rule[1]")
 
     def test_scanned_rules_require_a_complete_limit_pair(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, "warn_bytes = 20480\n", "")
+        text = replace_once(STARTER_POLICY_TEXT, "warn_bytes = 20480\n", "")
         self.assert_policy_diagnostic(text, CFG_MISSING_KEY, "file_rule[1].warn_bytes")
 
     def test_unscanned_rules_require_a_reason_and_forbid_limits(self) -> None:
         missing_reason = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             'reason = "Machine-generated dependency resolution data is not useful bootstrap context."\n',
             "",
         )
         self.assert_policy_diagnostic(missing_reason, CFG_MISSING_KEY, "file_rule[0].reason")
 
         with_limits = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             "scan = false\nreason =",
             "scan = false\nwarn_bytes = 100\nhard_bytes = 200\nreason =",
         )
         self.assert_policy_diagnostic(with_limits, CFG_INCONSISTENT, "file_rule[0]")
 
     def test_authored_rules_may_not_disable_scanning(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, 'kind = "generated"', 'kind = "authored"')
+        text = replace_once(STARTER_POLICY_TEXT, 'kind = "generated"', 'kind = "authored"')
         self.assert_policy_diagnostic(text, CFG_INCONSISTENT, "file_rule[0].scan")
 
     def test_byte_limits_are_positive_and_strictly_increasing(self) -> None:
         cases = (
             (
-                replace_once(ROOT_POLICY_TEXT, "warn_bytes = 20480", "warn_bytes = 0"),
+                replace_once(STARTER_POLICY_TEXT, "warn_bytes = 20480", "warn_bytes = 0"),
                 "file_rule[1].warn_bytes",
             ),
             (
-                replace_once(ROOT_POLICY_TEXT, "hard_bytes = 25600", "hard_bytes = 20480"),
+                replace_once(STARTER_POLICY_TEXT, "hard_bytes = 25600", "hard_bytes = 20480"),
                 "file_rule[1].hard_bytes",
             ),
         )
@@ -120,25 +120,25 @@ kind = "fixture"''',
                 self.assert_policy_diagnostic(text, CFG_LIMIT, field_path)
 
     def test_human_facing_rule_names_may_not_be_blank(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, 'name = "lockfiles"', 'name = "   "')
+        text = replace_once(STARTER_POLICY_TEXT, 'name = "lockfiles"', 'name = "   "')
         self.assert_policy_diagnostic(text, CFG_VALUE, "file_rule[0].name")
 
     def test_human_facing_values_reject_unicode_control_characters(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, 'name = "lockfiles"', 'name = "\\u0085"')
+        text = replace_once(STARTER_POLICY_TEXT, 'name = "lockfiles"', 'name = "\\u0085"')
         self.assert_policy_diagnostic(text, CFG_VALUE, "file_rule[0].name")
 
 
 class OverrideInvariantTests(ConfigurationAssertions):
     def test_override_requires_exactly_one_selector(self) -> None:
         neither = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             'path = "AGENTS.md"\nwarn_bytes = 8192',
             "warn_bytes = 8192",
         )
         self.assert_policy_diagnostic(neither, CFG_INCONSISTENT, "path_override[0]")
 
         both = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             'path = "AGENTS.md"\nwarn_bytes = 8192',
             'path = "AGENTS.md"\npattern = "docs/*.md"\nwarn_bytes = 8192',
         )
@@ -146,7 +146,7 @@ class OverrideInvariantTests(ConfigurationAssertions):
 
     def test_pattern_selector_must_actually_contain_a_wildcard(self) -> None:
         text = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             'pattern = "docs/**/index.md"',
             'pattern = "docs/index.md"',
         )
@@ -154,7 +154,7 @@ class OverrideInvariantTests(ConfigurationAssertions):
 
     def test_exact_and_pattern_override_selectors_are_unique(self) -> None:
         exact = insert_before(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             "[documentation]\n",
             '''[[path_override]]
 path = "AGENTS.md"
@@ -164,7 +164,7 @@ hard_bytes = 5000''',
         self.assert_policy_diagnostic(exact, CFG_DUPLICATE_SELECTOR, "path_override[4].path")
 
         pattern = insert_before(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             "[documentation]\n",
             '''[[path_override]]
 pattern = "docs/**/index.md"
@@ -175,7 +175,7 @@ hard_bytes = 5000''',
 
     def test_overlapping_equal_specificity_patterns_are_ambiguous(self) -> None:
         text = insert_before(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             "[documentation]\n",
             '''[[path_override]]
 pattern = "source/*.txt"
@@ -193,46 +193,46 @@ hard_bytes = 200''',
 class PathAndDocumentationInvariantTests(ConfigurationAssertions):
     def test_configured_exact_paths_and_patterns_use_repository_syntax(self) -> None:
         unsafe_path = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             'path = "AGENTS.md"\nwarn_bytes = 8192',
             'path = "../AGENTS.md"\nwarn_bytes = 8192',
         )
         self.assert_policy_diagnostic(unsafe_path, CFG_PATH, "path_override[0].path")
 
         malformed_pattern = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             'pattern = "docs/**/index.md"',
             'pattern = "docs/**index.md"',
         )
         self.assert_policy_diagnostic(malformed_pattern, CFG_PATTERN, "path_override[3].pattern")
 
     def test_documentation_roots_are_index_files(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, 'roots = ["docs/index.md"]', 'roots = ["docs/README.md"]')
+        text = replace_once(STARTER_POLICY_TEXT, 'roots = ["docs/index.md"]', 'roots = ["docs/README.md"]')
         self.assert_policy_diagnostic(text, CFG_VALUE, "documentation.roots[0]")
 
     def test_documentation_roots_may_not_be_empty(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, 'roots = ["docs/index.md"]', "roots = []")
+        text = replace_once(STARTER_POLICY_TEXT, 'roots = ["docs/index.md"]', "roots = []")
         self.assert_policy_diagnostic(text, CFG_VALUE, "documentation.roots")
 
     def test_documentation_roots_may_not_be_explicitly_or_globally_excluded(self) -> None:
         for exclusion in ('["docs/index.md"]', '["**"]'):
             with self.subTest(exclusion=exclusion):
-                text = replace_once(ROOT_POLICY_TEXT, "exclude = []", f"exclude = {exclusion}")
+                text = replace_once(STARTER_POLICY_TEXT, "exclude = []", f"exclude = {exclusion}")
                 self.assert_policy_diagnostic(text, CFG_INCONSISTENT, "documentation.roots[0]")
 
     def test_hierarchical_navigation_requires_directory_indexes(self) -> None:
         for key in ("require_sibling_links", "require_child_index_links"):
             with self.subTest(key=key):
-                text = replace_once(ROOT_POLICY_TEXT, "require_directory_indexes = true", "require_directory_indexes = false")
+                text = replace_once(STARTER_POLICY_TEXT, "require_directory_indexes = true", "require_directory_indexes = false")
                 self.assert_policy_diagnostic(text, CFG_INCONSISTENT, f"documentation.{key}")
 
     def test_fragment_checks_require_local_target_checks(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, "check_local_targets = true", "check_local_targets = false")
+        text = replace_once(STARTER_POLICY_TEXT, "check_local_targets = true", "check_local_targets = false")
         self.assert_policy_diagnostic(text, CFG_INCONSISTENT, "documentation.check_fragments")
 
     def test_authored_document_symlink_following_is_not_supported(self) -> None:
         text = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             "allow_authored_symlinks = false",
             "allow_authored_symlinks = true",
         )
@@ -246,7 +246,7 @@ class PathAndDocumentationInvariantTests(ConfigurationAssertions):
 class EntrypointAndContextInvariantTests(ConfigurationAssertions):
     def test_entrypoint_paths_are_unique(self) -> None:
         text = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             '[[entrypoint]]\npath = "README.md"\nrequired_targets = ["docs/index.md"]',
             '[[entrypoint]]\npath = "AGENTS.md"\nrequired_targets = ["docs/index.md"]',
         )
@@ -256,7 +256,7 @@ class EntrypointAndContextInvariantTests(ConfigurationAssertions):
         cases = (
             (
                 replace_once(
-                    ROOT_POLICY_TEXT,
+                    STARTER_POLICY_TEXT,
                     'path = "AGENTS.md"\nrequired_targets = ["docs/index.md"]\n\n[[entrypoint]]',
                     'path = "AGENTS.md"\nrequired_targets = []\n\n[[entrypoint]]',
                 ),
@@ -265,7 +265,7 @@ class EntrypointAndContextInvariantTests(ConfigurationAssertions):
             ),
             (
                 replace_once(
-                    ROOT_POLICY_TEXT,
+                    STARTER_POLICY_TEXT,
                     'path = "AGENTS.md"\nrequired_targets = ["docs/index.md"]\n\n[[entrypoint]]',
                     'path = "AGENTS.md"\nrequired_targets = ["docs/index.md", "docs/index.md"]\n\n[[entrypoint]]',
                 ),
@@ -274,7 +274,7 @@ class EntrypointAndContextInvariantTests(ConfigurationAssertions):
             ),
             (
                 replace_once(
-                    ROOT_POLICY_TEXT,
+                    STARTER_POLICY_TEXT,
                     'path = "AGENTS.md"\nrequired_targets = ["docs/index.md"]\n\n[[entrypoint]]',
                     'path = "AGENTS.md"\nrequired_targets = ["AGENTS.md"]\n\n[[entrypoint]]',
                 ),
@@ -288,14 +288,14 @@ class EntrypointAndContextInvariantTests(ConfigurationAssertions):
 
     def test_context_sets_require_a_selector_and_unique_name(self) -> None:
         no_selector = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             'paths = ["AGENTS.md", "ARCHITECTURE.md", "docs/index.md"]\n',
             "",
         )
         self.assert_policy_diagnostic(no_selector, CFG_VALUE, "context_set[0]")
 
         duplicate_name = insert_before(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             "[ratchet]\n",
             '''[[context_set]]
 name = "bootstrap"
@@ -307,7 +307,7 @@ hard_bytes = 2000''',
 
     def test_context_patterns_must_be_narrow(self) -> None:
         text = replace_once(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             'paths = ["AGENTS.md", "ARCHITECTURE.md", "docs/index.md"]',
             'patterns = ["**/*.md"]',
         )
@@ -316,7 +316,7 @@ hard_bytes = 2000''',
 
 class RatchetAndExceptionInvariantTests(ConfigurationAssertions):
     def test_new_oversize_ratchet_requires_base_size_comparison(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, "compare_file_sizes = true", "compare_file_sizes = false")
+        text = replace_once(STARTER_POLICY_TEXT, "compare_file_sizes = true", "compare_file_sizes = false")
         self.assert_policy_diagnostic(text, CFG_INCONSISTENT, "ratchet.forbid_new_oversize")
 
     def test_exception_governance_cannot_be_disabled(self) -> None:
@@ -333,14 +333,14 @@ class RatchetAndExceptionInvariantTests(ConfigurationAssertions):
         for old, new, field_path in cases:
             with self.subTest(field_path=field_path):
                 self.assert_policy_diagnostic(
-                    replace_once(ROOT_POLICY_TEXT, old, new),
+                    replace_once(STARTER_POLICY_TEXT, old, new),
                     CFG_INCONSISTENT,
                     field_path,
                 )
 
     def test_exception_patterns_must_be_narrow(self) -> None:
         text = append_exception_record(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             '''pattern = "**/*.json"
 owner = "tooling"
 rationale = "Temporary compatibility boundary"
@@ -352,7 +352,7 @@ scan = false''',
 
     def test_exception_requires_exactly_one_selector(self) -> None:
         text = append_exception_record(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             '''path = "generated/schema.json"
 pattern = "generated/*.json"
 owner = "tooling"
@@ -365,7 +365,7 @@ scan = false''',
 
     def test_exception_requires_replacement_behavior(self) -> None:
         text = append_exception_record(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             '''path = "generated/schema.json"
 owner = "tooling"
 rationale = "Temporary compatibility boundary"
@@ -376,7 +376,7 @@ created_on = 2026-08-01''',
 
     def test_exception_thresholds_are_complete_and_incompatible_with_scan_false(self) -> None:
         partial = append_exception_record(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             '''path = "generated/schema.json"
 owner = "tooling"
 rationale = "Temporary compatibility boundary"
@@ -387,7 +387,7 @@ warn_bytes = 30000''',
         self.assert_policy_diagnostic(partial, CFG_MISSING_KEY, "exceptions.record[0].hard_bytes")
 
         unscanned = append_exception_record(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             '''path = "generated/schema.json"
 owner = "tooling"
 rationale = "Temporary compatibility boundary"
@@ -401,7 +401,7 @@ hard_bytes = 40000''',
 
     def test_exception_expiry_may_not_precede_creation(self) -> None:
         text = append_exception_record(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             '''path = "generated/schema.json"
 owner = "tooling"
 rationale = "Temporary compatibility boundary"
@@ -419,7 +419,7 @@ rationale = "Temporary compatibility boundary"
 tracking_reference = "ADR-42"
 created_on = 2026-08-01
 scan = false'''
-        text = append_exception_record(append_exception_record(ROOT_POLICY_TEXT, body), body)
+        text = append_exception_record(append_exception_record(STARTER_POLICY_TEXT, body), body)
         self.assert_policy_diagnostic(text, CFG_DUPLICATE_SELECTOR, "exceptions.record[1].path")
 
     def test_overlapping_equal_specificity_exception_patterns_are_ambiguous(self) -> None:
@@ -436,7 +436,7 @@ tracking_reference = "ADR-43"
 created_on = 2026-08-01
 scan = false'''
         text = append_exception_record(
-            append_exception_record(ROOT_POLICY_TEXT, first),
+            append_exception_record(STARTER_POLICY_TEXT, first),
             second,
         )
         self.assert_policy_diagnostic(
@@ -447,7 +447,7 @@ scan = false'''
 
     def test_exception_metadata_may_not_be_blank(self) -> None:
         text = append_exception_record(
-            ROOT_POLICY_TEXT,
+            STARTER_POLICY_TEXT,
             '''path = "generated/schema.json"
 owner = " "
 rationale = "Temporary compatibility boundary"
@@ -460,7 +460,7 @@ scan = false''',
 
 class DiagnosticContractTests(ConfigurationAssertions):
     def test_multiple_diagnostics_have_stable_identity_paths_and_order(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, "version = 1\n", "version = 1\nzeta = true\nalpha = true\n")
+        text = replace_once(STARTER_POLICY_TEXT, "version = 1\n", "version = 1\nzeta = true\nalpha = true\n")
         diagnostics = self.policy_diagnostics(text)
         self.assertEqual(list(diagnostics), sorted(diagnostics, key=config_diagnostic_sort_key))
         self.assertEqual(
@@ -471,7 +471,7 @@ class DiagnosticContractTests(ConfigurationAssertions):
         self.assertTrue(all(item.location.path == "fixture.toml" for item in diagnostics if item.location))
 
     def test_codes_precede_field_paths_when_source_positions_are_equal(self) -> None:
-        text = replace_once(ROOT_POLICY_TEXT, "version = 1\n", "zeta = true\n")
+        text = replace_once(STARTER_POLICY_TEXT, "version = 1\n", "zeta = true\n")
         diagnostics = self.policy_diagnostics(text)
         self.assertEqual(
             [(item.code, item.field_path) for item in diagnostics[:2]],
