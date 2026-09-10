@@ -12,7 +12,7 @@ from unittest import mock
 
 from release_tools.smoke import smoke
 from release_tools.zipapp_builder import build_zipapp
-from repo_context import __version__
+from raften import __version__
 from tests.support.paths import ROOT
 
 
@@ -37,7 +37,7 @@ class ReleaseZipappTests(unittest.TestCase):
                 self.assertIn("__main__.py", names)
                 self.assertIn("LICENSE", names)
                 self.assertIn("NOTICE", names)
-                self.assertIn("repo_context/cli.py", names)
+                self.assertIn("raften/cli.py", names)
                 self.assertEqual(archive.read("LICENSE"), (ROOT / "LICENSE").read_bytes())
                 self.assertEqual(archive.read("NOTICE"), (ROOT / "NOTICE").read_bytes())
                 self.assertFalse(any("__pycache__" in name for name in names))
@@ -47,7 +47,7 @@ class ReleaseZipappTests(unittest.TestCase):
 
     def test_zipapp_runs_all_public_commands_without_installation(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            artifact = Path(directory) / "repo-context.pyz"
+            artifact = Path(directory) / "raften.pyz"
             build_zipapp(ROOT / "src", artifact, epoch=EPOCH)
             smoke((sys.executable, str(artifact)), expected_version=__version__)
 
@@ -55,10 +55,10 @@ class ReleaseZipappTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             output = root / "artifact.pyz"
-            with self.assertRaisesRegex(ValueError, "does not contain repo_context"):
+            with self.assertRaisesRegex(ValueError, "does not contain raften"):
                 build_zipapp(root, output, epoch=EPOCH)
             source = root / "source" / "src"
-            package = source / "repo_context"
+            package = source / "raften"
             package.mkdir(parents=True)
             (package / "__init__.py").write_text("", encoding="utf-8")
             (source.parent / "NOTICE").write_text("notice\n", encoding="utf-8")
@@ -87,7 +87,7 @@ class ReleaseZipappTests(unittest.TestCase):
 
     def test_zipapp_version_uses_the_authoritative_package_constant(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            artifact = Path(directory) / "repo-context.pyz"
+            artifact = Path(directory) / "raften.pyz"
             build_zipapp(ROOT / "src", artifact, epoch=EPOCH)
             result = subprocess.run(
                 [sys.executable, str(artifact), "--version"],
@@ -100,7 +100,7 @@ class ReleaseZipappTests(unittest.TestCase):
                 timeout=30,
             )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, f"repo-context {__version__}\n")
+        self.assertEqual(result.stdout, f"raften {__version__}\n")
 
 
 if __name__ == "__main__":

@@ -3,8 +3,8 @@ from __future__ import annotations
 import hashlib
 import unittest
 
-from repo_context.config import load_policy
-from repo_context.model import FileKind
+from raften.config import load_policy
+from raften.model import FileKind
 from tests.support.paths import ROOT
 
 
@@ -29,7 +29,7 @@ class PilotPolicyTests(unittest.TestCase):
     def test_pilots_use_configuration_instead_of_engine_special_cases(self) -> None:
         production = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in sorted((ROOT / "src" / "repo_context").glob("*.py"))
+            for path in sorted((ROOT / "src" / "raften").glob("*.py"))
         ).lower()
         self.assertNotIn("scene-maker", production)
         self.assertNotIn("nano-dllm", production)

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from repo_context.config import render_starter_policy
+from raften.config import render_starter_policy
 from tests.support.config import append_exception_record
 from tests.support.repository import RepositoryFixture
 
 
 def install_clean_target(repository: RepositoryFixture) -> None:
-    repository.write_bytes("repo-context.toml", render_starter_policy())
+    repository.write_bytes("raften.toml", render_starter_policy())
     repository.write_text("AGENTS.md", "[Documentation](docs/index.md)\n")
     repository.write_text("README.md", "[Documentation](docs/index.md)\n")
     repository.write_text(
@@ -32,5 +32,5 @@ tracking_reference = "ADR-42"
 created_on = 2026-08-01
 scan = true''',
     )
-    repository.write_text("repo-context.toml", policy)
+    repository.write_text("raften.toml", policy)
     repository.write_text("uv.lock", "runtime configuration fixture\n")

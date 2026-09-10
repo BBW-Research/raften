@@ -6,8 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import repo_context.worktree as worktree_module
-from repo_context.inventory import (
+import raften.worktree as worktree_module
+from raften.inventory import (
     RepositoryAccessError,
     RepositoryHandle,
     inventory_worktree,
@@ -36,7 +36,7 @@ class WorktreeRaceAndSafetyTests(unittest.TestCase):
                     raise FileNotFoundError(path)
                 return original_lstat(path)
 
-            with patch("repo_context.worktree._lstat", side_effect=fail_one):
+            with patch("raften.worktree._lstat", side_effect=fail_one):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     inventory_worktree(open_repository(repository.root))
             self.assertEqual(raised.exception.diagnostics[0].code, "GIT005")
@@ -52,7 +52,7 @@ class WorktreeRaceAndSafetyTests(unittest.TestCase):
                     raise PermissionError(path)
                 return original_lstat(path)
 
-            with patch("repo_context.worktree._lstat", side_effect=fail_one):
+            with patch("raften.worktree._lstat", side_effect=fail_one):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     inventory_worktree(open_repository(repository.root))
             self.assertEqual(raised.exception.diagnostics[0].code, "GIT009")
@@ -64,7 +64,7 @@ class WorktreeRaceAndSafetyTests(unittest.TestCase):
             except OSError as error:
                 self.skipTest(f"symlink creation is unavailable: {error}")
             handle = open_repository(repository.root)
-            with patch("repo_context.worktree.os.readlink", side_effect=PermissionError()):
+            with patch("raften.worktree.os.readlink", side_effect=PermissionError()):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     inventory_worktree(handle)
             diagnostic = raised.exception.diagnostics[0]
@@ -94,7 +94,7 @@ class WorktreeRaceAndSafetyTests(unittest.TestCase):
             repository.commit()
             handle = open_repository(repository.root)
             with patch(
-                "repo_context.worktree._is_junction",
+                "raften.worktree._is_junction",
                 side_effect=lambda path: path.name == "parent",
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:

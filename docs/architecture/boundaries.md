@@ -2,10 +2,10 @@
 
 ## Target package
 
-The target implementation lives under `src/repo_context/`. Keep the package decomposed by policy responsibility rather than by command. The expected shape is:
+The target implementation lives under `src/raften/`. Keep the package decomposed by policy responsibility rather than by command. The expected shape is:
 
 ```text
-src/repo_context/
+src/raften/
 ├── __init__.py
 ├── __main__.py
 ├── cli.py
@@ -94,7 +94,7 @@ The engine accepts an explicit repository path and must work from any current wo
 
 The consuming repository owns:
 
-- `repo-context.toml`.
+- `raften.toml`.
 - Local wrapper scripts and CI invocation.
 - Documentation roots and context sets.
 - Classification rules and intentional exceptions.
@@ -111,7 +111,7 @@ The engine owns:
 
 ## Offline boundary
 
-Runtime checks must not perform network requests. Remote-link validation is outside the core product. Local links, local fragments, repository history, and policy comparisons are in scope. Release tooling may use network access, but release behavior must remain separate from `repo-context check` and `repo-context audit`.
+Runtime checks must not perform network requests. Remote-link validation is outside the core product. Local links, local fragments, repository history, and policy comparisons are in scope. Release tooling may use network access, but release behavior must remain separate from `raften check` and `raften audit`.
 
 ## Source-fixture boundary
 

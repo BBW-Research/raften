@@ -9,7 +9,7 @@ Build the standalone `repo-context` tool in this repository to completion. Start
 Read, in order:
 
 1. `AGENTS.md`
-2. `docs/specs/repo-context.md`
+2. `docs/specs/raften.md`
 3. `docs/architecture/index.md` and its linked documents
 4. `docs/decisions/index.md` and all accepted decisions
 5. `docs/quality/index.md` and its linked documents

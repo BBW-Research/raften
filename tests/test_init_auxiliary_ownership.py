@@ -3,9 +3,9 @@ from __future__ import annotations
 import unittest
 from unittest import mock
 
-import repo_context.initialization as initialization
-import repo_context.init_transaction as transaction
-from repo_context.run_model import CommandFailure
+import raften.initialization as initialization
+import raften.init_transaction as transaction
+from raften.run_model import CommandFailure
 from tests.support.repository import RepositoryFixture
 
 
@@ -14,14 +14,14 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
         attributes = ("temporary_name", "backup_name", "removal_name")
         for attribute in attributes:
             with self.subTest(attribute=attribute), RepositoryFixture() as repository:
-                repository.write_text("repo-context.toml", "old policy\n")
+                repository.write_text("raften.toml", "old policy\n")
                 repository.commit("existing policy")
                 install = transaction._install_artifact
                 replacement_path: str | None = None
 
                 def replace_auxiliary(item, *, force):
                     nonlocal replacement_path
-                    if item.artifact.path == "repo-context.toml":
+                    if item.artifact.path == "raften.toml":
                         replacement_path = getattr(item, attribute)
                         assert replacement_path is not None
                         repository.path(replacement_path).unlink()
@@ -57,14 +57,14 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
                     dict(outcome.diagnostics[0].details)["recovery_paths"],
                 )
                 self.assertEqual(
-                    repository.path("repo-context.toml").read_text(),
+                    repository.path("raften.toml").read_text(),
                     "old policy\n",
                 )
-                self.assertFalse(repository.path("repo-context.debt.json").exists())
+                self.assertFalse(repository.path("raften.debt.json").exists())
 
     def test_forced_activation_preserves_a_temp_replaced_after_preflight(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", "old policy\n")
+            repository.write_text("raften.toml", "old policy\n")
             repository.commit("existing policy")
             require_target = transaction._require_unchanged_force_target
             replacement_path: str | None = None
@@ -90,7 +90,7 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             assert isinstance(outcome, CommandFailure)
             assert replacement_path is not None
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
-            self.assertEqual(repository.path("repo-context.toml").read_text(), "old policy\n")
+            self.assertEqual(repository.path("raften.toml").read_text(), "old policy\n")
             self.assertEqual(
                 repository.path(replacement_path).read_text(),
                 "concurrent temporary\n",
@@ -102,7 +102,7 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
 
     def test_forced_activation_reports_a_backup_replaced_after_preflight(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", "old policy\n")
+            repository.write_text("raften.toml", "old policy\n")
             repository.commit("existing policy")
             require_target = transaction._require_unchanged_force_target
             replacement_path: str | None = None
@@ -129,7 +129,7 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             assert isinstance(outcome, CommandFailure)
             assert replacement_path is not None
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT004",))
-            self.assertEqual(repository.path("repo-context.toml").read_text(), "old policy\n")
+            self.assertEqual(repository.path("raften.toml").read_text(), "old policy\n")
             self.assertEqual(
                 repository.path(replacement_path).read_text(),
                 "concurrent backup\n",
@@ -141,7 +141,7 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
 
     def test_forced_activation_quarantines_a_target_replaced_after_preflight(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", "old policy\n")
+            repository.write_text("raften.toml", "old policy\n")
             repository.commit("existing policy")
             require_target = transaction._require_unchanged_force_target
 
@@ -164,7 +164,7 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
             self.assertEqual(
-                repository.path("repo-context.toml").read_text(),
+                repository.path("raften.toml").read_text(),
                 "concurrent policy\n",
             )
             recovery_paths = dict(outcome.diagnostics[0].details)["recovery_paths"]
@@ -185,7 +185,7 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
 
             def replace_published_target(item):
                 nonlocal raced
-                if item.artifact.path == "repo-context.toml" and not raced:
+                if item.artifact.path == "raften.toml" and not raced:
                     raced = True
                     repository.path(item.artifact.path).unlink()
                     repository.write_text(item.artifact.path, "concurrent policy\n")
@@ -202,7 +202,7 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
             self.assertEqual(
-                repository.path("repo-context.toml").read_text(),
+                repository.path("raften.toml").read_text(),
                 "concurrent policy\n",
             )
             recovery_paths = dict(outcome.diagnostics[0].details)["recovery_paths"]
@@ -212,7 +212,7 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
                 if repository.path(path).is_file()
             }
             self.assertIn("concurrent policy\n", recovery_data)
-            self.assertFalse(repository.path("repo-context.debt.json").exists())
+            self.assertFalse(repository.path("raften.debt.json").exists())
 
     def test_group_commit_rechecks_an_earlier_capture_artifact(self) -> None:
         with RepositoryFixture() as repository:
@@ -221,10 +221,10 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             install = transaction._install_artifact
 
             def replace_sidecar_before_config(item, *, force):
-                if item.artifact.path == "repo-context.toml":
-                    repository.path("repo-context.debt.json").unlink()
+                if item.artifact.path == "raften.toml":
+                    repository.path("raften.debt.json").unlink()
                     repository.write_text(
-                        "repo-context.debt.json",
+                        "raften.debt.json",
                         "concurrent sidecar\n",
                     )
                 return install(item, force=force)
@@ -243,12 +243,12 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
             self.assertEqual(
-                repository.path("repo-context.debt.json").read_text(),
+                repository.path("raften.debt.json").read_text(),
                 "concurrent sidecar\n",
             )
             recovery_paths = dict(outcome.diagnostics[0].details)["recovery_paths"]
             self.assertTrue(any(repository.path(path).exists() for path in recovery_paths))
-            self.assertFalse(repository.path("repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
 
     def test_group_commit_rechecks_config_after_guard_cleanup(self) -> None:
         with RepositoryFixture() as repository:
@@ -257,8 +257,8 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             remove_guard = transaction._remove_absence_guard
 
             def replace_config_before_guard_cleanup(item):
-                repository.path("repo-context.toml").unlink()
-                repository.write_text("repo-context.toml", "concurrent policy\n")
+                repository.path("raften.toml").unlink()
+                repository.write_text("raften.toml", "concurrent policy\n")
                 return remove_guard(item)
 
             with mock.patch.object(
@@ -272,12 +272,12 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
             self.assertEqual(
-                repository.path("repo-context.toml").read_text(),
+                repository.path("raften.toml").read_text(),
                 "concurrent policy\n",
             )
             recovery_paths = dict(outcome.diagnostics[0].details)["recovery_paths"]
             self.assertTrue(any(repository.path(path).exists() for path in recovery_paths))
-            self.assertFalse(repository.path("repo-context.debt.json").exists())
+            self.assertFalse(repository.path("raften.debt.json").exists())
 
     def test_group_commit_rechecks_sidecar_absence_after_guard_cleanup(self) -> None:
         with RepositoryFixture() as repository:
@@ -288,7 +288,7 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             def create_sidecar_after_guard_cleanup(item):
                 remove_guard(item)
                 repository.write_text(
-                    "repo-context.debt.json",
+                    "raften.debt.json",
                     "concurrent sidecar\n",
                 )
 
@@ -304,13 +304,13 @@ class InitializationAuxiliaryOwnershipTests(unittest.TestCase):
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
             self.assertEqual(
                 outcome.diagnostics[0].location.path,
-                "repo-context.debt.json",
+                "raften.debt.json",
             )
             self.assertEqual(
-                repository.path("repo-context.debt.json").read_text(),
+                repository.path("raften.debt.json").read_text(),
                 "concurrent sidecar\n",
             )
-            self.assertFalse(repository.path("repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
 
 
 if __name__ == "__main__":

@@ -4,11 +4,11 @@ import ast
 import unittest
 from pathlib import Path
 
-from repo_context import inventory
+from raften import inventory
 from tests.support.paths import ROOT
 
 
-PACKAGE = ROOT / "src/repo_context"
+PACKAGE = ROOT / "src/raften"
 
 
 def _frozen_seed_references(source: str, filename: str) -> tuple[str, ...]:
@@ -118,12 +118,12 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
                 imported_inventory = (
                     isinstance(node, ast.Import)
                     and any(
-                        alias.name == "repo_context.inventory"
+                        alias.name == "raften.inventory"
                         for alias in node.names
                     )
                 ) or (
                     isinstance(node, ast.ImportFrom)
-                    and node.module == "repo_context.inventory"
+                    and node.module == "raften.inventory"
                 )
                 if imported_inventory:
                     offenders.append(name)
@@ -165,8 +165,8 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
             "os",
             "pathlib",
             "subprocess",
-            "repo_context.inventory",
-            "repo_context.worktree",
+            "raften.inventory",
+            "raften.worktree",
         }
         offenders: list[tuple[str, str]] = []
         for name in ("size_policy.py", "sizes.py"):
@@ -191,8 +191,8 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
             "os",
             "pathlib",
             "subprocess",
-            "repo_context.inventory",
-            "repo_context.worktree",
+            "raften.inventory",
+            "raften.worktree",
         }
         offenders: list[tuple[str, str]] = []
         for name in (
@@ -223,8 +223,8 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
             "os",
             "pathlib",
             "subprocess",
-            "repo_context.inventory",
-            "repo_context.worktree",
+            "raften.inventory",
+            "raften.worktree",
         }
         offenders: list[tuple[str, str]] = []
         for name in (
@@ -253,14 +253,14 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
 
     def test_runner_and_initialization_do_not_depend_on_presentation(self) -> None:
         forbidden_modules = {
-            "repo_context.cli",
-            "repo_context.report",
-            "repo_context.report_common",
-            "repo_context.report_data",
-            "repo_context.report_emergency",
-            "repo_context.report_json",
-            "repo_context.report_sarif",
-            "repo_context.report_text",
+            "raften.cli",
+            "raften.report",
+            "raften.report_common",
+            "raften.report_data",
+            "raften.report_emergency",
+            "raften.report_json",
+            "raften.report_sarif",
+            "raften.report_text",
         }
         offenders: list[tuple[str, str]] = []
         for name in (
@@ -292,11 +292,11 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
             "os",
             "pathlib",
             "subprocess",
-            "repo_context.cli",
-            "repo_context.initialization",
-            "repo_context.inventory",
-            "repo_context.runner",
-            "repo_context.worktree",
+            "raften.cli",
+            "raften.initialization",
+            "raften.inventory",
+            "raften.runner",
+            "raften.worktree",
         }
         offenders: list[tuple[str, str]] = []
         for name in (
@@ -326,9 +326,9 @@ class PhaseTwoArchitectureBoundaryTests(unittest.TestCase):
 
     def test_output_format_modules_do_not_depend_on_each_other(self) -> None:
         modules = {
-            "report_json.py": "repo_context.report_json",
-            "report_sarif.py": "repo_context.report_sarif",
-            "report_text.py": "repo_context.report_text",
+            "report_json.py": "raften.report_json",
+            "report_sarif.py": "raften.report_sarif",
+            "report_text.py": "raften.report_text",
         }
         offenders: list[tuple[str, str]] = []
         for name, own_module in modules.items():

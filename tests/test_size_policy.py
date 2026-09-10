@@ -4,8 +4,8 @@ import unittest
 from dataclasses import replace
 from datetime import date
 
-from repo_context.config import starter_policy
-from repo_context.model import (
+from raften.config import starter_policy
+from raften.model import (
     ExactSelector,
     ExceptionSettings,
     FileKind,
@@ -14,7 +14,7 @@ from repo_context.model import (
     PathOverride,
     PatternSelector,
 )
-from repo_context.sizes import compile_size_policy, resolve_effective_policy
+from raften.sizes import compile_size_policy, resolve_effective_policy
 
 
 class EffectivePolicyTests(unittest.TestCase):

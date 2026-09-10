@@ -6,12 +6,12 @@ from collections import Counter
 from datetime import date
 from unittest import mock
 
-import repo_context.runner as runner
-from repo_context.config import render_starter_policy
-from repo_context.debt import render_debt_manifest
-from repo_context.model import MigrationDebtEntry, MigrationDebtManifest, MigrationStatus
-from repo_context.run_model import CommandFailure, RepositoryRun, RunStatus
-from repo_context.runner import explain_repository_path, run_repository
+import raften.runner as runner
+from raften.config import render_starter_policy
+from raften.debt import render_debt_manifest
+from raften.model import MigrationDebtEntry, MigrationDebtManifest, MigrationStatus
+from raften.run_model import CommandFailure, RepositoryRun, RunStatus
+from raften.runner import explain_repository_path, run_repository
 from tests.support.repository import RepositoryFixture
 from tests.support.config import append_exception_record
 from tests.support.target import install_clean_target, install_runtime_configuration_failure
@@ -29,12 +29,12 @@ class RepositoryRunnerTests(unittest.TestCase):
             entries = {item.path: item for item in snapshot.entries}
             content = runner._ContentCache(
                 handle,
-                frozenset({"repo-context.toml", "repo-context.debt.json"}),
+                frozenset({"raften.toml", "raften.debt.json"}),
             )
-            content.read(entries["repo-context.toml"])
+            content.read(entries["raften.toml"])
             content.read(entries["README.md"])
 
-        self.assertEqual(tuple(content.values), ("repo-context.toml",))
+        self.assertEqual(tuple(content.values), ("raften.toml",))
 
     def test_clean_current_repository_runs_every_engine_from_an_explicit_root(self) -> None:
         with RepositoryFixture() as repository:
@@ -58,7 +58,7 @@ class RepositoryRunnerTests(unittest.TestCase):
         counts = Counter(call.args[1].path for call in read.call_args_list)
         self.assertTrue(counts)
         self.assertEqual(set(counts.values()), {1})
-        self.assertEqual(counts["repo-context.toml"], 1)
+        self.assertEqual(counts["raften.toml"], 1)
 
     def test_base_policy_and_blobs_produce_policy_and_file_ratchet_findings(self) -> None:
         with RepositoryFixture() as repository:
@@ -88,7 +88,7 @@ class RepositoryRunnerTests(unittest.TestCase):
         )
         with RepositoryFixture() as repository:
             install_clean_target(repository)
-            repository.write_bytes("repo-context.toml", padded_policy)
+            repository.write_bytes("raften.toml", padded_policy)
             base = repository.commit("oversized policy")
             with mock.patch.object(
                 runner,
@@ -105,7 +105,7 @@ class RepositoryRunnerTests(unittest.TestCase):
         config_reads = [
             call
             for call in read.call_args_list
-            if call.args[1].path == "repo-context.toml"
+            if call.args[1].path == "raften.toml"
         ]
         self.assertEqual(len(config_reads), 1)
 
@@ -126,7 +126,7 @@ class RepositoryRunnerTests(unittest.TestCase):
                     ),
                 ),
             )
-            repository.write_bytes("repo-context.debt.json", render_debt_manifest(manifest))
+            repository.write_bytes("raften.debt.json", render_debt_manifest(manifest))
             with mock.patch.object(
                 runner,
                 "read_worktree_bytes",
@@ -144,8 +144,8 @@ class RepositoryRunnerTests(unittest.TestCase):
         self.assertEqual(outcome.ratchet.files[0].migration_status, MigrationStatus.DEBT)
         self.assertEqual(outcome.ratchet.baseline_source.value, "manifest")
         counts = Counter(call.args[1].path for call in read.call_args_list)
-        self.assertEqual(counts["repo-context.toml"], 1)
-        self.assertEqual(counts["repo-context.debt.json"], 1)
+        self.assertEqual(counts["raften.toml"], 1)
+        self.assertEqual(counts["raften.debt.json"], 1)
 
     def test_missing_manifest_for_base_without_policy_is_operational_failure(self) -> None:
         with RepositoryFixture() as repository:
@@ -166,9 +166,9 @@ class RepositoryRunnerTests(unittest.TestCase):
     def test_base_policy_symlink_is_not_parsed_as_policy_blob(self) -> None:
         with RepositoryFixture() as repository:
             repository.write_bytes("policy-target.toml", render_starter_policy())
-            repository.symlink("repo-context.toml", "policy-target.toml")
+            repository.symlink("raften.toml", "policy-target.toml")
             base = repository.commit("symlink policy")
-            repository.path("repo-context.toml").unlink()
+            repository.path("raften.toml").unlink()
             install_clean_target(repository)
             outcome = run_repository(
                 repository.root,
@@ -195,7 +195,7 @@ class RepositoryRunnerTests(unittest.TestCase):
             base = repository.commit("before policy")
             install_clean_target(repository)
             repository.write_bytes(
-                "repo-context.toml",
+                "raften.toml",
                 render_starter_policy().replace(
                     b"compare_file_sizes = true",
                     b"compare_file_sizes = false",
@@ -219,16 +219,16 @@ class RepositoryRunnerTests(unittest.TestCase):
     def test_config_need_not_be_git_visible_but_must_be_repo_contained_regular(self) -> None:
         with RepositoryFixture() as repository:
             install_clean_target(repository)
-            repository.ignore("repo-context.toml")
+            repository.ignore("raften.toml")
             outcome = run_repository(repository.root, evaluation_date=TODAY)
 
         self.assertIsInstance(outcome, RepositoryRun)
         assert isinstance(outcome, RepositoryRun)
-        self.assertNotIn("repo-context.toml", {item.path for item in outcome.inventory})
+        self.assertNotIn("raften.toml", {item.path for item in outcome.inventory})
 
     def test_invalid_current_config_is_a_structured_configuration_failure(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_bytes("repo-context.toml", render_starter_policy().replace(b"version = 1", b"version = 2"))
+            repository.write_bytes("raften.toml", render_starter_policy().replace(b"version = 1", b"version = 2"))
             outcome = run_repository(repository.root, evaluation_date=TODAY)
 
         self.assertIsInstance(outcome, CommandFailure)
@@ -299,7 +299,7 @@ created_on = 2026-08-01
 warn_bytes = 30000
 hard_bytes = 40000''',
             )
-            repository.write_text("repo-context.toml", policy)
+            repository.write_text("raften.toml", policy)
             outcome = explain_repository_path(
                 repository.root,
                 "uv.lock",

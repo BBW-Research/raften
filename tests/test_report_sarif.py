@@ -4,10 +4,10 @@ import json
 import unittest
 from datetime import date
 
-from repo_context.model import Diagnostic, OutputFormat, Severity, SourceLocation
-from repo_context.report import render_report
-from repo_context.report_sarif import _result_value
-from repo_context.runner import run_repository
+from raften.model import Diagnostic, OutputFormat, Severity, SourceLocation
+from raften.report import render_report
+from raften.report_sarif import _result_value
+from raften.runner import run_repository
 from tests.support.repository import RepositoryFixture
 from tests.support.target import install_clean_target
 

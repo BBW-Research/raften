@@ -11,7 +11,7 @@ from tests.support.paths import ROOT
 from tests.support.repository import isolated_environment
 
 
-CHILD_MARKER = "REPO_CONTEXT_ARCHIVE_BOOTSTRAP_CHILD"
+CHILD_MARKER = "RAFTEN_ARCHIVE_BOOTSTRAP_CHILD"
 
 
 class ArchiveBootstrapTests(unittest.TestCase):
@@ -19,7 +19,7 @@ class ArchiveBootstrapTests(unittest.TestCase):
         if os.environ.get(CHILD_MARKER) == "1":
             self.skipTest("nested bootstrap recursion is disabled")
 
-        with tempfile.TemporaryDirectory(prefix="repo-context-bootstrap-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="raften-bootstrap-") as temporary:
             subprocess.run(
                 ["git", "-C", temporary, "init", "--quiet"],
                 check=True,
@@ -29,7 +29,7 @@ class ArchiveBootstrapTests(unittest.TestCase):
                 env=isolated_environment(),
                 timeout=30,
             )
-            archive = Path(temporary) / "repo context archive"
+            archive = Path(temporary) / "raften archive"
             shutil.copytree(
                 ROOT,
                 archive,

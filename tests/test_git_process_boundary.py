@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repo_context.inventory import (
+from raften.inventory import (
     RepositoryAccessError,
     RepositoryHandle,
     inventory_worktree,
@@ -40,7 +40,7 @@ class GitBoundaryTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as directory:
             with patch.dict(os.environ, hostile, clear=False):
-                with patch("repo_context.inventory.subprocess.run", return_value=completed) as run:
+                with patch("raften.inventory.subprocess.run", return_value=completed) as run:
                     handle = open_repository(directory)
 
         arguments = run.call_args.args[0]
@@ -126,7 +126,7 @@ class GitBoundaryTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as directory:
             handle = RepositoryHandle(Path(directory).resolve())
-            with patch("repo_context.inventory.subprocess.run", side_effect=outputs) as run:
+            with patch("raften.inventory.subprocess.run", side_effect=outputs) as run:
                 snapshot = inventory_worktree(handle)
         self.assertEqual(snapshot.entries, ())
         commands = [call.args[0][9:] for call in run.call_args_list]
@@ -214,7 +214,7 @@ class GitBoundaryTests(unittest.TestCase):
         failed = subprocess.CompletedProcess([], 9, b"", b"failure")
         with tempfile.TemporaryDirectory() as directory:
             handle = RepositoryHandle(Path(directory))
-            with patch("repo_context.inventory.subprocess.run", return_value=failed):
+            with patch("raften.inventory.subprocess.run", return_value=failed):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     inventory_worktree(handle)
         self.assertEqual(raised.exception.diagnostics[0].code, "GIT002")

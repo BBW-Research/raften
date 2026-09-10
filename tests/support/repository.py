@@ -16,11 +16,11 @@ from tests.support.paths import ROOT, SEED_PATH
 
 FIXED_GIT_ENV = {
     "GIT_AUTHOR_DATE": "2000-01-01T00:00:00+00:00",
-    "GIT_AUTHOR_EMAIL": "repo-context@example.invalid",
-    "GIT_AUTHOR_NAME": "Repo Context Tests",
+    "GIT_AUTHOR_EMAIL": "raften@example.invalid",
+    "GIT_AUTHOR_NAME": "Raften Tests",
     "GIT_COMMITTER_DATE": "2000-01-01T00:00:00+00:00",
-    "GIT_COMMITTER_EMAIL": "repo-context@example.invalid",
-    "GIT_COMMITTER_NAME": "Repo Context Tests",
+    "GIT_COMMITTER_EMAIL": "raften@example.invalid",
+    "GIT_COMMITTER_NAME": "Raften Tests",
     "GIT_ATTR_NOSYSTEM": "1",
     "GIT_CONFIG_COUNT": "0",
     "GIT_CONFIG_GLOBAL": os.devnull,
@@ -82,7 +82,7 @@ class RepositoryFixture:
         object_format: str = "sha1",
     ) -> None:
         self._temporary_directory = tempfile.TemporaryDirectory(
-            prefix="repo-context-fixture-",
+            prefix="raften-fixture-",
         )
         self.root = Path(self._temporary_directory.name)
         if initialize_git:
@@ -90,8 +90,8 @@ class RepositoryFixture:
             if object_format != "sha1":
                 init_arguments.append(f"--object-format={object_format}")
             self.git(*init_arguments)
-            self.git("config", "user.name", "Repo Context Tests")
-            self.git("config", "user.email", "repo-context@example.invalid")
+            self.git("config", "user.name", "Raften Tests")
+            self.git("config", "user.email", "raften@example.invalid")
             self.git("config", "commit.gpgsign", "false")
             self.git("config", "core.autocrlf", "false")
 
@@ -223,7 +223,7 @@ class RepositoryFixture:
             overrides.update(environment_overrides)
         environment = isolated_environment(**overrides)
         return subprocess.run(
-            [sys.executable, "-m", "repo_context", *arguments],
+            [sys.executable, "-m", "raften", *arguments],
             cwd=self.root if cwd is None else cwd,
             check=False,
             stdout=subprocess.PIPE,

@@ -8,8 +8,8 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from repo_context.git_executable import resolve_git_executable
-from repo_context.inventory import (
+from raften.git_executable import resolve_git_executable
+from raften.inventory import (
     RepositoryAccessError,
     list_base_tree,
     open_repository,
@@ -17,7 +17,7 @@ from repo_context.inventory import (
     repository_is_clean,
     resolve_base_revision,
 )
-from repo_context.model import GitFileMode, GitObjectType
+from raften.model import GitFileMode, GitObjectType
 
 
 class ReleaseSourceError(RuntimeError):

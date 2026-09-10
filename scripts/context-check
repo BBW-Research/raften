@@ -5,4 +5,4 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 PYTHONPATH="$ROOT/src"
 export PYTHONPATH
 
-exec python3 -P -m repo_context check --repo "$ROOT" "$@"
+exec python3 -P -m raften check --repo "$ROOT" --config repo-context.toml "$@"

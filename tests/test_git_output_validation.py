@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repo_context.inventory import (
+from raften.inventory import (
     RepositoryAccessError,
     RepositoryHandle,
     decode_git_path,
@@ -15,7 +15,7 @@ from repo_context.inventory import (
     list_base_tree,
     open_repository,
 )
-from repo_context.model import BaseRevision, GitFileMode, GitObjectType
+from raften.model import BaseRevision, GitFileMode, GitObjectType
 from tests.support.repository import RepositoryFixture
 
 
@@ -48,7 +48,7 @@ class GitOutputValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             handle = RepositoryHandle(Path(directory))
             with patch(
-                "repo_context.inventory._run_git",
+                "raften.inventory._run_git",
             return_value=b"H 100644 " + b"a" * 40 + b" 0\tfile.txt",
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:
@@ -103,7 +103,7 @@ class GitOutputValidationTests(unittest.TestCase):
                     side_effect = list(outputs)
                 with tempfile.TemporaryDirectory() as directory:
                     handle = RepositoryHandle(Path(directory))
-                    with patch("repo_context.inventory._run_git", side_effect=side_effect):
+                    with patch("raften.inventory._run_git", side_effect=side_effect):
                         with self.assertRaises(RepositoryAccessError) as raised:
                             inventory_worktree(handle)
                 self.assertEqual(raised.exception.diagnostics[0].code, "GIT003")
@@ -118,7 +118,7 @@ class GitOutputValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             handle = RepositoryHandle(Path(directory))
             revision = BaseRevision("main", "b" * 40)
-            with patch("repo_context.inventory._run_git", return_value=reversed_tree) as run:
+            with patch("raften.inventory._run_git", return_value=reversed_tree) as run:
                 entries = list_base_tree(handle, revision)
             self.assertEqual(tuple(entry.path for entry in entries), ("a.txt", "nested", "z.txt"))
             self.assertEqual(entries[1].mode, GitFileMode.TREE)
@@ -128,7 +128,7 @@ class GitOutputValidationTests(unittest.TestCase):
                 ("ls-tree", "-r", "-t", "-z", "--full-tree", revision.commit_id),
             )
             with patch(
-                "repo_context.inventory._run_git",
+                "raften.inventory._run_git",
                 return_value=reversed_tree[:-1],
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:
@@ -140,7 +140,7 @@ class GitOutputValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             handle = RepositoryHandle(Path(directory))
             with patch(
-                "repo_context.inventory._run_git",
+                "raften.inventory._run_git",
                 side_effect=(record, b"", b""),
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:
@@ -154,7 +154,7 @@ class GitOutputValidationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             handle = RepositoryHandle(Path(directory))
             with patch(
-                "repo_context.inventory._run_git",
+                "raften.inventory._run_git",
                 side_effect=(tracked_z, b"", untracked_a),
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:

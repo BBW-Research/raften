@@ -4,7 +4,7 @@ The standalone tool is release-ready only when every release-blocking item below
 
 ## Repository and configuration
 
-- [x] `repo-context` accepts an explicit repository root and works from any current working directory.
+- [x] `raften` accepts an explicit repository root and works from any current working directory.
 - [x] The v1 TOML parser rejects unknown keys, invalid types, unsafe paths, ambiguous rules, invalid limits, and broad exceptions.
 - [x] Rule and override precedence is documented, deterministic, and covered by tests.
 - [x] Runtime checks make no network requests and do not execute repository content.
@@ -60,8 +60,10 @@ The standalone tool is release-ready only when every release-blocking item below
 
 ## Distribution and pilots
 
-- [x] Wheel and source distribution build in isolation.
-- [x] Installed CLI works in clean environments.
+The completed Phase 8 evidence qualified artifacts under the former distribution name. The two pending items require fresh Raften artifacts across the supported matrix, as required by [decision 0009](../decisions/0009-raften-name.md) and the [release guide](../release/index.md).
+
+- [ ] Raften wheel and source distribution build in isolation from the reviewed release commit.
+- [ ] Installed Raften CLI works in clean environments across the supported release matrix.
 - [x] A vendorable offline distribution path is documented and tested.
 - [x] Migration from the scene-maker JSON policy is documented.
 - [x] `scene-maker`, `nano-dllm`, and `research-vault` have been piloted without adding project-specific engine branches.

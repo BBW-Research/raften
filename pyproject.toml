@@ -3,16 +3,16 @@ requires = ["setuptools==84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "repo-context-policy"
+name = "raften"
 dynamic = ["version"]
-description = "Repository context budgets, documentation reachability, and policy ratchets for coding-agent projects."
+description = "Policy checks for code and documentation in agentic coding projects."
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 license = "MIT"
 license-files = ["LICENSE", "NOTICE"]
 dependencies = []
 authors = [
-  {name = "Repo Context contributors"},
+  {name = "Raften contributors"},
 ]
 keywords = ["coding-agents", "documentation", "policy", "repository", "static-analysis"]
 classifiers = [
@@ -29,7 +29,7 @@ classifiers = [
 ]
 
 [project.scripts]
-repo-context = "repo_context.cli:main"
+raften = "raften.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/BBW-Research/repo-context"
@@ -40,4 +40,4 @@ Repository = "https://github.com/BBW-Research/repo-context"
 where = ["src"]
 
 [tool.setuptools.dynamic]
-version = {attr = "repo_context.__version__"}
+version = {attr = "raften.__version__"}

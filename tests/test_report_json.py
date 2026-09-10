@@ -4,11 +4,11 @@ import json
 import unittest
 from datetime import date
 
-from repo_context.config import render_starter_policy
-from repo_context.model import OutputFormat
-from repo_context.report import command_exit_code, render_report
-from repo_context.run_model import CommandFailure, RepositoryRun
-from repo_context.runner import explain_repository_path, run_repository
+from raften.config import render_starter_policy
+from raften.model import OutputFormat
+from raften.report import command_exit_code, render_report
+from raften.run_model import CommandFailure, RepositoryRun
+from raften.runner import explain_repository_path, run_repository
 from tests.support.config import append_exception_record
 from tests.support.repository import RepositoryFixture
 from tests.support.target import install_clean_target
@@ -33,7 +33,7 @@ class JsonReportTests(unittest.TestCase):
             ("schema_version", "tool", "command", "status", "summary", "diagnostics", "data"),
         )
         self.assertEqual(document["schema_version"], 1)
-        self.assertEqual(document["tool"], {"name": "repo-context", "version": "1.0.0"})
+        self.assertEqual(document["tool"], {"name": "raften", "version": "1.0.0"})
         self.assertEqual(document["command"], "check")
         self.assertEqual(document["status"], "complete")
         self.assertEqual(document["summary"], {"errors": 0, "warnings": 0, "notes": 1})
@@ -118,7 +118,7 @@ paths = ["unrelated.txt"]
 warn_bytes = 1
 hard_bytes = 2
 '''
-            repository.write_text("repo-context.toml", policy)
+            repository.write_text("raften.toml", policy)
             repository.write_bytes("unrelated.txt", b"x" * 30_000)
             outcome = explain_repository_path(
                 repository.root,
@@ -159,7 +159,7 @@ expires_on = 2026-09-01
 warn_bytes = 9000
 hard_bytes = 10000''',
             )
-            repository.write_text("repo-context.toml", policy)
+            repository.write_text("raften.toml", policy)
             outcome = explain_repository_path(
                 repository.root,
                 "ARCHITECTURE.md",

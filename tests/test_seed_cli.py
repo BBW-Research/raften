@@ -195,7 +195,7 @@ class RepositoryFixtureContractTests(unittest.TestCase):
         with RepositoryFixture() as repository:
             result = repository.run_target("--help")
         self.assertEqual(result.returncode, 0)
-        self.assertIn("repo-context", result.stdout)
+        self.assertIn("raften", result.stdout)
         self.assertEqual(result.stderr, "")
 
 

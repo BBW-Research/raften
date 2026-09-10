@@ -23,13 +23,13 @@ class ReleaseArtifactTests(unittest.TestCase):
     def test_verifier_accepts_minimal_safe_release_archives(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
-            self._wheel(output / "repo_context_policy-1.0.0-py3-none-any.whl")
-            self._sdist(output / "repo_context_policy-1.0.0.tar.gz")
-            build_zipapp(ROOT / "src", output / "repo-context-1.0.0.pyz", epoch=1_788_220_800)
+            self._wheel(output / "raften-1.0.0-py3-none-any.whl")
+            self._sdist(output / "raften-1.0.0.tar.gz")
+            build_zipapp(ROOT / "src", output / "raften-1.0.0.pyz", epoch=1_788_220_800)
 
             artifacts = verify_artifacts(
                 output,
-                expected_name="repo-context-policy",
+                expected_name="raften",
                 expected_version="1.0.0",
             )
             checksums = write_checksums(output, artifacts)
@@ -84,27 +84,27 @@ class ReleaseArtifactTests(unittest.TestCase):
     def test_verifier_rejects_unsafe_archive_members(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
-            self._wheel(output / "repo_context_policy-1.0.0-py3-none-any.whl", unsafe=True)
-            self._sdist(output / "repo_context_policy-1.0.0.tar.gz")
-            build_zipapp(ROOT / "src", output / "repo-context-1.0.0.pyz", epoch=1_788_220_800)
+            self._wheel(output / "raften-1.0.0-py3-none-any.whl", unsafe=True)
+            self._sdist(output / "raften-1.0.0.tar.gz")
+            build_zipapp(ROOT / "src", output / "raften-1.0.0.pyz", epoch=1_788_220_800)
             with self.assertRaisesRegex(ValueError, "unsafe archive member"):
                 verify_artifacts(
                     output,
-                    expected_name="repo-context-policy",
+                    expected_name="raften",
                     expected_version="1.0.0",
                 )
 
     def test_verifier_rejects_unrelated_artifact_directory_files(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
-            self._wheel(output / "repo_context_policy-1.0.0-py3-none-any.whl")
-            self._sdist(output / "repo_context_policy-1.0.0.tar.gz")
-            build_zipapp(ROOT / "src", output / "repo-context-1.0.0.pyz", epoch=1_788_220_800)
+            self._wheel(output / "raften-1.0.0-py3-none-any.whl")
+            self._sdist(output / "raften-1.0.0.tar.gz")
+            build_zipapp(ROOT / "src", output / "raften-1.0.0.pyz", epoch=1_788_220_800)
             (output / "unreviewed.bin").write_bytes(b"unexpected")
             with self.assertRaisesRegex(ValueError, "unexpected files"):
                 verify_artifacts(
                     output,
-                    expected_name="repo-context-policy",
+                    expected_name="raften",
                     expected_version="1.0.0",
                 )
 
@@ -112,15 +112,15 @@ class ReleaseArtifactTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
             self._wheel(
-                output / "repo_context_policy-1.0.0-py3-none-any.whl",
+                output / "raften-1.0.0-py3-none-any.whl",
                 include_project_license=False,
             )
-            self._sdist(output / "repo_context_policy-1.0.0.tar.gz")
-            build_zipapp(ROOT / "src", output / "repo-context-1.0.0.pyz", epoch=1_788_220_800)
+            self._sdist(output / "raften-1.0.0.tar.gz")
+            build_zipapp(ROOT / "src", output / "raften-1.0.0.pyz", epoch=1_788_220_800)
             with self.assertRaisesRegex(ValueError, "missing the project license"):
                 verify_artifacts(
                     output,
-                    expected_name="repo-context-policy",
+                    expected_name="raften",
                     expected_version="1.0.0",
                 )
 
@@ -154,7 +154,7 @@ class ReleaseArtifactTests(unittest.TestCase):
         include_project_license: bool = True,
     ) -> None:
         metadata = """Metadata-Version: 2.4
-Name: repo-context-policy
+Name: raften
 Version: 1.0.0
 Requires-Python: <3.14,>=3.12
 License-Expression: MIT
@@ -169,37 +169,37 @@ Classifier: Programming Language :: Python :: Implementation :: CPython
 fixture
 """
         with zipfile.ZipFile(path, "w") as archive:
-            archive.writestr("repo_context/__init__.py", "")
-            archive.writestr("repo_context/cli.py", "")
-            archive.writestr("repo_context_policy-1.0.0.dist-info/METADATA", metadata)
+            archive.writestr("raften/__init__.py", "")
+            archive.writestr("raften/cli.py", "")
+            archive.writestr("raften-1.0.0.dist-info/METADATA", metadata)
             archive.writestr(
-                "repo_context_policy-1.0.0.dist-info/entry_points.txt",
-                "[console_scripts]\nrepo-context = repo_context.cli:main\n",
+                "raften-1.0.0.dist-info/entry_points.txt",
+                "[console_scripts]\nraften = raften.cli:main\n",
             )
             archive.writestr(
-                "repo_context_policy-1.0.0.dist-info/WHEEL",
+                "raften-1.0.0.dist-info/WHEEL",
                 "Wheel-Version: 1.0\nTag: py3-none-any\n",
             )
-            archive.writestr("repo_context_policy-1.0.0.dist-info/RECORD", "")
+            archive.writestr("raften-1.0.0.dist-info/RECORD", "")
             if include_project_license:
                 archive.writestr(
-                    "repo_context_policy-1.0.0.dist-info/licenses/LICENSE",
+                    "raften-1.0.0.dist-info/licenses/LICENSE",
                     "license\n",
                 )
-            archive.writestr("repo_context_policy-1.0.0.dist-info/licenses/NOTICE", "notice\n")
+            archive.writestr("raften-1.0.0.dist-info/licenses/NOTICE", "notice\n")
             if unsafe:
                 archive.writestr("../escape", "x")
 
     def _sdist(self, path: Path) -> None:
-        root = "repo_context_policy-1.0.0"
+        root = "raften-1.0.0"
         files = {
             f"{root}/CHANGELOG.md": b"# Changelog\n",
             f"{root}/LICENSE": b"license\n",
             f"{root}/README.md": b"# fixture\n",
             f"{root}/NOTICE": b"notice\n",
-            f"{root}/pyproject.toml": b"[project]\nname='repo-context-policy'\n",
-            f"{root}/src/repo_context/__init__.py": b"",
-            f"{root}/src/repo_context/cli.py": b"",
+            f"{root}/pyproject.toml": b"[project]\nname='raften'\n",
+            f"{root}/src/raften/__init__.py": b"",
+            f"{root}/src/raften/cli.py": b"",
         }
         with tarfile.open(path, "w:gz") as archive:
             for name, data in files.items():

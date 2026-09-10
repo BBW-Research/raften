@@ -7,13 +7,13 @@ from datetime import date
 from pathlib import Path
 from unittest import mock
 
-from repo_context.config import (
+from raften.config import (
     load_policy,
     parse_policy,
     render_starter_policy,
     starter_policy,
 )
-from repo_context.model import (
+from raften.model import (
     ContextSet,
     DocumentationSettings,
     Entrypoint,
@@ -60,7 +60,7 @@ class ValidConfigurationTests(unittest.TestCase):
                         "**/uv.lock",
                         "package-lock.json",
                         "**/package-lock.json",
-                        "repo-context.debt.json",
+                        "raften.debt.json",
                     ),
                     kind=FileKind.GENERATED,
                     scan=False,
@@ -247,7 +247,7 @@ hard_bytes = 200
 
     def test_loading_policy_does_not_scan_or_invoke_git(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "repo-context.toml"
+            path = Path(directory) / "raften.toml"
             path.write_bytes(STARTER_POLICY_BYTES)
             with (
                 mock.patch.object(subprocess, "run", side_effect=AssertionError("Git invoked")),

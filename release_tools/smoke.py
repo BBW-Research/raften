@@ -17,12 +17,12 @@ class SmokeFailure(RuntimeError):
 def smoke(command: Sequence[str], *, expected_version: str) -> None:
     if not command:
         raise ValueError("distribution smoke command may not be empty")
-    with tempfile.TemporaryDirectory(prefix="repo-context-distribution-") as directory:
+    with tempfile.TemporaryDirectory(prefix="raften-distribution-") as directory:
         workspace = Path(directory)
         repository = workspace / "repository"
         environment = _environment()
         version = _run(command, "--version", environment=environment, cwd=workspace)
-        expected = f"repo-context {expected_version}\n"
+        expected = f"raften {expected_version}\n"
         if version.stdout != expected:
             raise SmokeFailure(f"unexpected version output: {version.stdout!r}")
         _install_repository(repository, environment)
@@ -34,9 +34,9 @@ def smoke(command: Sequence[str], *, expected_version: str) -> None:
             environment=environment,
             cwd=workspace,
         )
-        if 'Wrote "repo-context.toml".' not in initialized.stdout:
+        if 'Wrote "raften.toml".' not in initialized.stdout:
             raise SmokeFailure(f"init did not report activation: {initialized.stdout!r}")
-        _git(repository, environment, "add", "repo-context.toml")
+        _git(repository, environment, "add", "raften.toml")
         _git(repository, environment, "commit", "-m", "adopt policy")
 
         checked = _run(
@@ -113,7 +113,7 @@ def _run(
 def _install_repository(repository: Path, environment: dict[str, str]) -> None:
     repository.mkdir()
     _git(repository, environment, "init", "--quiet")
-    _git(repository, environment, "config", "user.name", "Repo Context Release")
+    _git(repository, environment, "config", "user.name", "Raften Release")
     _git(repository, environment, "config", "user.email", "release@example.invalid")
     files = {
         "AGENTS.md": "[Documentation](docs/index.md)\n",

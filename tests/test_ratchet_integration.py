@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import unittest
 
-from repo_context.config import load_policy, parse_policy
-from repo_context.debt import capture_debt_manifest
-from repo_context.diagnostics import (
+from raften.config import load_policy, parse_policy
+from raften.debt import capture_debt_manifest
+from raften.diagnostics import (
     GIT_BASE_REVISION,
     RAT_FILE_LIMIT_INCREASED,
     RAT_NEW_OVERSIZE,
     RAT_SIZE_REGRESSION,
 )
-from repo_context.git_records import find_base_entry
-from repo_context.inventory import (
+from raften.git_records import find_base_entry
+from raften.inventory import (
     RepositoryAccessError,
     inventory_worktree,
     list_base_tree,
@@ -20,11 +20,11 @@ from repo_context.inventory import (
     read_worktree_bytes,
     resolve_base_revision,
 )
-from repo_context.model import MigrationStatus
-from repo_context.model import GitFileMode
-from repo_context.policy_ratchet import compare_policies
-from repo_context.ratchet import evaluate_file_ratchet
-from repo_context.sizes import compile_size_policy, evaluate_sizes
+from raften.model import MigrationStatus
+from raften.model import GitFileMode
+from raften.policy_ratchet import compare_policies
+from raften.ratchet import evaluate_file_ratchet
+from raften.sizes import compile_size_policy, evaluate_sizes
 from tests.support.config import STARTER_POLICY_TEXT, replace_once
 from tests.support.repository import RepositoryFixture, seed_policy
 from tests.support.seed import ROOT, SEED
@@ -42,7 +42,7 @@ def _policy_text() -> str:
         "\n[documentation]\n",
         """
 [[path_override]]
-path = "repo-context.toml"
+path = "raften.toml"
 warn_bytes = 4096
 hard_bytes = 8192
 
@@ -52,7 +52,7 @@ hard_bytes = 8192
 
 
 def _evaluate(repository: RepositoryFixture):
-    policy = parse_policy(repository.path("repo-context.toml").read_bytes())
+    policy = parse_policy(repository.path("raften.toml").read_bytes())
     handle = open_repository(repository.root)
     snapshot = inventory_worktree(handle)
     sizes = evaluate_sizes(
@@ -64,13 +64,13 @@ def _evaluate(repository: RepositoryFixture):
     return handle, policy, snapshot, sizes
 
 
-def _base_policy(handle, tree, commit_id: str):
-    entry = find_base_entry(tree, "repo-context.toml")
+def _base_policy(handle, tree, commit_id: str, *, config_path: str = "raften.toml"):
+    entry = find_base_entry(tree, config_path)
     if entry is None:
         raise AssertionError("fixture base policy is missing")
     return parse_policy(
         read_base_blob(handle, entry),
-        source_path=f"{commit_id}:repo-context.toml",
+        source_path=f"{commit_id}:{config_path}",
     )
 
 
@@ -90,7 +90,7 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
         except RepositoryAccessError as error:
             self.skipTest(f"repository archive has no committed baseline: {error}")
         tree = list_base_tree(handle, revision)
-        base_policy = _base_policy(handle, tree, revision.commit_id)
+        base_policy = _base_policy(handle, tree, revision.commit_id, config_path="repo-context.toml")
         files = evaluate_file_ratchet(
             current_policy,
             sizes.files,
@@ -105,14 +105,14 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
 
     def test_policy_weakening_is_read_from_the_exact_base_blob_without_current_violations(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", STARTER_POLICY_TEXT)
+            repository.write_text("raften.toml", STARTER_POLICY_TEXT)
             repository.write_text("AGENTS.md", "x\n")
             repository.write_text("ARCHITECTURE.md", "x\n")
             repository.write_text("docs/index.md", "# Docs\n")
             repository.write_text("small.txt", "small")
             base_commit = repository.commit("base policy")
             repository.write_text(
-                "repo-context.toml",
+                "raften.toml",
                 replace_once(STARTER_POLICY_TEXT, "hard_bytes = 25600", "hard_bytes = 26000"),
             )
             status_before = repository.status_bytes()
@@ -129,7 +129,7 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
 
     def test_git_blob_comparison_locks_in_each_partial_reduction_without_mutation(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", _policy_text())
+            repository.write_text("raften.toml", _policy_text())
             repository.write_bytes("legacy.txt", b"a" * 100)
             base_commit = repository.commit("legacy debt")
             repository.write_bytes("legacy.txt", b"b" * 60)
@@ -184,7 +184,7 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
         with RepositoryFixture() as repository:
             repository.write_bytes("legacy.txt", b"a" * 100)
             base_commit = repository.commit("pre-adoption")
-            repository.write_text("repo-context.toml", _policy_text())
+            repository.write_text("raften.toml", _policy_text())
             _handle, current_policy, _snapshot, captured = _evaluate(repository)
             manifest = capture_debt_manifest(captured.files)
             repository.write_bytes("legacy.txt", b"b" * 60)
@@ -200,14 +200,14 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
             )
             status_after = repository.status_bytes()
 
-        self.assertIsNone(find_base_entry(tree, "repo-context.toml"))
+        self.assertIsNone(find_base_entry(tree, "raften.toml"))
         self.assertEqual(status_after, status_before)
         self.assertEqual(result.diagnostics, ())
         self.assertEqual(result.files[0].migration_status, MigrationStatus.DEBT)
 
     def test_clean_base_cannot_gain_its_first_oversized_authored_file(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", _policy_text())
+            repository.write_text("raften.toml", _policy_text())
             repository.write_text("small.txt", "small")
             base_commit = repository.commit("clean base")
             repository.write_bytes("new.txt", b"n" * 51)
@@ -229,7 +229,7 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
     def test_staged_and_unstaged_renames_are_delete_plus_add_even_for_the_same_blob(self) -> None:
         for staged in (False, True):
             with self.subTest(staged=staged), RepositoryFixture() as repository:
-                repository.write_text("repo-context.toml", _policy_text())
+                repository.write_text("raften.toml", _policy_text())
                 repository.write_bytes("old.txt", b"x" * 60)
                 base_commit = repository.commit("old path")
                 repository.rename("old.txt", "new.txt")
@@ -254,7 +254,7 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
 
     def test_base_directory_replaced_by_oversized_file_is_a_type_change(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", _policy_text())
+            repository.write_text("raften.toml", _policy_text())
             repository.write_text("legacy.txt/child.txt", "base child\n")
             base_commit = repository.commit("base directory")
             repository.delete("legacy.txt/child.txt")
@@ -282,7 +282,7 @@ class RatchetRepositoryIntegrationTests(unittest.TestCase):
 
     def test_missing_or_shallow_unavailable_ref_is_an_operational_git_error(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", _policy_text())
+            repository.write_text("raften.toml", _policy_text())
             repository.commit("base")
             status_before = repository.status_bytes()
             handle = open_repository(repository.root)

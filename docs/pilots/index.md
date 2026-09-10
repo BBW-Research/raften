@@ -24,7 +24,7 @@ The reproducible input identities are:
 | nano-dllm | `02d2f8287e86543875ba0a962d0fde3eb4404f602e6afb0de4e2734a851d62f2` | `f7e6167f4e5e153bda0c1f06671d993faeea24fe142b33d03783e2c4554238e3` | 18,685 | `d4a4c3fccc1d20df1eade6bfbc589fb7819eb26dc4444b6fd1cbf3d1c05c1005` |
 | research-vault | `3fddfed64f1fc23c5090eb5d1a07f504bdc731151b25647963a6a7132315ba51` | `fb51fca9faa2106343f79d62e853ce6bc6e42af5ed7dc11cbc2fe3d415bc7e43` | 20,617 | `7e25d0844f7a0e86af6060f06f635395e796e22bdf7ab832cd0ba39833663d10` |
 
-Debt sidecars are not checked into this repository because they are exact, commit-specific generated adoption state and Scene Maker's copy exceeds this repository's fixture ceiling. Reproduce them by checking out the source commit and running the release artifact's `init --capture-debt` while the clone is still clean. Then apply the stored proposed index where applicable and replace the starter TOML with the stored policy before running checks against `HEAD`. The hashes above make any regeneration drift visible.
+Debt sidecars are generated, commit-specific adoption state; Scene Maker's exceeds the fixture ceiling. To reproduce them, check out the recorded source commit and run `raften init --capture-debt --config repo-context.toml` while clean. Apply any stored index, replace the starter with the stored policy, and check against `HEAD`. Keep `--config repo-context.toml` for all commands to preserve the original paths. The hashes above detect regeneration drift.
 
 ## Documentation adoption findings
 

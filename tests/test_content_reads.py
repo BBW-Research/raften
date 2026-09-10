@@ -7,14 +7,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import repo_context.worktree as worktree_module
-from repo_context.inventory import (
+import raften.worktree as worktree_module
+from raften.inventory import (
     RepositoryAccessError,
     inventory_worktree,
     open_repository,
     read_worktree_bytes,
 )
-from repo_context.model import InventoryEntry, InventorySource, WorktreeKind
+from raften.model import InventoryEntry, InventorySource, WorktreeKind
 from tests.support.repository import RepositoryFixture
 
 
@@ -93,7 +93,7 @@ class SnapshotContentReadTests(unittest.TestCase):
                 return original_read(descriptor, expected_size)
 
             with patch(
-                "repo_context.worktree._read_descriptor",
+                "raften.worktree._read_descriptor",
                 side_effect=mutate_then_read,
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:
@@ -114,7 +114,7 @@ class SnapshotContentReadTests(unittest.TestCase):
                 return data
 
             with patch(
-                "repo_context.worktree._read_descriptor",
+                "raften.worktree._read_descriptor",
                 side_effect=read_then_replace,
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:
@@ -126,7 +126,7 @@ class SnapshotContentReadTests(unittest.TestCase):
             target = repository.write_bytes("safe.txt", b"inside\n")
             repository.commit()
             handle, entries = entries_by_path(repository)
-            with tempfile.TemporaryDirectory(prefix="repo-context-external-") as external:
+            with tempfile.TemporaryDirectory(prefix="raften-external-") as external:
                 secret = Path(external, "secret.txt")
                 secret.write_bytes(b"outside-secret\n")
                 target.unlink()
@@ -156,7 +156,7 @@ class SnapshotContentReadTests(unittest.TestCase):
                     os.mkfifo(target)
 
             with patch(
-                "repo_context.worktree._require_current_identity",
+                "raften.worktree._require_current_identity",
                 side_effect=replace_after_check,
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:
@@ -176,7 +176,7 @@ class SnapshotContentReadTests(unittest.TestCase):
                 raise OSError(unusual_errno, "unsupported leaf type")
 
             with patch(
-                "repo_context.worktree._open_snapshot_file",
+                "raften.worktree._open_snapshot_file",
                 side_effect=replace_then_fail,
             ):
                 with self.assertRaises(RepositoryAccessError) as raised:
@@ -189,7 +189,7 @@ class SnapshotContentReadTests(unittest.TestCase):
             repository.commit()
             handle, entries = entries_by_path(repository)
             repository.path("parent").rename(repository.path("original-parent"))
-            with tempfile.TemporaryDirectory(prefix="repo-context-external-") as external:
+            with tempfile.TemporaryDirectory(prefix="raften-external-") as external:
                 Path(external, "file.txt").write_bytes(b"outside-secret\n")
                 try:
                     repository.path("parent").symlink_to(external, target_is_directory=True)
@@ -205,7 +205,7 @@ class SnapshotContentReadTests(unittest.TestCase):
             repository.commit()
             handle, entries = entries_by_path(repository)
             failure = PermissionError(errno.EACCES, "blocked")
-            with patch("repo_context.worktree._open_snapshot_file", side_effect=failure):
+            with patch("raften.worktree._open_snapshot_file", side_effect=failure):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     read_worktree_bytes(handle, entries["blocked.txt"])
             diagnostic = raised.exception.diagnostics[0]

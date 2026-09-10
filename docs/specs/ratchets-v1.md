@@ -47,7 +47,7 @@ The base policy is read as exact blob bytes and parsed with a source label conta
 
 ## First-adoption manifest
 
-For a canonical config path, the sidecar replaces a final `.toml` suffix with `.debt.json`; the default is `repo-context.debt.json`. `init --capture-debt` captures only current candidate paths. It never writes a pattern, classification rule, exception, or exclusion.
+For a canonical config path, the sidecar replaces a final `.toml` suffix with `.debt.json`; the default is `raften.debt.json`. `init --capture-debt` captures only current candidate paths. It never writes a pattern, classification rule, exception, or exclusion.
 
 The sidecar is strict UTF-8 JSON with this exact logical schema:
 

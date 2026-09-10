@@ -3,20 +3,20 @@ from __future__ import annotations
 import tomllib
 import unittest
 
-from repo_context import __version__
+from raften import __version__
 from tests.support.paths import ROOT
 
 
 class PackageMetadataTests(unittest.TestCase):
-    def test_metadata_preserves_distinct_distribution_cli_and_import_names(self) -> None:
+    def test_metadata_uses_raften_for_distribution_cli_and_import(self) -> None:
         metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
         project = metadata["project"]
-        self.assertEqual(project["name"], "repo-context-policy")
+        self.assertEqual(project["name"], "raften")
         self.assertEqual(project["dynamic"], ["version"])
         self.assertEqual(project["license"], "MIT")
         self.assertEqual(project["license-files"], ["LICENSE", "NOTICE"])
-        self.assertEqual(metadata["project"]["scripts"], {"repo-context": "repo_context.cli:main"})
-        self.assertEqual(metadata["tool"]["setuptools"]["dynamic"]["version"]["attr"], "repo_context.__version__")
+        self.assertEqual(metadata["project"]["scripts"], {"raften": "raften.cli:main"})
+        self.assertEqual(metadata["tool"]["setuptools"]["dynamic"]["version"]["attr"], "raften.__version__")
         self.assertEqual(__version__, "1.0.0")
 
     def test_metadata_uses_the_canonical_repository_identity(self) -> None:

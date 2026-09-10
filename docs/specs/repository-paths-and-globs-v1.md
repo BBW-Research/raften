@@ -1,6 +1,6 @@
 # Version 1 repository paths and globs
 
-This document is the authoritative matching contract for version 1. `repo_context.matcher` owns compilation and interpretation; no other production module may call `fnmatch`, `glob`, `Path.match`, or implement a second pattern language.
+This document is the authoritative matching contract for version 1. `raften.matcher` owns compilation and interpretation; no other production module may call `fnmatch`, `glob`, `Path.match`, or implement a second pattern language.
 
 ## Canonical repository paths
 

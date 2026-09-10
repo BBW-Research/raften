@@ -7,11 +7,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import repo_context.initialization as initialization
-import repo_context.init_transaction as transaction
-from repo_context.config import load_policy, render_starter_policy
-from repo_context.debt import parse_debt_manifest
-from repo_context.run_model import CommandFailure, InitResult, RunStatus
+import raften.initialization as initialization
+import raften.init_transaction as transaction
+from raften.config import load_policy, render_starter_policy
+from raften.debt import parse_debt_manifest
+from raften.run_model import CommandFailure, InitResult, RunStatus
 from tests.support.repository import RepositoryFixture
 
 
@@ -24,10 +24,10 @@ class InitializationTests(unittest.TestCase):
 
             self.assertIsInstance(outcome, InitResult)
             assert isinstance(outcome, InitResult)
-            self.assertEqual(outcome.written_paths, ("repo-context.toml",))
-            self.assertEqual(repository.path("repo-context.toml").read_bytes(), render_starter_policy())
+            self.assertEqual(outcome.written_paths, ("raften.toml",))
+            self.assertEqual(repository.path("raften.toml").read_bytes(), render_starter_policy())
             self.assertEqual(repository.path("source.txt").read_text(encoding="utf-8"), "source\n")
-            self.assertFalse(repository.path("repo-context.debt.json").exists())
+            self.assertFalse(repository.path("raften.debt.json").exists())
 
     def test_dirty_repository_is_refused_before_any_write(self) -> None:
         with RepositoryFixture() as repository:
@@ -38,7 +38,7 @@ class InitializationTests(unittest.TestCase):
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(outcome.status, RunStatus.OPERATIONAL_ERROR)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT001",))
-            self.assertFalse(repository.path("repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
 
     def test_oversized_authored_file_requires_explicit_debt_capture(self) -> None:
         with RepositoryFixture() as repository:
@@ -50,7 +50,7 @@ class InitializationTests(unittest.TestCase):
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT003",))
             self.assertEqual(outcome.diagnostics[0].location.path, "legacy.txt")
-            self.assertFalse(repository.path("repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
 
     def test_capture_writes_exact_debt_and_an_empty_capture_is_still_versioned(self) -> None:
         for payloads, expected_paths in (
@@ -70,9 +70,9 @@ class InitializationTests(unittest.TestCase):
                 assert isinstance(outcome, InitResult)
                 self.assertEqual(
                     outcome.written_paths,
-                    ("repo-context.debt.json", "repo-context.toml"),
+                    ("raften.debt.json", "raften.toml"),
                 )
-                parsed = parse_debt_manifest(repository.path("repo-context.debt.json").read_bytes())
+                parsed = parse_debt_manifest(repository.path("raften.debt.json").read_bytes())
                 self.assertEqual(tuple(item.path for item in parsed.entries), expected_paths)
 
     def test_custom_config_classifies_its_exact_debt_sidecar(self) -> None:
@@ -96,8 +96,8 @@ class InitializationTests(unittest.TestCase):
 
     def test_existing_destinations_require_force_and_force_replaces_regular_files(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", "old policy\n")
-            repository.write_text("repo-context.debt.json", '{"old": true}\n')
+            repository.write_text("raften.toml", "old policy\n")
+            repository.write_text("raften.debt.json", '{"old": true}\n')
             repository.commit("old initialization")
 
             refused = initialization.initialize_repository(
@@ -107,7 +107,7 @@ class InitializationTests(unittest.TestCase):
             self.assertIsInstance(refused, CommandFailure)
             assert isinstance(refused, CommandFailure)
             self.assertEqual(tuple(item.code for item in refused.diagnostics), ("INIT002",))
-            self.assertEqual(repository.path("repo-context.toml").read_text(), "old policy\n")
+            self.assertEqual(repository.path("raften.toml").read_text(), "old policy\n")
 
             replaced = initialization.initialize_repository(
                 repository.root,
@@ -115,24 +115,24 @@ class InitializationTests(unittest.TestCase):
                 force=True,
             )
             self.assertIsInstance(replaced, InitResult)
-            self.assertEqual(repository.path("repo-context.toml").read_bytes(), render_starter_policy())
-            self.assertEqual(parse_debt_manifest(repository.path("repo-context.debt.json").read_bytes()).entries, ())
+            self.assertEqual(repository.path("raften.toml").read_bytes(), render_starter_policy())
+            self.assertEqual(parse_debt_manifest(repository.path("raften.debt.json").read_bytes()).entries, ())
 
     def test_stale_manifest_is_never_silently_left_without_capture(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.debt.json", "stale\n")
+            repository.write_text("raften.debt.json", "stale\n")
             repository.commit("stale sidecar")
             outcome = initialization.initialize_repository(repository.root, force=True)
 
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
-            self.assertFalse(repository.path("repo-context.toml").exists())
-            self.assertEqual(repository.path("repo-context.debt.json").read_text(), "stale\n")
+            self.assertFalse(repository.path("raften.toml").exists())
+            self.assertEqual(repository.path("raften.debt.json").read_text(), "stale\n")
 
     def test_ignored_sidecar_race_is_atomically_refused_before_config_activation(self) -> None:
         with RepositoryFixture() as repository:
-            repository.ignore("repo-context.debt.json")
+            repository.ignore("raften.debt.json")
             repository.commit("ignore sidecar")
             write_artifacts = initialization._write_artifacts
 
@@ -144,7 +144,7 @@ class InitializationTests(unittest.TestCase):
                 force,
                 absence_guards=(),
             ):
-                repository.write_text("repo-context.debt.json", "racing stale sidecar\n")
+                repository.write_text("raften.debt.json", "racing stale sidecar\n")
                 return write_artifacts(
                     root,
                     artifacts,
@@ -163,22 +163,22 @@ class InitializationTests(unittest.TestCase):
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
-            self.assertFalse(repository.path("repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
             self.assertEqual(
-                repository.path("repo-context.debt.json").read_text(),
+                repository.path("raften.debt.json").read_text(),
                 "racing stale sidecar\n",
             )
 
     def test_post_preflight_destination_collisions_are_path_scoped(self) -> None:
         cases = (
-            (False, "repo-context.debt.json"),
-            (True, "repo-context.toml"),
+            (False, "raften.debt.json"),
+            (True, "raften.toml"),
         )
         for capture_debt, raced_path in cases:
             with self.subTest(capture_debt=capture_debt), RepositoryFixture() as repository:
                 repository.write_text("source.txt", "source\n")
                 if not capture_debt:
-                    repository.ignore("repo-context.debt.json")
+                    repository.ignore("raften.debt.json")
                 repository.commit("collision fixture")
                 install = transaction._install_artifact
                 raced = False
@@ -207,8 +207,8 @@ class InitializationTests(unittest.TestCase):
                 self.assertEqual(repository.path(raced_path).read_text(), "concurrent owner data\n")
 
     def test_replaced_absence_guard_is_preserved_and_rolls_back_config(self) -> None:
-        config_path = "nested/repo-context.toml"
-        sidecar_path = "nested/repo-context.debt.json"
+        config_path = "nested/raften.toml"
+        sidecar_path = "nested/raften.debt.json"
         with RepositoryFixture() as repository:
             repository.write_text("nested/source.txt", "source\n")
             repository.ignore(sidecar_path)
@@ -253,14 +253,14 @@ class InitializationTests(unittest.TestCase):
     def test_symlink_destination_and_missing_parent_are_refused(self) -> None:
         with RepositoryFixture() as repository:
             repository.write_text("protected.txt", "protected\n")
-            repository.symlink("repo-context.toml", "protected.txt")
+            repository.symlink("raften.toml", "protected.txt")
             repository.commit("symlink destination")
             symlink = initialization.initialize_repository(repository.root, force=True)
 
             self.assertIsInstance(symlink, CommandFailure)
             assert isinstance(symlink, CommandFailure)
             self.assertEqual(tuple(item.code for item in symlink.diagnostics), ("INIT002",))
-            self.assertTrue(repository.path("repo-context.toml").is_symlink())
+            self.assertTrue(repository.path("raften.toml").is_symlink())
             self.assertEqual(repository.path("protected.txt").read_text(), "protected\n")
 
         with RepositoryFixture() as repository:
@@ -268,7 +268,7 @@ class InitializationTests(unittest.TestCase):
             repository.commit("source")
             missing_parent = initialization.initialize_repository(
                 repository.root,
-                config_path="missing/repo-context.toml",
+                config_path="missing/raften.toml",
             )
 
             self.assertIsInstance(missing_parent, CommandFailure)
@@ -282,13 +282,13 @@ class InitializationTests(unittest.TestCase):
             repository.commit("symlink parent")
             symlink_parent = initialization.initialize_repository(
                 repository.root,
-                config_path="linked/repo-context.toml",
+                config_path="linked/raften.toml",
             )
 
             self.assertIsInstance(symlink_parent, CommandFailure)
             assert isinstance(symlink_parent, CommandFailure)
             self.assertEqual(tuple(item.code for item in symlink_parent.diagnostics), ("INIT002",))
-            self.assertFalse(repository.path("real/repo-context.toml").exists())
+            self.assertFalse(repository.path("real/raften.toml").exists())
 
     def test_parent_renamed_outside_repository_before_install_is_refused(self) -> None:
         with RepositoryFixture() as repository, tempfile.TemporaryDirectory(
@@ -302,7 +302,7 @@ class InitializationTests(unittest.TestCase):
 
             def move_parent_before_config(item, *, force):
                 nonlocal raced
-                if item.artifact.path == "nested/repo-context.toml" and not raced:
+                if item.artifact.path == "nested/raften.toml" and not raced:
                     raced = True
                     repository.path("nested").rename(moved_parent)
                     repository.path("nested").mkdir()
@@ -315,15 +315,15 @@ class InitializationTests(unittest.TestCase):
             ):
                 outcome = initialization.initialize_repository(
                     repository.root,
-                    config_path="nested/repo-context.toml",
+                    config_path="nested/raften.toml",
                 )
 
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
-            self.assertFalse(repository.path("nested/repo-context.toml").exists())
-            self.assertFalse((moved_parent / "repo-context.toml").exists())
-            self.assertFalse((moved_parent / "repo-context.debt.json").exists())
+            self.assertFalse(repository.path("nested/raften.toml").exists())
+            self.assertFalse((moved_parent / "raften.toml").exists())
+            self.assertFalse((moved_parent / "raften.debt.json").exists())
 
     def test_repository_root_renamed_before_install_is_refused(self) -> None:
         with RepositoryFixture() as repository, tempfile.TemporaryDirectory(
@@ -353,8 +353,8 @@ class InitializationTests(unittest.TestCase):
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
-            self.assertFalse(repository.path("repo-context.toml").exists())
-            self.assertFalse((moved_root / "repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
+            self.assertFalse((moved_root / "raften.toml").exists())
 
     def test_repository_root_replaced_before_preparation_is_refused(self) -> None:
         with RepositoryFixture() as repository, tempfile.TemporaryDirectory(
@@ -393,8 +393,8 @@ class InitializationTests(unittest.TestCase):
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
-            self.assertFalse(repository.path("repo-context.toml").exists())
-            self.assertFalse((moved_root / "repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
+            self.assertFalse((moved_root / "raften.toml").exists())
 
 
 if __name__ == "__main__":

@@ -4,18 +4,18 @@ import unittest
 from dataclasses import replace
 from datetime import date
 
-from repo_context.config import starter_policy
-from repo_context.diagnostics import CFG_EFFECTIVE_POLICY, RAT_EXCEPTION_BROADENED
-from repo_context.model import (
+from raften.config import starter_policy
+from raften.diagnostics import CFG_EFFECTIVE_POLICY, RAT_EXCEPTION_BROADENED
+from raften.model import (
     ExactSelector,
     FileKind,
     FileRule,
     IntentionalException,
     PatternSelector,
 )
-from repo_context.policy_ratchet import compare_policies
-from repo_context.size_policy import compile_size_policy
-from repo_context.sizes import evaluate_sizes
+from raften.policy_ratchet import compare_policies
+from raften.size_policy import compile_size_policy
+from raften.sizes import evaluate_sizes
 from tests.support.sizes import TODAY, regular
 
 

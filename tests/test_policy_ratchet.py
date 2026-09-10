@@ -3,8 +3,8 @@ from __future__ import annotations
 import unittest
 from dataclasses import replace
 
-from repo_context.config import starter_policy
-from repo_context.diagnostics import (
+from raften.config import starter_policy
+from raften.diagnostics import (
     RAT_CONTEXT_WEAKENED,
     RAT_DOCUMENTATION_WEAKENED,
     RAT_ENTRYPOINT_WEAKENED,
@@ -14,7 +14,7 @@ from repo_context.diagnostics import (
     RAT_OVERRIDE_WEAKENED,
     RAT_RATCHET_DISABLED,
 )
-from repo_context.model import (
+from raften.model import (
     ContextSet,
     Entrypoint,
     FileKind,
@@ -22,7 +22,7 @@ from repo_context.model import (
     PathOverride,
     PatternSelector,
 )
-from repo_context.policy_ratchet import compare_policies
+from raften.policy_ratchet import compare_policies
 from tests.support.repository import seed_policy
 from tests.support.seed import SEED
 

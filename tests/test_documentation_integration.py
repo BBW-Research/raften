@@ -4,12 +4,12 @@ import unittest
 from dataclasses import replace
 from datetime import date
 
-from repo_context.config import load_policy, starter_policy
-from repo_context.diagnostics import DOC_AUTHORED_SYMLINK
-from repo_context.docs import compile_documentation_policy, documentation_text_paths, evaluate_documentation
-from repo_context.inventory import inventory_worktree, open_repository, read_worktree_bytes
-from repo_context.model import DocumentationSettings, Entrypoint, FileKind, FileRule
-from repo_context.sizes import compile_size_policy, evaluate_sizes
+from raften.config import load_policy, starter_policy
+from raften.diagnostics import DOC_AUTHORED_SYMLINK
+from raften.docs import compile_documentation_policy, documentation_text_paths, evaluate_documentation
+from raften.inventory import inventory_worktree, open_repository, read_worktree_bytes
+from raften.model import DocumentationSettings, Entrypoint, FileKind, FileRule
+from raften.sizes import compile_size_policy, evaluate_sizes
 from tests.support.repository import RepositoryFixture, seed_policy
 from tests.support.seed import ROOT, SEED
 

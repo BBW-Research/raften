@@ -4,14 +4,14 @@ import hashlib
 import json
 import unittest
 
-from repo_context.debt import (
+from raften.debt import (
     DebtManifestError,
     capture_debt_manifest,
     debt_manifest_path,
     parse_debt_manifest,
     render_debt_manifest,
 )
-from repo_context.diagnostics import (
+from raften.diagnostics import (
     CFG_DUPLICATE_SELECTOR,
     CFG_MISSING_KEY,
     CFG_PARSE,
@@ -20,8 +20,8 @@ from repo_context.diagnostics import (
     CFG_UNKNOWN_KEY,
     CFG_VALUE,
 )
-from repo_context.model import FileKind, FileRule, MigrationDebtEntry, MigrationDebtManifest
-from repo_context.sizes import compile_size_policy, evaluate_sizes
+from raften.model import FileKind, FileRule, MigrationDebtEntry, MigrationDebtManifest
+from raften.sizes import compile_size_policy, evaluate_sizes
 from tests.support.sizes import TODAY, policy_with, regular
 
 
@@ -70,7 +70,7 @@ class DebtManifestTests(unittest.TestCase):
     def test_round_trip_is_canonical_and_immutable(self) -> None:
         manifest = capture_debt_manifest(_evaluate({"legacy.txt": b"x" * 21}).files)
         rendered = render_debt_manifest(manifest)
-        parsed = parse_debt_manifest(rendered, source_path="repo-context-debt.json")
+        parsed = parse_debt_manifest(rendered, source_path="raften-debt.json")
 
         self.assertEqual(parsed, manifest)
         self.assertEqual(render_debt_manifest(parsed), rendered)
@@ -78,7 +78,7 @@ class DebtManifestTests(unittest.TestCase):
             parsed.schema_version = 2
 
     def test_sidecar_path_is_derived_from_the_selected_config_path(self) -> None:
-        self.assertEqual(debt_manifest_path("repo-context.toml"), "repo-context.debt.json")
+        self.assertEqual(debt_manifest_path("raften.toml"), "raften.debt.json")
         self.assertEqual(
             debt_manifest_path("config/custom.toml"),
             "config/custom.debt.json",

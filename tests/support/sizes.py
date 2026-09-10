@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import date
 
-from repo_context.config import starter_policy
-from repo_context.model import (
+from raften.config import starter_policy
+from raften.model import (
     ContextSet,
     FileKind,
     FileRule,
