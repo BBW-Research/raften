@@ -4,6 +4,7 @@
 - Date: 2026-09-10
 - Authority: explicit user selection
 - Supersedes: product and package identity in [decision 0007](0007-distribution-name.md)
+- Follow-up: GitHub repository identity and review controls in [decision 0010](0010-canonical-repository-and-review-controls.md).
 
 ## Context
 

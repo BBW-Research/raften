@@ -11,6 +11,7 @@ All user-visible changes to `raften` are recorded here. Version headings use PEP
 
 ### Changed
 
+- Renamed the GitHub repository to `BBW-Research/raften`, updated package links, and aligned publication guidance with the existing review controls.
 - Renamed the product, distribution, Python package, CLI, and report identity to Raften. New policies use `raften.toml` and `raften.debt.json`; existing adopters retain their policy history with `--config repo-context.toml`.
 - Archived the completed standalone-tool plan and recorded the private repository's hosted CI, CODEOWNERS, and protected-branch controls.
 - Split near-limit implementation, test, and completion-evidence files by responsibility; removed malformed repository-specific Codex agent definitions; and extended ownership to agent guidance and configuration.

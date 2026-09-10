@@ -6,11 +6,11 @@ See [repository publication](publication.md) for the separate GitHub rename, pri
 
 The first stable release supports CPython 3.12 and 3.13 on macOS and Linux. Windows is not qualified. Runtime behavior requires Git 2.39.5 or newer, as defined by the [repository inventory boundary](../architecture/inventory.md), plus only the Python standard library; building distributions uses the separately reviewed and hash-locked release environment in `requirements/release.txt`.
 
-The public distribution is `raften`, the import package is `raften`, and the stable command is `raften`. Version 1.0.0 is the first stable artifact version. The project is MIT licensed by BBW-Research, and its canonical repository is `https://github.com/BBW-Research/repo-context`. The package version has one authoritative source in `raften.__version__`; release tags and changelog headings must use the same PEP 440 version. Stable versions follow `MAJOR.MINOR.PATCH`, with major increments for incompatible CLI, configuration, or machine-output changes.
+The public distribution is `raften`, the import package is `raften`, and the stable command is `raften`. Version 1.0.0 is the first stable artifact version. The project is MIT licensed by BBW-Research, and its canonical repository is `https://github.com/BBW-Research/raften`. The package version has one authoritative source in `raften.__version__`; release tags and changelog headings must use the same PEP 440 version. Stable versions follow `MAJOR.MINOR.PATCH`, with major increments for incompatible CLI, configuration, or machine-output changes.
 
 ## Build and qualify
 
-Raften succeeds the former `repo-context-policy` distribution under [decision 0009](../decisions/0009-raften-name.md). The completed Phase 8 evidence records artifacts under the former name. Build and qualify fresh Raften artifacts before publication; the source rename alone does not qualify a release.
+Raften succeeds the former `repo-context-policy` distribution under [decision 0009](../decisions/0009-raften-name.md). The completed Phase 8 evidence records artifacts under the former name; fresh Raften qualification is recorded in the [acceptance evidence](../quality/acceptance.md#distribution-and-pilots). Build and qualify each exact release candidate before publication.
 
 Start from a reviewed clean commit. Acquire the release wheelhouse while network access is available, then perform every subsequent step offline:
 
@@ -83,6 +83,6 @@ Add user-visible changes to the `Unreleased` section of `CHANGELOG.md` in the sa
 
 ## Repository controls
 
-The GitHub repository requires the stable `Required repository policy` check on the default branch, pull requests, at least one approving review, dismissal of stale approvals, approval of the most recent reviewable push, code-owner review, conversation resolution, and administrator enforcement. Individual matrix job names are not required checks; the stable aggregator owns that interface while the matrix may evolve.
+The default branch requires pull requests, the strict `Required repository policy` check from GitHub Actions, resolved conversations, and administrator enforcement. The approving-review count is zero; code-owner review, dismissal of stale approvals, and approval of the most recent reviewable push are disabled. Force pushes and branch deletion are disabled, with no bypass allowances. The owner retained this workflow for a single maintainer in [decision 0010](../decisions/0010-canonical-repository-and-review-controls.md). Individual matrix job names are not required checks; the stable aggregator owns that interface while the matrix may evolve.
 
-`.github/CODEOWNERS` assigns `@taiqihe` to the repository's agent guidance, Codex configuration, policy, workflow, packaging, licensing, and release surfaces. The exact protected path set is asserted by the release qualification suite. GitHub reports no parsing errors, and `@taiqihe` has explicit administrator access. Provider settings, rather than workflow and CODEOWNERS text alone, enforce protected-branch review.
+`.github/CODEOWNERS` assigns `@taiqihe` to the repository's agent guidance, Codex configuration, policy, workflow, packaging, licensing, and release surfaces. The exact owned path set is asserted by the release qualification suite. GitHub reports no parsing errors, and `@taiqihe` has explicit administrator access. CODEOWNERS records ownership; it does not require a second person's approval under the current settings.
