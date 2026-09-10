@@ -67,7 +67,7 @@ class RepositorySelfHostingTests(unittest.TestCase):
             "tests/fixtures/output/check-clean.txt": ("test-fixtures", FileKind.FIXTURE),
             "tests/fixtures/seed/clean-policy.json": ("test-fixtures", FileKind.FIXTURE),
             "requirements/release.txt": ("release-lock", FileKind.GENERATED),
-            "NOTICE": ("legal-material", FileKind.LEGAL),
+            "LICENSE": ("legal-material", FileKind.LEGAL),
         }
         for path, (rule_name, kind) in expected.items():
             with self.subTest(path=path):

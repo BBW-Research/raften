@@ -3,7 +3,7 @@
 - Status: accepted
 - Date: 2026-09-02
 - Superseded in part: repository identity and review controls by [decision 0010](0010-canonical-repository-and-review-controls.md); licensing and ownership remain in effect.
-- Attribution update: project-owned bootstrap wording follows [decision 0011](0011-generic-bootstrap-attribution.md).
+- Superseded legal-file packaging: [decision 0011](0011-generic-bootstrap-attribution.md) removes the duplicate `NOTICE` and retains the unchanged `LICENSE` in every distribution; the two-file requirements below describe the original decision.
 
 ## Context
 

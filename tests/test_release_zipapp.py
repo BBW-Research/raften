@@ -36,10 +36,9 @@ class ReleaseZipappTests(unittest.TestCase):
                 self.assertEqual(tuple(archive.namelist()), names)
                 self.assertIn("__main__.py", names)
                 self.assertIn("LICENSE", names)
-                self.assertIn("NOTICE", names)
+                self.assertNotIn("NOTICE", names)
                 self.assertIn("raften/cli.py", names)
                 self.assertEqual(archive.read("LICENSE"), (ROOT / "LICENSE").read_bytes())
-                self.assertEqual(archive.read("NOTICE"), (ROOT / "NOTICE").read_bytes())
                 self.assertFalse(any("__pycache__" in name for name in names))
                 timestamps = {entry.date_time for entry in archive.infolist()}
                 self.assertEqual(timestamps, {(2026, 9, 1, 0, 0, 0)})
@@ -61,7 +60,6 @@ class ReleaseZipappTests(unittest.TestCase):
             package = source / "raften"
             package.mkdir(parents=True)
             (package / "__init__.py").write_text("", encoding="utf-8")
-            (source.parent / "NOTICE").write_text("notice\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "regular LICENSE"):
                 build_zipapp(source, output, epoch=EPOCH)
             output.write_bytes(b"owned")

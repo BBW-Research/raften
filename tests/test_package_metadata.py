@@ -14,7 +14,7 @@ class PackageMetadataTests(unittest.TestCase):
         self.assertEqual(project["name"], "raften")
         self.assertEqual(project["dynamic"], ["version"])
         self.assertEqual(project["license"], "MIT")
-        self.assertEqual(project["license-files"], ["LICENSE", "NOTICE"])
+        self.assertEqual(project["license-files"], ["LICENSE"])
         self.assertEqual(metadata["project"]["scripts"], {"raften": "raften.cli:main"})
         self.assertEqual(metadata["tool"]["setuptools"]["dynamic"]["version"]["attr"], "raften.__version__")
         self.assertEqual(__version__, "1.0.0")

@@ -83,8 +83,8 @@ def _verify_wheel(path: Path, expected_name: str, expected_version: str) -> None
             raise ValueError("wheel version does not match release metadata")
         if metadata["License-Expression"] != "MIT":
             raise ValueError("wheel must declare the MIT license expression")
-        if tuple(metadata.get_all("License-File") or ()) != ("LICENSE", "NOTICE"):
-            raise ValueError("wheel must declare exactly LICENSE and NOTICE")
+        if tuple(metadata.get_all("License-File") or ()) != ("LICENSE",):
+            raise ValueError("wheel must declare exactly LICENSE")
         python_specifiers = tuple(
             item.strip()
             for item in (metadata["Requires-Python"] or "").split(",")
@@ -113,8 +113,6 @@ def _verify_wheel(path: Path, expected_name: str, expected_version: str) -> None
             raise ValueError("wheel is missing required package modules")
         if not any(name.endswith(".dist-info/licenses/LICENSE") for name in names):
             raise ValueError("wheel is missing the project license")
-        if not any(name.endswith(".dist-info/licenses/NOTICE") for name in names):
-            raise ValueError("wheel is missing the upstream license notice")
 
 
 def _verify_sdist(path: Path, expected_name: str, expected_version: str) -> None:
@@ -133,7 +131,6 @@ def _verify_sdist(path: Path, expected_name: str, expected_version: str) -> None
             f"{root}/CHANGELOG.md",
             f"{root}/LICENSE",
             f"{root}/README.md",
-            f"{root}/NOTICE",
             f"{root}/pyproject.toml",
             f"{root}/src/raften/__init__.py",
             f"{root}/src/raften/cli.py",
@@ -156,7 +153,7 @@ def _verify_zipapp(path: Path) -> None:
         _verify_member_names(names)
         if names != tuple(sorted(names)):
             raise ValueError("zipapp entries must be sorted")
-        required = {"LICENSE", "NOTICE", "__main__.py", "raften/cli.py"}
+        required = {"LICENSE", "__main__.py", "raften/cli.py"}
         if not required.issubset(names):
             raise ValueError("zipapp is missing its entrypoint, package, or legal files")
         if any(entry.compress_type != zipfile.ZIP_STORED for entry in archive.infolist()):

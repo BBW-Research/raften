@@ -1,5 +1,7 @@
 # Standalone tool Phase 8 qualification evidence
 
+This record describes the historical candidate. Current legal-file packaging follows [decision 0011](../../decisions/0011-generic-bootstrap-attribution.md); the artifact hashes and archive contents below remain evidence of the original build.
+
 - Status: Phase 8 completed on 2026-09-02. The MIT-licensed artifacts, pilots, supported-platform qualification, hosted CI, ownership, and default-branch controls satisfy every release-blocking acceptance item.
 - Candidate identity: release tooling exported and built the exact clean commit `c67b394601fcaedad6cb69c852f0f4bb940788ec`. The public distribution name is `repo-context-policy`, while the import package and CLI remain `repo_context` and `repo-context`. Version 1.0.0 supports CPython 3.12 and 3.13 on macOS and Linux; Windows is intentionally unqualified.
 - Build boundary: `scripts/build-release` rejects dirty, non-repository, or changed source state, exports regular Git blob bytes from `HEAD`, verifies and privately stages the exact hash-locked wheelhouse, builds the sdist and wheel under PEP 517 isolation without indexes, creates the zipapp, verifies archive membership and metadata, and writes an exact sorted checksum manifest. The first committed-state build exposed that outer `pip --isolated` ignored environment-only index controls; commit `615fc5d` adds explicit `--no-index` and `--find-links` arguments, and the read-only reviewer found no remaining package-resolution leak.

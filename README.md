@@ -44,4 +44,4 @@ The [release and consumption guide](docs/release/index.md) covers hash-locked of
 
 ## License
 
-`raften` is released under the [MIT License](LICENSE). The [source notice](NOTICE) covers the project-owned bootstrap source from which part of Raften was derived.
+`raften` is released under the [MIT License](LICENSE).

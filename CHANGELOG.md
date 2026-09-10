@@ -11,6 +11,7 @@ All user-visible changes to `raften` are recorded here. Version headings use PEP
 
 ### Changed
 
+- Removed the duplicate source `NOTICE`; all distribution formats retain the unchanged MIT `LICENSE`.
 - Replaced private source-project identifiers with generic bootstrap references while retaining the frozen checker and pilot policy content hashes.
 - Made the source and development history public at `BBW-Research/raften`.
 - Renamed the GitHub repository to `BBW-Research/raften`, updated package links, and aligned publication guidance with the existing review controls.
