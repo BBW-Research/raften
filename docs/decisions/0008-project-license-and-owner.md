@@ -2,6 +2,7 @@
 
 - Status: accepted
 - Date: 2026-09-02
+- Superseded in part: repository identity and review controls by [decision 0010](0010-canonical-repository-and-review-controls.md); licensing and ownership remain in effect.
 
 ## Context
 

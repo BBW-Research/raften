@@ -1,6 +1,6 @@
 # Acceptance criteria
 
-The standalone tool is release-ready only when every release-blocking item below is satisfied.
+The standalone tool satisfies technical release criteria only when every item below is satisfied. Repository privacy and visibility are covered separately by the [publication procedure](../release/publication.md).
 
 ## Repository and configuration
 
@@ -60,11 +60,11 @@ The standalone tool is release-ready only when every release-blocking item below
 
 ## Distribution and pilots
 
-The completed Phase 8 evidence qualified artifacts under the former distribution name. The two pending items require fresh Raften artifacts across the supported matrix, as required by [decision 0009](../decisions/0009-raften-name.md) and the [release guide](../release/index.md).
+The completed Phase 8 evidence qualified artifacts under the former distribution name. Fresh Raften wheel, source distribution, and zipapp builds and qualification in clean environments passed on reviewed commit `4dccefb565641ecb8968c3b665522a3f36a57aa8` in [workflow run 34470781723](https://github.com/BBW-Research/raften/actions/runs/34470781723), covering Ubuntu 24.04 and macOS 15 with Python 3.12 and 3.13. Every subsequent release candidate must repeat the full matrix in the [release guide](../release/index.md).
 
-- [ ] Raften wheel and source distribution build in isolation from the reviewed release commit.
-- [ ] Installed Raften CLI works in clean environments across the supported release matrix.
+- [x] Raften wheel and source distribution build in isolation from the reviewed release commit.
+- [x] Installed Raften CLI works in clean environments across the supported release matrix.
 - [x] A vendorable offline distribution path is documented and tested.
 - [x] Migration from the scene-maker JSON policy is documented.
 - [x] `scene-maker`, `nano-dllm`, and `research-vault` have been piloted without adding project-specific engine branches.
-- [x] The repository protects the required CI check and policy-sensitive files through repository settings and ownership review.
+- [x] The repository enforces required CI and pull requests and maintains ownership mappings for policy-sensitive files.

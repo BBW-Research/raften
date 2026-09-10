@@ -24,9 +24,9 @@ class PackageMetadataTests(unittest.TestCase):
         self.assertEqual(
             project["urls"],
             {
-                "Homepage": "https://github.com/BBW-Research/repo-context",
-                "Issues": "https://github.com/BBW-Research/repo-context/issues",
-                "Repository": "https://github.com/BBW-Research/repo-context",
+                "Homepage": "https://github.com/BBW-Research/raften",
+                "Issues": "https://github.com/BBW-Research/raften/issues",
+                "Repository": "https://github.com/BBW-Research/raften",
             },
         )
 

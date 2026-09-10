@@ -9,3 +9,4 @@
 - [0007: Preserve the repo-context CLI under a distinct distribution name (superseded)](0007-distribution-name.md)
 - [0008: License the project under MIT in the BBW-Research repository](0008-project-license-and-owner.md)
 - [0009: Name the product Raften](0009-raften-name.md)
+- [0010: Canonical Raften repository and review controls](0010-canonical-repository-and-review-controls.md)

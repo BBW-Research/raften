@@ -2,6 +2,8 @@
 
 Policy checks for code and documentation in agentic coding projects. Raften enforces file and context budgets, checks documentation navigation, and catches policy weakening against Git history.
 
+Source and issue tracking are on [GitHub](https://github.com/BBW-Research/raften).
+
 The standalone `check`, `audit`, `explain`, and guarded `init` commands are implemented under `src/raften/` and run locally without installation or network access. `scripts/context-check`, local validation, bootstrap, and CI use this engine; the verbatim scene-maker checker remains only as a characterized test oracle.
 
 ## Start here
