@@ -1,12 +1,9 @@
-raften includes software derived from the scene-maker repository's
-tools/check_repository_policy.py at commit
-9e792124bc61f55150416b8bf803862c6c634c78.
-
-That upstream software is licensed under the following terms:
+Raften includes software derived from a project-owned bootstrap policy checker.
+That source is distributed under the following terms:
 
 MIT License
 
-Copyright (c) 2026 Scene Maker contributors
+Copyright (c) 2026 BBW-Research
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

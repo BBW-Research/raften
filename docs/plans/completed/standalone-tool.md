@@ -4,14 +4,14 @@
 - Owner: Codex implementation agent
 - Started: 2026-08-31
 - Completed: 2026-09-02
-- Source oracle: scene-maker commit `9e792124bc61f55150416b8bf803862c6c634c78`
+- Source oracle: the hash-verified bootstrap snapshot recorded in `reference/bootstrap/SOURCE.json`.
 - Completion authority: `docs/quality/acceptance.md`
 
 This is the completed build record under the former `repo-context` name. The subsequent Raften rename and its validation are recorded in [decision 0009](../../decisions/0009-raften-name.md).
 
 ## Objective
 
-Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python CLI without inheriting scene-maker-specific assumptions. Work through the phases in order. Do not stop after producing design notes or scaffolding; the assignment is complete only when the standalone CLI replaces the transitional checker and all acceptance criteria pass.
+Turn the frozen bootstrap checker into a reusable, tested, self-hosting Python CLI without inheriting bootstrap-specific assumptions. Work through the phases in order. Do not stop after producing design notes or scaffolding; the assignment is complete only when the standalone CLI replaces the transitional checker and all acceptance criteria pass.
 
 ## Working rules
 
@@ -29,7 +29,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Tasks
 
-- [x] Verify `reference/scene-maker/SOURCE.json` against the copied Python checker and referenced workflow files.
+- [x] Verify `reference/bootstrap/SOURCE.json` against the copied Python checker and referenced workflow files.
 - [x] Expand source characterization tests to cover every public behavior in the seed: policy parsing, path canonicalization, Git inventory invocation, UTF-8 classification, limit selection, legacy ceilings, document discovery, required indexes, sibling links, child-index links, entrypoint targets, base-policy loading, non-weakening comparisons, exit codes, and deterministic ordering.
 - [x] Create fixture-repository helpers that initialize temporary Git repositories, commit a base state, mutate a working tree, and run either checker without network access.
 - [x] Add golden text fixtures only where structured assertions cannot express behavior. Normalize temporary paths before comparison.
@@ -39,7 +39,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 ### Gate
 
-- [x] Every behavior inherited from scene-maker has at least one characterization test.
+- [x] Every behavior inherited from bootstrap has at least one characterization test.
 - [x] The frozen checker hash test passes.
 - [x] Known differences have explicit target tests or documented deferred test cases.
 - [x] `scripts/validate` passes without network access.
@@ -205,7 +205,7 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 - [x] Classify every output difference as intended improvement, equivalent diagnostic, or defect.
 - [x] Update `scripts/context-check` to invoke `PYTHONPATH=src python3 -m repo_context check` without requiring package installation.
 - [x] Update CI to run the new engine with the existing base-ref behavior.
-- [x] Keep the scene-maker checker as a frozen test oracle or move it byte-for-byte under a fixture path. Update provenance paths without changing contents.
+- [x] Keep the bootstrap checker as a frozen test oracle or move it byte-for-byte under a fixture path. Update provenance paths without changing contents.
 - [x] Remove the bootstrap JSON policy only after the new TOML policy is authoritative and no script depends on it.
 - [x] Make the new tool validate its own file budgets, documentation graph, bootstrap context set, and base ratchet.
 - [x] Add a test ensuring production code does not import the frozen oracle.
@@ -230,8 +230,8 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 - [x] Add an optional zipapp or equivalent vendorable artifact if it can remain dependency-free and deterministic.
 - [x] Verify installation and execution on macOS and Linux with Python 3.12 and 3.13.
 - [x] Document three consumption modes: installed package, pinned zipapp, and vendored source with a project-local wrapper.
-- [x] Create migration instructions from the scene-maker JSON format to v1 TOML.
-- [x] Pilot in `scene-maker`, `nano-dllm`, and `research-vault` using separate project policies.
+- [x] Create migration instructions from the bootstrap JSON format to v1 TOML.
+- [x] Pilot in `private-pilot`, `nano-dllm`, and `research-vault` using separate project policies.
 - [x] Record false positives, performance, context-debt findings, and policy features that genuinely generalize.
 - [x] Do not add project-specific behavior to the engine during pilots; add configuration or a separately justified generic feature.
 - [x] Configure the GitHub repository's required CI check, branch protection, and ownership review for policy, workflow, and release files.
@@ -251,9 +251,9 @@ Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python
 
 - Interface: release 1.0.0 provides `repo-context check`, `audit`, `explain`, and guarded `init`; the configuration schema and JSON output schema are both version 1.
 - Dependencies: runtime uses only CPython's standard library plus Git 2.39.5 or newer. Distribution builds use the separately reviewed, hash-locked `build`, `packaging`, `pyproject-hooks`, and `setuptools` artifacts because standards-compliant wheel and sdist construction is a release concern rather than a runtime concern.
-- Compatibility: the frozen scene-maker checker remains a byte-verified characterization oracle. The [compatibility report](../../reference/scene-maker-compatibility.md) classifies equivalent results and intentional fixes for ancestor discovery, Markdown parsing, base handling, and unsafe paths; no comparison defect remains.
+- Compatibility: the frozen bootstrap checker remains a byte-verified characterization oracle. The [compatibility report](../../reference/bootstrap-compatibility.md) classifies equivalent results and intentional fixes for ancestor discovery, Markdown parsing, base handling, and unsafe paths; no comparison defect remains.
 - Validation: the current local suite contains 522 tests and passes under CPython 3.12 and 3.13 on macOS, with one host-capability skip. Pinned Debian Bookworm containers pass the complete artifact-era 512-test suite without skips on both versions, and the four-entry native Ubuntu/macOS GitHub matrix plus offline link validation passes in [workflow run 33629864145](https://github.com/BBW-Research/repo-context/actions/runs/33629864145).
 - Self-hosting: `scripts/context-check`, `scripts/validate`, bootstrap, and CI select `src/repo_context` rather than the oracle. A freshly unpacked archive validates offline, and comparison against the reviewed policy baseline has no blocking or ratchet diagnostic.
-- Pilots: scene-maker, NanoDLLM, and Research Vault pass at the recorded commits with zero blocking diagnostics and no project-specific engine branch. Exact policy, debt, performance, and context-size evidence is retained in the [pilot report](../../pilots/index.md).
+- Pilots: the private pilot, NanoDLLM, and Research Vault pass at the recorded commits with zero blocking diagnostics and no project-specific engine branch. Exact policy, debt, performance, and context-size evidence is retained in the [pilot report](../../pilots/index.md).
 - Release identity: the qualified MIT candidate was exported from exact clean commit `c67b394601fcaedad6cb69c852f0f4bb940788ec`; its wheel, source archive, zipapp, and checksum hashes are recorded in the [Phase 8 evidence](standalone-tool-evidence-phase-8.md). `BBW-Research/repo-context` is private, `@taiqihe` has administrator access, GitHub reports no CODEOWNERS error, and protected `main` requires pull requests, one current code-owner approval, resolved conversations, and the stable `Required repository policy` check with administrator enforcement.
 - Remaining non-blocking work: the repository intentionally remains private for now. No tag, package-index publication, or trusted publisher has been created; those require a separate publication request and a fresh build and qualification from the selected exact release commit. Four existing files remain above advisory thresholds but below hard ceilings, and one macOS filename-capability test may skip on filesystems that cannot represent its byte sequence.

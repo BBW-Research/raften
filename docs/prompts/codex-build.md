@@ -13,9 +13,9 @@ Read, in order:
 3. `docs/architecture/index.md` and its linked documents
 4. `docs/decisions/index.md` and all accepted decisions
 5. `docs/quality/index.md` and its linked documents
-6. `docs/reference/scene-maker-seed.md`
+6. `docs/reference/bootstrap-seed.md`
 7. `docs/plans/completed/standalone-tool.md`
-8. `tools/check_repository_policy.py` and `reference/scene-maker/SOURCE.json`
+8. `tools/check_repository_policy.py` and `reference/bootstrap/SOURCE.json`
 
 Then execute `docs/plans/completed/standalone-tool.md` phase by phase until every release-blocking item in `docs/quality/acceptance.md` is satisfied.
 
@@ -52,8 +52,8 @@ Required final state:
 - `scripts/context-check` and CI invoke the new package, not the source oracle.
 - This repository validates itself with the new tool from a clean checkout and without network access.
 - Distribution artifacts build and install in clean environments for the supported Python versions and platforms.
-- Migration guidance exists for scene-maker's JSON policy.
-- Pilot findings for `scene-maker`, `nano-dllm`, and `research-vault` are recorded without introducing project-specific engine branches.
+- Migration guidance exists for bootstrap's JSON policy.
+- Pilot findings for `private-pilot`, `nano-dllm`, and `research-vault` are recorded without introducing project-specific engine branches.
 - The completed plan contains a final report and no unchecked release-blocking work.
 
 The assignment is complete; consult the completed plan and its evidence before follow-up changes.

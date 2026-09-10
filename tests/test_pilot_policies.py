@@ -11,7 +11,7 @@ from tests.support.paths import ROOT
 class PilotPolicyTests(unittest.TestCase):
     def test_every_pilot_policy_is_strict_separate_and_has_no_exceptions(self) -> None:
         policies = {}
-        for name in ("scene-maker", "nano-dllm", "research-vault"):
+        for name in ("private-pilot", "nano-dllm", "research-vault"):
             with self.subTest(name=name):
                 path = ROOT / "tests" / "fixtures" / "pilots" / name / "repo-context.toml"
                 policy = load_policy(path)
@@ -31,7 +31,7 @@ class PilotPolicyTests(unittest.TestCase):
             path.read_text(encoding="utf-8")
             for path in sorted((ROOT / "src" / "raften").glob("*.py"))
         ).lower()
-        self.assertNotIn("scene-maker", production)
+        self.assertNotIn("private-pilot", production)
         self.assertNotIn("nano-dllm", production)
         self.assertNotIn("research-vault", production)
 
@@ -41,7 +41,7 @@ class PilotPolicyTests(unittest.TestCase):
             "nano-dllm/docs/index.md": "d4a4c3fccc1d20df1eade6bfbc589fb7819eb26dc4444b6fd1cbf3d1c05c1005",
             "research-vault/repo-context.toml": "3fddfed64f1fc23c5090eb5d1a07f504bdc731151b25647963a6a7132315ba51",
             "research-vault/docs/index.md": "7e25d0844f7a0e86af6060f06f635395e796e22bdf7ab832cd0ba39833663d10",
-            "scene-maker/repo-context.toml": "2869d79ea5b1d20e89f5553a6bd9891178d2e37ea9d7703ae6b236b52e0069cd",
+            "private-pilot/repo-context.toml": "2869d79ea5b1d20e89f5553a6bd9891178d2e37ea9d7703ae6b236b52e0069cd",
         }
         root = ROOT / "tests" / "fixtures" / "pilots"
         for relative, expected_hash in expected.items():

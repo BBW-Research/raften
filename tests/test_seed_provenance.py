@@ -7,23 +7,20 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_MANIFEST = ROOT / "reference" / "scene-maker" / "SOURCE.json"
+SOURCE_MANIFEST = ROOT / "reference" / "bootstrap" / "SOURCE.json"
 
 
 class SeedProvenanceTests(unittest.TestCase):
-    def test_manifest_identifies_the_accepted_scene_maker_snapshot(self) -> None:
+    def test_manifest_identifies_the_accepted_bootstrap_snapshot(self) -> None:
         manifest = json.loads(SOURCE_MANIFEST.read_text(encoding="utf-8"))
-        self.assertEqual(manifest["repository"], "BBW-Research/scene-maker")
-        self.assertEqual(
-            manifest["source_commit"],
-            "9e792124bc61f55150416b8bf803862c6c634c78",
-        )
+        self.assertEqual(manifest["snapshot"], "bootstrap")
+        self.assertEqual(manifest["owner"], "BBW-Research")
         self.assertEqual(
             set(manifest["copied_files"]),
             {
                 "tools/check_repository_policy.py",
-                "reference/scene-maker/repository-policy.yml",
-                "reference/scene-maker/lychee.toml",
+                "reference/bootstrap/repository-policy.yml",
+                "reference/bootstrap/lychee.toml",
             },
         )
 

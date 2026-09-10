@@ -4,7 +4,7 @@ Policy checks for code and documentation in agentic coding projects. Raften enfo
 
 Source and issue tracking are on [GitHub](https://github.com/BBW-Research/raften).
 
-The standalone `check`, `audit`, `explain`, and guarded `init` commands are implemented under `src/raften/` and run locally without installation or network access. `scripts/context-check`, local validation, bootstrap, and CI use this engine; the verbatim scene-maker checker remains only as a characterized test oracle.
+The standalone `check`, `audit`, `explain`, and guarded `init` commands are implemented under `src/raften/` and run locally without installation or network access. `scripts/context-check`, local validation, bootstrap, and CI use this engine; the verbatim bootstrap checker remains only as a characterized test oracle.
 
 ## Start here
 
@@ -44,4 +44,4 @@ The [release and consumption guide](docs/release/index.md) covers hash-locked of
 
 ## License
 
-`raften` is released under the [MIT License](LICENSE). The [upstream notice](NOTICE) retains the license and provenance of the scene-maker source from which part of the tool was derived.
+`raften` is released under the [MIT License](LICENSE). The [source notice](NOTICE) covers the project-owned bootstrap source from which part of Raften was derived.

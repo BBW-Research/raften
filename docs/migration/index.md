@@ -1,10 +1,10 @@
-# Migrate scene-maker JSON policy to version 1 TOML
+# Migrate bootstrap JSON policy to version 1 TOML
 
-The scene-maker bootstrap JSON and `raften` version 1 TOML express different contracts. Treat migration as a reviewed first adoption, not a syntax conversion. Work in an isolated clean clone, keep the old checker available until results are classified, and do not modify the original working directory during evaluation.
+The bootstrap JSON and `raften` version 1 TOML express different contracts. Treat migration as a reviewed first adoption, not a syntax conversion. Work in an isolated clean clone, keep the old checker available until results are classified, and do not modify the original working directory during evaluation.
 
 ## Field mapping
 
-| Scene-maker JSON | Version 1 TOML | Migration rule |
+| Bootstrap JSON | Version 1 TOML | Migration rule |
 | --- | --- | --- |
 | `policy_version` | top-level `version` | Set `version = 1`; do not copy the old numeric value blindly. |
 | `max_text_bytes` | final scanned authored `[[file_rule]].hard_bytes` | Preserve the old ordinary hard ceiling unless the owner deliberately tightens it. Add an owner-selected `warn_bytes` below it because the old schema has no warning ceiling. |
@@ -28,4 +28,4 @@ Add the required `[repository]`, `[output]`, `[ratchet]`, and `[exceptions]` tab
 6. Review every unscanned rule, warning, exception, new graph diagnostic, and debt entry. Correct false classifications in policy; do not add shared-engine special cases.
 7. Commit the TOML policy and debt sidecar together, then run against the immediate parent on each later change. Partial size reductions become the next automatic ceiling and debt disappears when a file returns below its ordinary limit.
 
-Expected differences from the seed include strict TOML validation, explicit glob semantics, ancestor directory indexes, reachability and fragment checks, no automatic structured-data bypass, stable structured diagnostics, and immediate-base ratchets. The detailed compatibility inventory is in [the scene-maker compatibility reference](../reference/scene-maker-compatibility.md).
+Expected differences from the seed include strict TOML validation, explicit glob semantics, ancestor directory indexes, reachability and fragment checks, no automatic structured-data bypass, stable structured diagnostics, and immediate-base ratchets. The detailed compatibility inventory is in [the bootstrap compatibility reference](../reference/bootstrap-compatibility.md).

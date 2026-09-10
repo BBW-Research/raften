@@ -55,13 +55,13 @@ class RepositorySelfHostingTests(unittest.TestCase):
         assert isinstance(outcome, RepositoryRun)
         assessments = {item.entry.path: item for item in outcome.sizes.files}
         expected = {
-            "tools/check_repository_policy.py": ("frozen-scene-maker", FileKind.VENDORED),
-            "reference/scene-maker/repository-policy.yml": (
-                "frozen-scene-maker",
+            "tools/check_repository_policy.py": ("frozen-bootstrap", FileKind.VENDORED),
+            "reference/bootstrap/repository-policy.yml": (
+                "frozen-bootstrap",
                 FileKind.VENDORED,
             ),
-            "reference/scene-maker/lychee.toml": (
-                "frozen-scene-maker",
+            "reference/bootstrap/lychee.toml": (
+                "frozen-bootstrap",
                 FileKind.VENDORED,
             ),
             "tests/fixtures/output/check-clean.txt": ("test-fixtures", FileKind.FIXTURE),
