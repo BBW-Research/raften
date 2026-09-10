@@ -8,6 +8,8 @@ The product, distribution, Python package, and CLI rename was merged through [PR
 
 Public source access was enabled from reviewed commit `e8de7fc6f07e28b37af90a01a82fd395120d2520` after all six jobs passed in [workflow run 34472708304](https://github.com/BBW-Research/raften/actions/runs/34472708304). Anonymous clone access and the existing repository controls were verified after the visibility change.
 
+The subsequent current-file source-attribution cleanup, duplicate-notice removal, and reviewed policy migration are recorded in [decision 0011](../decisions/0011-generic-bootstrap-attribution.md#reviewed-policy-migration).
+
 GitHub redirects ordinary web and Git references after a rename, but callers of hosted Actions need explicit updates. Do not reuse the former repository name while those redirects are needed. See GitHub's [rename behavior](https://docs.github.com/en/repositories/creating-and-managing-repositories/renaming-a-repository).
 
 ## Resolve publication scope
