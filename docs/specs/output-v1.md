@@ -47,7 +47,7 @@ JSON is UTF-8, two-space-indented, literal-Unicode text with LF and one final ne
 {
   "schema_version": 1,
   "tool": {
-    "name": "repo-context",
+    "name": "raften",
     "version": "1.0.0"
   },
   "command": "check",

@@ -15,15 +15,15 @@ from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
-from repo_context.config import starter_policy
-from repo_context.docs import (
+from raften.config import starter_policy
+from raften.docs import (
     compile_documentation_policy,
     documentation_text_paths,
     evaluate_documentation,
 )
-from repo_context.inventory import inventory_worktree, open_repository
-from repo_context.markdown import parse_markdown
-from repo_context.model import (
+from raften.inventory import inventory_worktree, open_repository
+from raften.markdown import parse_markdown
+from raften.model import (
     DocumentationSettings,
     FileRatchetEvaluation,
     InventoryEntry,
@@ -32,10 +32,10 @@ from repo_context.model import (
     TextDocument,
     WorktreeKind,
 )
-from repo_context.report_json import render_json
-from repo_context.run_model import RepositoryRun, RunStatus
-from repo_context.size_policy import compile_size_policy
-from repo_context.sizes import evaluate_sizes
+from raften.report_json import render_json
+from raften.run_model import RepositoryRun, RunStatus
+from raften.size_policy import compile_size_policy
+from raften.sizes import evaluate_sizes
 
 
 EVALUATION_DATE = date(2026, 9, 2)
@@ -100,7 +100,7 @@ def _benchmark_count(count: int, *, include_git: bool) -> dict[str, object]:
     run = RepositoryRun(
         status=RunStatus.COMPLETE,
         repository_root=Path("/synthetic"),
-        config_path="repo-context.toml",
+        config_path="raften.toml",
         policy=policy,
         inventory=entries,
         sizes=sizes,
@@ -232,7 +232,7 @@ def _measure_git_inventory(count: int) -> tuple[float, int]:
     if git is None:
         raise RuntimeError("Git is required for the inventory benchmark")
     git = str(Path(git).resolve(strict=True))
-    with tempfile.TemporaryDirectory(prefix="repo-context-git-benchmark-") as directory:
+    with tempfile.TemporaryDirectory(prefix="raften-git-benchmark-") as directory:
         root = Path(directory)
         environment = _git_environment()
         _run_git(git, root, environment, "init", "--quiet")

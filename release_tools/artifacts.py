@@ -106,9 +106,9 @@ def _verify_wheel(path: Path, expected_name: str, expected_version: str) -> None
         if any("Windows" in classifier for classifier in classifiers):
             raise ValueError("wheel metadata may not claim Windows support")
         entrypoints = archive.read(entrypoint_names[0]).decode("utf-8")
-        if "repo-context = repo_context.cli:main" not in entrypoints:
-            raise ValueError("wheel does not expose the repo-context command")
-        required = {"repo_context/__init__.py", "repo_context/cli.py"}
+        if "raften = raften.cli:main" not in entrypoints:
+            raise ValueError("wheel does not expose the raften command")
+        required = {"raften/__init__.py", "raften/cli.py"}
         if not required.issubset(names):
             raise ValueError("wheel is missing required package modules")
         if not any(name.endswith(".dist-info/licenses/LICENSE") for name in names):
@@ -135,8 +135,8 @@ def _verify_sdist(path: Path, expected_name: str, expected_version: str) -> None
             f"{root}/README.md",
             f"{root}/NOTICE",
             f"{root}/pyproject.toml",
-            f"{root}/src/repo_context/__init__.py",
-            f"{root}/src/repo_context/cli.py",
+            f"{root}/src/raften/__init__.py",
+            f"{root}/src/raften/cli.py",
         }
         if not required.issubset(names):
             raise ValueError("sdist is missing required source files")
@@ -156,7 +156,7 @@ def _verify_zipapp(path: Path) -> None:
         _verify_member_names(names)
         if names != tuple(sorted(names)):
             raise ValueError("zipapp entries must be sorted")
-        required = {"LICENSE", "NOTICE", "__main__.py", "repo_context/cli.py"}
+        required = {"LICENSE", "NOTICE", "__main__.py", "raften/cli.py"}
         if not required.issubset(names):
             raise ValueError("zipapp is missing its entrypoint, package, or legal files")
         if any(entry.compress_type != zipfile.ZIP_STORED for entry in archive.infolist()):

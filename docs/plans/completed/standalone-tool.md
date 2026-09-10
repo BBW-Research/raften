@@ -7,6 +7,8 @@
 - Source oracle: scene-maker commit `9e792124bc61f55150416b8bf803862c6c634c78`
 - Completion authority: `docs/quality/acceptance.md`
 
+This is the completed build record under the former `repo-context` name. The subsequent Raften rename and its validation are recorded in [decision 0009](../../decisions/0009-raften-name.md).
+
 ## Objective
 
 Turn the frozen scene-maker checker into a reusable, tested, self-hosting Python CLI without inheriting scene-maker-specific assumptions. Work through the phases in order. Do not stop after producing design notes or scaffolding; the assignment is complete only when the standalone CLI replaces the transitional checker and all acceptance criteria pass.

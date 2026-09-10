@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from repo_context.diagnostics import (
+from raften.diagnostics import (
     CFG_AMBIGUOUS_OVERRIDE,
     CFG_CATCH_ALL,
     CFG_DUPLICATE_NAME,

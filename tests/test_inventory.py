@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repo_context.inventory import (
+from raften.inventory import (
     RepositoryAccessError,
     find_base_entry,
     inventory_worktree,
@@ -17,7 +17,7 @@ from repo_context.inventory import (
     read_base_blob,
     resolve_base_revision,
 )
-from repo_context.model import GitFileMode, GitObjectType, InventorySource, WorktreeKind
+from raften.model import GitFileMode, GitObjectType, InventorySource, WorktreeKind
 from tests.support.repository import RepositoryFixture
 
 
@@ -74,7 +74,7 @@ class RepositoryRootTests(unittest.TestCase):
         with RepositoryFixture() as repository:
             repository.write_text("tracked.txt", "tracked\n")
             repository.commit()
-            with tempfile.TemporaryDirectory(prefix="repo-context-worktree-") as parent:
+            with tempfile.TemporaryDirectory(prefix="raften-worktree-") as parent:
                 linked = Path(parent) / "linked"
                 repository.git("worktree", "add", "--quiet", "--detach", str(linked))
                 handle = open_repository(linked)
@@ -216,7 +216,7 @@ class WorktreeInventoryTests(unittest.TestCase):
             os.mkfifo(repository.path("named-pipe"))
             handle = open_repository(repository.root)
             with patch(
-                "repo_context.inventory._run_git",
+                "raften.inventory._run_git",
                 side_effect=(b"", b"", b"named-pipe\x00"),
             ):
                 entries = inventory_worktree(handle).entries

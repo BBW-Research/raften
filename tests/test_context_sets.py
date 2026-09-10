@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import unittest
 
-from repo_context.diagnostics import (
+from raften.diagnostics import (
     CONTEXT_HARD_BYTES,
     CONTEXT_MEMBER_MISSING,
     CONTEXT_WARN_BYTES,
 )
-from repo_context.model import (
+from raften.model import (
     ContextSet,
     FileKind,
     FileRule,
@@ -17,7 +17,7 @@ from repo_context.model import (
     Severity,
     WorktreeKind,
 )
-from repo_context.sizes import compile_size_policy, evaluate_sizes
+from raften.sizes import compile_size_policy, evaluate_sizes
 from tests.support.sizes import TODAY, policy_with, regular
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from pathlib import PureWindowsPath
 
-from repo_context.matcher import (
+from raften.matcher import (
     PathFlavor,
     PatternSyntaxError,
     candidate_path_validation_error,

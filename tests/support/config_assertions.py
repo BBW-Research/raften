@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from repo_context.config import ConfigurationError, parse_policy
-from repo_context.model import Diagnostic
+from raften.config import ConfigurationError, parse_policy
+from raften.model import Diagnostic
 
 
 class ConfigurationAssertions(unittest.TestCase):

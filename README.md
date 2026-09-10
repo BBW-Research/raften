@@ -1,8 +1,8 @@
-# repo-context
+# Raften
 
-This repository builds a standalone checker that keeps coding-agent repositories bounded, navigable, and economical to load into context windows.
+Policy checks for code and documentation in agentic coding projects. Raften enforces file and context budgets, checks documentation navigation, and catches policy weakening against Git history.
 
-The standalone `check`, `audit`, `explain`, and guarded `init` commands are implemented under `src/repo_context/` and run locally without installation or network access. `scripts/context-check`, local validation, bootstrap, and CI use this engine; the verbatim scene-maker checker remains only as a characterized test oracle.
+The standalone `check`, `audit`, `explain`, and guarded `init` commands are implemented under `src/raften/` and run locally without installation or network access. `scripts/context-check`, local validation, bootstrap, and CI use this engine; the verbatim scene-maker checker remains only as a characterized test oracle.
 
 ## Start here
 
@@ -22,22 +22,24 @@ Useful commands:
 scripts/context-check
 scripts/test
 scripts/validate
-PYTHONPATH=src python3 -m repo_context --help
+PYTHONPATH=src python3 -m raften --help
 ```
 
 The target public interface is:
 
 ```sh
-repo-context check
-repo-context audit
-repo-context explain PATH
-repo-context init
+raften check
+raften audit
+raften explain PATH
+raften init
 ```
 
 See the [documentation index](docs/index.md) for the specification, architecture, decisions, acceptance criteria, test matrix, and source provenance.
 
-The [release and consumption guide](docs/release/index.md) covers hash-locked offline builds, native and Docker qualification, installed wheels, pinned zipapps, and vendored source wrappers. The distribution name is `repo-context-policy`; the command and import package remain `repo-context` and `repo_context`.
+The distribution, command, and Python import are all `raften`. New projects use `raften.toml`; existing projects can keep their policy path with `--config repo-context.toml`. This repository's `scripts/context-check` wrapper selects that existing path to preserve policy history.
+
+The [release and consumption guide](docs/release/index.md) covers hash-locked offline builds, native and Docker qualification, installed wheels, pinned zipapps, vendored source wrappers, and migration from the former name.
 
 ## License
 
-`repo-context` is released under the [MIT License](LICENSE). The [upstream notice](NOTICE) retains the license and provenance of the scene-maker source from which part of the tool was derived.
+`raften` is released under the [MIT License](LICENSE). The [upstream notice](NOTICE) retains the license and provenance of the scene-maker source from which part of the tool was derived.

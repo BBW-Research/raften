@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from repo_context.config import render_starter_policy
+from raften.config import render_starter_policy
 
 
 STARTER_POLICY_BYTES = render_starter_policy()

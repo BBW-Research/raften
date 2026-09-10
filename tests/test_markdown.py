@@ -3,9 +3,9 @@ from __future__ import annotations
 import unittest
 from unittest import mock
 
-from repo_context import markdown, markdown_links
-from repo_context.markdown import parse_markdown
-from repo_context.model import AnchorKind, LinkKind
+from raften import markdown, markdown_links
+from raften.markdown import parse_markdown
+from raften.model import AnchorKind, LinkKind
 
 
 class MarkdownLinkExtractionTests(unittest.TestCase):

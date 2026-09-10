@@ -7,8 +7,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from repo_context.cli import main
-from repo_context.config import render_starter_policy
+from raften.cli import main
+from raften.config import render_starter_policy
 from tests.support.config import append_exception_record
 from tests.support.repository import RepositoryFixture
 from tests.support.target import install_clean_target, install_runtime_configuration_failure
@@ -53,6 +53,33 @@ class CliIntegrationTests(unittest.TestCase):
         self.assertEqual(sarif_result.stderr, "")
         self.assertEqual(json.loads(sarif_result.stdout)["version"], "2.1.0")
 
+    def test_explicit_legacy_policy_keeps_git_comparison_and_rejects_weakening(self) -> None:
+        with RepositoryFixture() as repository:
+            install_clean_target(repository)
+            repository.rename("raften.toml", "repo-context.toml")
+            policy = render_starter_policy(debt_manifest_path="repo-context.debt.json")
+            repository.write_bytes("repo-context.toml", policy)
+            base = repository.commit("adopt the legacy policy path")
+            arguments = (
+                "check", "--config", "repo-context.toml", "--base-ref", "HEAD",
+                "--format", "json", *EVALUATION,
+            )
+            clean = repository.run_target(*arguments)
+            repository.write_bytes(
+                "repo-context.toml",
+                policy.replace(b"hard_bytes = 25600", b"hard_bytes = 25601", 1),
+            )
+            weakened = repository.run_target(*arguments)
+
+        self.assertEqual(clean.returncode, 0, clean.stderr)
+        document = json.loads(clean.stdout)
+        self.assertEqual(document["tool"]["name"], "raften")
+        self.assertEqual(document["data"]["base_commit_id"], base)
+        self.assertEqual(document["data"]["baseline_source"], "git")
+        self.assertEqual(document["diagnostics"], [])
+        self.assertEqual(weakened.returncode, 1, weakened.stdout + weakened.stderr)
+        self.assertIn("RAT006", [item["code"] for item in json.loads(weakened.stdout)["diagnostics"]])
+
     def test_warning_only_check_succeeds_on_stdout(self) -> None:
         with RepositoryFixture() as repository:
             install_clean_target(repository)
@@ -77,7 +104,7 @@ expires_on = 2026-09-01
 warn_bytes = 9000
 hard_bytes = 10000''',
             )
-            repository.write_text("repo-context.toml", policy)
+            repository.write_text("raften.toml", policy)
             on_expiry = repository.run_target(
                 "check",
                 "--evaluation-date",
@@ -174,7 +201,7 @@ hard_bytes = 10000''',
             dirty_retry = repository.run_target("init", "--force", "--capture-debt")
 
         self.assertEqual(captured.returncode, 0)
-        self.assertIn('Wrote "repo-context.debt.json".', captured.stdout)
+        self.assertIn('Wrote "raften.debt.json".', captured.stdout)
         self.assertEqual(captured.stderr, "")
         self.assertEqual(dirty_retry.returncode, 2)
         self.assertIn("INIT001", dirty_retry.stderr)
@@ -205,7 +232,7 @@ hard_bytes = 10000''',
             bad_config = repository.run_target(
                 "check",
                 "--config",
-                "nested//repo-context.toml",
+                "nested//raften.toml",
                 *EVALUATION,
             )
             bad_explain = repository.run_target(
@@ -276,7 +303,7 @@ hard_bytes = 10000''',
         with RepositoryFixture() as repository:
             result = repository.run_target("--version")
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout, "repo-context 1.0.0\n")
+        self.assertEqual(result.stdout, "raften 1.0.0\n")
         self.assertEqual(result.stderr, "")
 
     def test_broken_pipe_is_quiet_and_preserves_semantic_exit(self) -> None:
@@ -313,7 +340,7 @@ hard_bytes = 10000''',
 
     def test_unexpected_internal_failure_is_structured_without_traceback(self) -> None:
         stderr = io.StringIO()
-        with mock.patch("repo_context.cli.run_repository", side_effect=RuntimeError("boom")):
+        with mock.patch("raften.cli.run_repository", side_effect=RuntimeError("boom")):
             with mock.patch("sys.stderr", stderr):
                 result = main(["check", *EVALUATION])
         self.assertEqual(result, 2)
@@ -327,11 +354,11 @@ hard_bytes = 10000''',
                 stdout = io.StringIO()
                 stderr = io.StringIO()
                 with mock.patch(
-                    "repo_context.cli.run_repository",
+                    "raften.cli.run_repository",
                     side_effect=RuntimeError("runner failed"),
                 ):
                     with mock.patch(
-                        "repo_context.cli.render_report",
+                        "raften.cli.render_report",
                         side_effect=RuntimeError("renderer failed"),
                     ):
                         with mock.patch("sys.stdout", stdout), mock.patch(

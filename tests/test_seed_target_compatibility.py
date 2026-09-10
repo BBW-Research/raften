@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from repo_context.config import render_starter_policy
+from raften.config import render_starter_policy
 from tests.support.config import replace_once
 from tests.support.repository import RepositoryFixture, seed_policy
 from tests.support.target import install_clean_target
@@ -80,7 +80,7 @@ class EquivalentBehaviorCompatibilityTests(unittest.TestCase):
                 },
             )
             repository.write_text(
-                "repo-context.toml",
+                "raften.toml",
                 _target_with_override("large.txt", warn_bytes=5, hard_bytes=10),
             )
             repository.write_text("large.txt", "eleven bytes")
@@ -114,7 +114,7 @@ class EquivalentBehaviorCompatibilityTests(unittest.TestCase):
                 "warn_bytes = 20480\nhard_bytes = 25600",
                 "warn_bytes = 20480\nhard_bytes = 26000",
             )
-            repository.write_text("repo-context.toml", target_policy)
+            repository.write_text("raften.toml", target_policy)
             seed = repository.run_seed("--base-ref", base)
             target = repository.run_target(
                 "check",

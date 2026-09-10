@@ -6,9 +6,9 @@ import unittest
 from datetime import date
 from pathlib import Path
 
-from repo_context.model import FileKind, LimitState, RatchetBaselineSource, Severity
-from repo_context.run_model import RepositoryRun, RunStatus
-from repo_context.runner import run_repository
+from raften.model import FileKind, LimitState, RatchetBaselineSource, Severity
+from raften.run_model import RepositoryRun, RunStatus
+from raften.runner import run_repository
 from tests.support.paths import ROOT, SEED_PATH
 from tests.support.repository import RepositoryFixture, isolated_environment
 from tests.support.target import install_clean_target
@@ -49,7 +49,7 @@ def _run(arguments: list[str], *, cwd: Path):
 
 class RepositorySelfHostingTests(unittest.TestCase):
     def test_root_policy_explicitly_classifies_scanned_special_paths(self) -> None:
-        outcome = run_repository(ROOT, evaluation_date=EVALUATION_DATE)
+        outcome = run_repository(ROOT, config_path="repo-context.toml", evaluation_date=EVALUATION_DATE)
 
         self.assertIsInstance(outcome, RepositoryRun)
         assert isinstance(outcome, RepositoryRun)
@@ -85,6 +85,7 @@ class RepositorySelfHostingTests(unittest.TestCase):
         has_head = _root_has_head()
         outcome = run_repository(
             ROOT,
+            config_path="repo-context.toml",
             base_ref="HEAD" if has_head else None,
             evaluation_date=EVALUATION_DATE,
         )
@@ -154,7 +155,7 @@ class RepositorySelfHostingTests(unittest.TestCase):
         with RepositoryFixture() as repository, tempfile.TemporaryDirectory() as outside:
             install_clean_target(repository)
             repository.commit("clean target")
-            shadow = Path(outside) / "repo_context"
+            shadow = Path(outside) / "raften"
             shadow.mkdir()
             (shadow / "__init__.py").write_text("", encoding="utf-8")
             (shadow / "__main__.py").write_text(
@@ -166,6 +167,8 @@ class RepositorySelfHostingTests(unittest.TestCase):
                     str(ROOT / "scripts/context-check"),
                     "--repo",
                     str(repository.root),
+                    "--config",
+                    "raften.toml",
                     "--base-ref",
                     "HEAD",
                     "--evaluation-date",
@@ -192,8 +195,9 @@ class RepositorySelfHostingTests(unittest.TestCase):
                 self.assertNotIn("check_repository_policy.py", text)
 
         wrapper = (ROOT / "scripts/context-check").read_text(encoding="utf-8")
-        self.assertIn("python3 -P -m repo_context check", wrapper)
+        self.assertIn("python3 -P -m raften check", wrapper)
         self.assertIn('--repo "$ROOT"', wrapper)
+        self.assertIn("--config repo-context.toml", wrapper)
         self.assertIn('PYTHONPATH="$ROOT/src"', wrapper)
         self.assertNotIn("${PYTHONPATH", wrapper)
         validation = (ROOT / "scripts/validate").read_text(encoding="utf-8")

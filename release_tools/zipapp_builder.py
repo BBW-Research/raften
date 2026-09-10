@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-_MAIN = b"from repo_context.cli import main\n\nraise SystemExit(main())\n"
+_MAIN = b"from raften.cli import main\n\nraise SystemExit(main())\n"
 _MINIMUM_ZIP_EPOCH = 315_532_800
 _MAXIMUM_ZIP_EPOCH = 4_354_819_198
 
@@ -18,9 +18,9 @@ _MAXIMUM_ZIP_EPOCH = 4_354_819_198
 def build_zipapp(source_root: Path, destination: Path, *, epoch: int) -> tuple[str, ...]:
     """Write one stored, timestamp-normalized executable archive without overwriting."""
 
-    package = source_root / "repo_context"
+    package = source_root / "raften"
     if not package.is_dir() or not (package / "__init__.py").is_file():
-        raise ValueError(f"source root does not contain repo_context: {source_root}")
+        raise ValueError(f"source root does not contain raften: {source_root}")
     legal_files: dict[str, Path] = {}
     for name in ("LICENSE", "NOTICE"):
         path = source_root.parent / name

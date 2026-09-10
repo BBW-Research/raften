@@ -4,12 +4,12 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import repo_context.initialization as initialization
-import repo_context.inventory as inventory_module
-import repo_context.sizes as sizes_module
-from repo_context.inventory import RepositoryHandle
-from repo_context.model import ClassifiedContent, InventoryEntry
-from repo_context.run_model import InitResult
+import raften.initialization as initialization
+import raften.inventory as inventory_module
+import raften.sizes as sizes_module
+from raften.inventory import RepositoryHandle
+from raften.model import ClassifiedContent, InventoryEntry
+from raften.run_model import InitResult
 from tests.support.repository import RepositoryFixture
 
 

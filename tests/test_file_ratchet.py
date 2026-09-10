@@ -4,8 +4,8 @@ import unittest
 from dataclasses import replace
 from datetime import date
 
-from repo_context.debt import capture_debt_manifest
-from repo_context.diagnostics import (
+from raften.debt import capture_debt_manifest
+from raften.diagnostics import (
     FILE_HARD_BYTES,
     RAT_BASE_TYPE_CHANGED,
     RAT_BASE_WITHIN_ORDINARY,
@@ -13,7 +13,7 @@ from repo_context.diagnostics import (
     RAT_NEW_OVERSIZE,
     RAT_SIZE_REGRESSION,
 )
-from repo_context.model import (
+from raften.model import (
     BaseTreeEntry,
     ContentState,
     ExactSelector,
@@ -26,12 +26,12 @@ from repo_context.model import (
     RatchetBaselineSource,
     RatchetUnavailableReason,
 )
-from repo_context.ratchet import (
+from raften.ratchet import (
     evaluate_file_ratchet,
     is_all_zero_ref,
     reconcile_size_diagnostics,
 )
-from repo_context.sizes import compile_size_policy, evaluate_sizes
+from raften.sizes import compile_size_policy, evaluate_sizes
 from tests.support.sizes import TODAY, policy_with, regular
 
 

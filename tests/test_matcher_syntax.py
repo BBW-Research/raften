@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from repo_context.matcher import (
+from raften.matcher import (
     narrow_pattern_error,
     path_validation_error,
     pattern_has_wildcards,

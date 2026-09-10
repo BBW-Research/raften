@@ -7,12 +7,12 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import repo_context.initialization as initialization
-import repo_context.init_preparation as preparation
-import repo_context.init_transaction as transaction
-from repo_context.config import render_starter_policy
-from repo_context.debt import parse_debt_manifest
-from repo_context.run_model import CommandFailure, InitResult, RunStatus
+import raften.initialization as initialization
+import raften.init_preparation as preparation
+import raften.init_transaction as transaction
+from raften.config import render_starter_policy
+from raften.debt import parse_debt_manifest
+from raften.run_model import CommandFailure, InitResult, RunStatus
 from tests.support.repository import RepositoryFixture
 
 
@@ -20,9 +20,9 @@ from tests.support.repository import RepositoryFixture
 class InitializationTransactionTests(unittest.TestCase):
     def test_transaction_name_collisions_preserve_preexisting_files(self) -> None:
         token = "fixed-token"
-        temporary = f".repo-context.toml.repo-context-{token}.tmp"
-        backup = f".repo-context.toml.repo-context-{token}.bak"
-        rollback = f".repo-context.toml.repo-context-{token}.rollback"
+        temporary = f".raften.toml.raften-{token}.tmp"
+        backup = f".raften.toml.raften-{token}.bak"
+        rollback = f".raften.toml.raften-{token}.rollback"
 
         with RepositoryFixture() as repository:
             repository.write_text(temporary, "owned temporary collision\n")
@@ -32,10 +32,10 @@ class InitializationTransactionTests(unittest.TestCase):
 
             self.assertIsInstance(temp_outcome, CommandFailure)
             self.assertEqual(repository.path(temporary).read_text(), "owned temporary collision\n")
-            self.assertFalse(repository.path("repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
 
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", "old policy\n")
+            repository.write_text("raften.toml", "old policy\n")
             repository.write_text(backup, "owned backup collision\n")
             repository.commit("backup collision")
             with mock.patch.object(preparation.secrets, "token_hex", return_value=token):
@@ -46,7 +46,7 @@ class InitializationTransactionTests(unittest.TestCase):
 
             self.assertIsInstance(backup_outcome, CommandFailure)
             self.assertEqual(repository.path(backup).read_text(), "owned backup collision\n")
-            self.assertEqual(repository.path("repo-context.toml").read_text(), "old policy\n")
+            self.assertEqual(repository.path("raften.toml").read_text(), "old policy\n")
 
         with RepositoryFixture() as repository:
             repository.write_text(rollback, "owned rollback collision\n")
@@ -56,11 +56,11 @@ class InitializationTransactionTests(unittest.TestCase):
 
             self.assertIsInstance(rollback_outcome, CommandFailure)
             self.assertEqual(repository.path(rollback).read_text(), "owned rollback collision\n")
-            self.assertFalse(repository.path("repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
 
     def test_force_refuses_a_destination_changed_to_a_symlink_before_install(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", "old policy\n")
+            repository.write_text("raften.toml", "old policy\n")
             repository.write_text("protected.txt", "protected\n")
             repository.commit("existing policy")
             install = transaction._install_artifact
@@ -68,10 +68,10 @@ class InitializationTransactionTests(unittest.TestCase):
 
             def race_destination(item, *, force):
                 nonlocal raced
-                if item.artifact.path == "repo-context.toml" and not raced:
+                if item.artifact.path == "raften.toml" and not raced:
                     raced = True
-                    repository.path("repo-context.toml").unlink()
-                    repository.symlink("repo-context.toml", "protected.txt")
+                    repository.path("raften.toml").unlink()
+                    repository.symlink("raften.toml", "protected.txt")
                 return install(item, force=force)
 
             with mock.patch.object(
@@ -88,7 +88,7 @@ class InitializationTransactionTests(unittest.TestCase):
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
             self.assertEqual(dict(outcome.diagnostics[0].details)["state"], "symlink")
-            self.assertTrue(repository.path("repo-context.toml").is_symlink())
+            self.assertTrue(repository.path("raften.toml").is_symlink())
             self.assertEqual(repository.path("protected.txt").read_text(), "protected\n")
 
     def test_final_cleanliness_recheck_prevents_racing_writes(self) -> None:
@@ -105,7 +105,7 @@ class InitializationTransactionTests(unittest.TestCase):
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT001",))
-            self.assertFalse(repository.path("repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
 
     def test_group_write_rolls_back_a_new_manifest_when_config_install_fails(self) -> None:
         with RepositoryFixture() as repository:
@@ -114,7 +114,7 @@ class InitializationTransactionTests(unittest.TestCase):
             install = transaction._install_artifact
 
             def fail_config(item, *, force):
-                if item.artifact.path == "repo-context.toml":
+                if item.artifact.path == "raften.toml":
                     raise OSError("injected failure")
                 return install(item, force=force)
 
@@ -127,8 +127,8 @@ class InitializationTransactionTests(unittest.TestCase):
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT004",))
-            self.assertFalse(repository.path("repo-context.toml").exists())
-            self.assertFalse(repository.path("repo-context.debt.json").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
+            self.assertFalse(repository.path("raften.debt.json").exists())
 
     def test_unexpected_install_exception_still_cleans_prepared_artifacts(self) -> None:
         with RepositoryFixture() as repository:
@@ -137,7 +137,7 @@ class InitializationTransactionTests(unittest.TestCase):
             install = transaction._install_artifact
 
             def unsupported_config_install(item, *, force):
-                if item.artifact.path == "repo-context.toml":
+                if item.artifact.path == "raften.toml":
                     raise NotImplementedError("injected unsupported primitive")
                 return install(item, force=force)
 
@@ -152,22 +152,22 @@ class InitializationTransactionTests(unittest.TestCase):
                         capture_debt=True,
                     )
 
-            self.assertFalse(repository.path("repo-context.toml").exists())
-            self.assertFalse(repository.path("repo-context.debt.json").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
+            self.assertFalse(repository.path("raften.debt.json").exists())
             self.assertEqual(
-                tuple(repository.root.glob(".*.repo-context-*")),
+                tuple(repository.root.glob(".*.raften-*")),
                 (),
             )
 
     def test_group_force_write_restores_existing_artifacts_when_install_fails(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", "old policy\n")
-            repository.write_text("repo-context.debt.json", '{"old": true}\n')
+            repository.write_text("raften.toml", "old policy\n")
+            repository.write_text("raften.debt.json", '{"old": true}\n')
             repository.commit("old initialization")
             install = transaction._install_artifact
 
             def fail_config(item, *, force):
-                if item.artifact.path == "repo-context.toml":
+                if item.artifact.path == "raften.toml":
                     raise OSError("injected failure")
                 return install(item, force=force)
 
@@ -179,25 +179,25 @@ class InitializationTransactionTests(unittest.TestCase):
                 )
 
             self.assertIsInstance(outcome, CommandFailure)
-            self.assertEqual(repository.path("repo-context.toml").read_text(), "old policy\n")
-            self.assertEqual(repository.path("repo-context.debt.json").read_text(), '{"old": true}\n')
+            self.assertEqual(repository.path("raften.toml").read_text(), "old policy\n")
+            self.assertEqual(repository.path("raften.debt.json").read_text(), '{"old": true}\n')
             self.assertEqual(
-                tuple(path.name for path in repository.root.glob(".*.repo-context-*.bak")),
+                tuple(path.name for path in repository.root.glob(".*.raften-*.bak")),
                 (),
             )
 
     def test_forced_rollback_preserves_old_and_concurrent_sidecar_data(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", "old policy\n")
-            repository.write_text("repo-context.debt.json", "old sidecar\n")
+            repository.write_text("raften.toml", "old policy\n")
+            repository.write_text("raften.debt.json", "old sidecar\n")
             repository.commit("old initialization")
             install = transaction._install_artifact
 
             def replace_sidecar_then_fail_config(item, *, force):
-                if item.artifact.path == "repo-context.toml":
-                    repository.path("repo-context.debt.json").unlink()
+                if item.artifact.path == "raften.toml":
+                    repository.path("raften.debt.json").unlink()
                     repository.write_text(
-                        "repo-context.debt.json",
+                        "raften.debt.json",
                         "concurrent owner data\n",
                     )
                     raise OSError("injected config failure")
@@ -217,9 +217,9 @@ class InitializationTransactionTests(unittest.TestCase):
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT004",))
-            self.assertEqual(repository.path("repo-context.toml").read_text(), "old policy\n")
+            self.assertEqual(repository.path("raften.toml").read_text(), "old policy\n")
             self.assertEqual(
-                repository.path("repo-context.debt.json").read_text(),
+                repository.path("raften.debt.json").read_text(),
                 "concurrent owner data\n",
             )
             recovery_paths = dict(outcome.diagnostics[0].details)["recovery_paths"]
@@ -249,13 +249,13 @@ class InitializationTransactionTests(unittest.TestCase):
                 )
 
             self.assertIsInstance(outcome, CommandFailure)
-            self.assertFalse(repository.path("repo-context.toml").exists())
-            self.assertFalse(repository.path("repo-context.debt.json").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
+            self.assertFalse(repository.path("raften.debt.json").exists())
 
     def test_backup_cleanup_failure_never_rolls_back_committed_replacements(self) -> None:
         with RepositoryFixture() as repository:
-            repository.write_text("repo-context.toml", "old policy\n")
-            repository.write_text("repo-context.debt.json", '{"old": true}\n')
+            repository.write_text("raften.toml", "old policy\n")
+            repository.write_text("raften.debt.json", '{"old": true}\n')
             repository.commit("old initialization")
             with mock.patch.object(
                 transaction,
@@ -271,8 +271,8 @@ class InitializationTransactionTests(unittest.TestCase):
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT004",))
-            self.assertEqual(repository.path("repo-context.toml").read_bytes(), render_starter_policy())
-            self.assertEqual(parse_debt_manifest(repository.path("repo-context.debt.json").read_bytes()).entries, ())
+            self.assertEqual(repository.path("raften.toml").read_bytes(), render_starter_policy())
+            self.assertEqual(parse_debt_manifest(repository.path("raften.debt.json").read_bytes()).entries, ())
             recovery_paths = dict(outcome.diagnostics[0].details)["recovery_paths"]
             self.assertEqual(len(recovery_paths), 4)
             self.assertTrue(all(repository.path(path).exists() for path in recovery_paths))
@@ -291,7 +291,7 @@ class InitializationTransactionTests(unittest.TestCase):
             self.assertIsInstance(outcome, CommandFailure)
             assert isinstance(outcome, CommandFailure)
             self.assertEqual(tuple(item.code for item in outcome.diagnostics), ("INIT002",))
-            self.assertFalse(repository.path("repo-context.toml").exists())
+            self.assertFalse(repository.path("raften.toml").exists())
 
     def test_ignored_untracked_files_do_not_make_repository_dirty(self) -> None:
         with RepositoryFixture() as repository:

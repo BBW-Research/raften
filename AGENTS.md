@@ -3,7 +3,7 @@
 ## Repository map
 
 - Start with the [documentation index](docs/index.md).
-- The product contract is `docs/specs/repo-context.md`.
+- The product contract is `docs/specs/raften.md`.
 - The completed executable build sequence is `docs/plans/completed/standalone-tool.md`.
 - The completed Codex assignment is retained in `docs/prompts/codex-build.md`.
 - Architecture boundaries are summarized in `ARCHITECTURE.md` and expanded under `docs/architecture/`.
@@ -36,7 +36,7 @@ When lower-authority material conflicts with a higher-authority contract, preser
 - All diagnostics are stable, sorted, and testable. Human-readable wording may improve without changing diagnostic identity.
 - Git-visible authored text is governed by default. Generated, vendored, lock, fixture, and legal material must be classified explicitly rather than hidden behind broad exclusions.
 - Policy limits may tighten but must not silently weaken relative to a configured base revision.
-- `tools/check_repository_policy.py` is the frozen test oracle copied from scene-maker. Do not edit it; production behavior belongs in `src/repo_context/`.
+- `tools/check_repository_policy.py` is the frozen test oracle copied from scene-maker. Do not edit it; production behavior belongs in `src/raften/`.
 - Never add project-specific exemptions to shared engine code.
 - Keep every authored code and documentation file below the repository policy ceiling. Split by responsibility, not merely to satisfy byte counts.
 
@@ -46,7 +46,7 @@ When lower-authority material conflicts with a higher-authority contract, preser
 - Tests only: `scripts/test`.
 - Bootstrap a freshly unpacked archive: `scripts/bootstrap`.
 - Self-hosted policy check: `scripts/context-check`.
-- Target CLI smoke test: `PYTHONPATH=src python3 -m repo_context --help`.
+- Target CLI smoke test: `PYTHONPATH=src python3 -m raften --help`.
 
 ## Parallel work
 

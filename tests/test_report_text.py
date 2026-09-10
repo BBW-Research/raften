@@ -4,9 +4,9 @@ import unittest
 from datetime import date
 from pathlib import Path
 
-from repo_context.model import OutputFormat
-from repo_context.report import render_report
-from repo_context.runner import explain_repository_path, run_repository
+from raften.model import OutputFormat
+from raften.report import render_report
+from raften.runner import explain_repository_path, run_repository
 from tests.support.repository import RepositoryFixture
 from tests.support.target import install_clean_target, install_runtime_configuration_failure
 

@@ -1,12 +1,16 @@
 # Release and consumption
 
+See [repository publication](publication.md) for the separate GitHub rename, privacy review, and visibility procedure.
+
 ## Support contract
 
 The first stable release supports CPython 3.12 and 3.13 on macOS and Linux. Windows is not qualified. Runtime behavior requires Git 2.39.5 or newer, as defined by the [repository inventory boundary](../architecture/inventory.md), plus only the Python standard library; building distributions uses the separately reviewed and hash-locked release environment in `requirements/release.txt`.
 
-The public distribution is `repo-context-policy`, the import package is `repo_context`, and the stable command is `repo-context`. Version 1.0.0 is the first stable artifact version. The project is MIT licensed by BBW-Research, and its canonical repository is `https://github.com/BBW-Research/repo-context`. The package version has one authoritative source in `repo_context.__version__`; release tags and changelog headings must use the same PEP 440 version. Stable versions follow `MAJOR.MINOR.PATCH`, with major increments for incompatible CLI, configuration, or machine-output changes.
+The public distribution is `raften`, the import package is `raften`, and the stable command is `raften`. Version 1.0.0 is the first stable artifact version. The project is MIT licensed by BBW-Research, and its canonical repository is `https://github.com/BBW-Research/repo-context`. The package version has one authoritative source in `raften.__version__`; release tags and changelog headings must use the same PEP 440 version. Stable versions follow `MAJOR.MINOR.PATCH`, with major increments for incompatible CLI, configuration, or machine-output changes.
 
 ## Build and qualify
+
+Raften succeeds the former `repo-context-policy` distribution under [decision 0009](../decisions/0009-raften-name.md). The completed Phase 8 evidence records artifacts under the former name. Build and qualify fresh Raften artifacts before publication; the source rename alone does not qualify a release.
 
 Start from a reviewed clean commit. Acquire the release wheelhouse while network access is available, then perform every subsequent step offline:
 
@@ -29,35 +33,49 @@ Run the native artifact qualifier on both supported Python versions on macOS. Th
 Verify the release checksum manifest, install the wheel into a dedicated environment without dependencies, and keep a project-local wrapper as the stable invocation point:
 
 ```console
-$ python3 -m venv .tools/repo-context
-$ .tools/repo-context/bin/python -m pip install --no-deps /verified/repo_context_policy-1.0.0-py3-none-any.whl
-$ .tools/repo-context/bin/repo-context check --repo .
+$ python3 -m venv .tools/raften
+$ .tools/raften/bin/python -m pip install --no-deps /verified/raften-1.0.0-py3-none-any.whl
+$ .tools/raften/bin/raften check --repo .
 ```
 
-Use the exact reviewed release filename. A wrapper should execute `.tools/repo-context/bin/repo-context "$@"` and the project should pin the artifact SHA-256 alongside its update procedure.
+Use the exact reviewed release filename. A wrapper should execute `.tools/raften/bin/raften "$@"` and the project should pin the artifact SHA-256 alongside its update procedure.
 
 ### Pinned zipapp
 
-Copy the release `repo-context-<version>.pyz` into a project-controlled tools directory, record its line from `SHA256SUMS`, and verify that checksum before adoption. Invoke it with either supported interpreter:
+Copy the release `raften-<version>.pyz` into a project-controlled tools directory, record its line from `SHA256SUMS`, and verify that checksum before adoption. Invoke it with either supported interpreter:
 
 ```console
-$ python3 tools/repo-context-<version>.pyz check --repo .
+$ python3 tools/raften-<version>.pyz check --repo .
 ```
 
-The zipapp contains the `repo_context` Python sources, a generated entrypoint, `LICENSE`, and `NOTICE`. It requires no installation and is byte-identical when built from the same source with the same `SOURCE_DATE_EPOCH`. The consuming repository's `scripts/context-check` should name the pinned file explicitly rather than select a moving download.
+The zipapp contains the `raften` Python sources, a generated entrypoint, `LICENSE`, and `NOTICE`. It requires no installation and is byte-identical when built from the same source with the same `SOURCE_DATE_EPOCH`. The consuming repository's `scripts/context-check` should name the pinned file explicitly rather than select a moving download.
 
 ### Vendored source
 
-Copy the reviewed `src/repo_context` directory to a versioned project location such as `vendor/repo-context/src/repo_context`, retain both `LICENSE` and `NOTICE`, and make the project-local wrapper select only that source tree:
+Copy the reviewed `src/raften` directory to a versioned project location such as `vendor/raften/src/raften`, retain both `LICENSE` and `NOTICE`, and make the project-local wrapper select only that source tree:
 
 ```sh
 #!/bin/sh
 set -eu
 ROOT=$(CDPATH= cd -P -- "$(dirname -- "$0")/.." && pwd -P)
-PYTHONPATH="$ROOT/vendor/repo-context/src" exec python3 -P -m repo_context check --repo "$ROOT" "$@"
+PYTHONPATH="$ROOT/vendor/raften/src" exec python3 -P -m raften check --repo "$ROOT" "$@"
 ```
 
 Do not append ambient `PYTHONPATH`; that could select an unintended package. Record the vendored version, source commit, and tree hash, and update the copy as one reviewed change.
+
+## Existing projects
+
+Update installations, imports, and command invocations to `raften`. For an adopted policy, retain its tracked filename and select it explicitly:
+
+```sh
+raften check --config repo-context.toml --base-ref HEAD
+raften audit --config repo-context.toml
+raften explain README.md --config repo-context.toml
+```
+
+The same option selects the matching `repo-context.debt.json` sidecar when one is required. Keep the existing policy and sidecar contents; initialization is for adoption, not a required part of the name change. Raften does not automatically fall back from `raften.toml` to the old filename.
+
+Keep the policy path stable while comparing against revisions that contain only the old path. Renaming it causes those revisions to look like first adoption and requires an eligible manifest. This repository's `scripts/context-check` already passes its historical policy path explicitly, preserving the normal Git ratchets.
 
 ## Changelog process
 

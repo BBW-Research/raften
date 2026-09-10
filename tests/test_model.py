@@ -4,10 +4,10 @@ import unittest
 from dataclasses import FrozenInstanceError, fields, is_dataclass
 from datetime import date
 
-from repo_context.config import starter_policy
-from repo_context.docs import compile_documentation_policy, evaluate_documentation
-from repo_context.markdown import parse_markdown
-from repo_context.model import (
+from raften.config import starter_policy
+from raften.docs import compile_documentation_policy, evaluate_documentation
+from raften.markdown import parse_markdown
+from raften.model import (
     BaseRevision,
     BaseTreeEntry,
     Diagnostic,
@@ -32,8 +32,8 @@ from repo_context.model import (
     WorktreeKind,
     WorktreeIdentity,
 )
-from repo_context.run_model import CommandFailure, RunStatus
-from repo_context.sizes import compile_size_policy, evaluate_sizes, explain_size_path
+from raften.run_model import CommandFailure, RunStatus
+from raften.sizes import compile_size_policy, evaluate_sizes, explain_size_path
 
 
 class ImmutableModelTests(unittest.TestCase):

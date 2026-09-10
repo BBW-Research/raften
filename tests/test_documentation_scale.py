@@ -3,9 +3,9 @@ from __future__ import annotations
 import unittest
 from dataclasses import replace
 
-from repo_context.config import starter_policy
-from repo_context.docs import compile_documentation_policy, documentation_text_paths, evaluate_documentation
-from repo_context.model import DocumentationSettings, InventoryEntry, InventorySource, TextDocument, WorktreeKind
+from raften.config import starter_policy
+from raften.docs import compile_documentation_policy, documentation_text_paths, evaluate_documentation
+from raften.model import DocumentationSettings, InventoryEntry, InventorySource, TextDocument, WorktreeKind
 
 
 def regular(path: str, size: int = 1) -> InventoryEntry:

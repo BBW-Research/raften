@@ -31,7 +31,7 @@ def qualify(
 
     if not wheelhouse.is_dir():
         raise ValueError(f"release wheelhouse does not exist: {wheelhouse}")
-    with tempfile.TemporaryDirectory(prefix="repo-context-qualification-") as directory:
+    with tempfile.TemporaryDirectory(prefix="raften-qualification-") as directory:
         workspace = Path(directory)
         staged_artifacts = stage_release_artifacts(
             artifact_directory,
@@ -81,13 +81,13 @@ def verify_checksums(directory: Path, artifacts: tuple[Artifact, ...]) -> None:
 
 
 def _qualify_installable(artifact: Path, wheelhouse: Path, expected_version: str) -> None:
-    with tempfile.TemporaryDirectory(prefix="repo-context-install-") as directory:
+    with tempfile.TemporaryDirectory(prefix="raften-install-") as directory:
         workspace = Path(directory)
         environment = _isolated_environment(wheelhouse, workspace)
         environment_directory = workspace / "environment"
         venv.EnvBuilder(with_pip=True, clear=True, symlinks=True).create(environment_directory)
         python = environment_directory / "bin" / "python"
-        command = environment_directory / "bin" / "repo-context"
+        command = environment_directory / "bin" / "raften"
         result = subprocess.run(
             [
                 str(python),

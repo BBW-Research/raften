@@ -1,10 +1,10 @@
 # Version 1 configuration schema
 
-`repo-context.toml` is a strict, UTF-8 TOML document. Version 1 rejects unknown keys, wrong TOML types, unsupported enum values, unsafe repository paths, malformed patterns, duplicate identities, ambiguous overrides, invalid limits, and inconsistent settings. Declaration order is preserved for records whose semantics depend on it.
+`raften.toml` is a strict, UTF-8 TOML document. Version 1 rejects unknown keys, wrong TOML types, unsupported enum values, unsafe repository paths, malformed patterns, duplicate identities, ambiguous overrides, invalid limits, and inconsistent settings. Declaration order is preserved for records whose semantics depend on it.
 
 Human-facing `name`, `reason`, `owner`, `rationale`, and `tracking_reference` values must be nonblank and reject C0, DEL, and C1 control characters whenever supplied.
 
-The package-owned `repo_context.config.render_starter_policy()` bytes are the normative generic serialized example; the implementation does not contain a general-purpose TOML writer. The root [adopted policy](../../repo-context.toml) began from that template and may add repository-specific classifications or tighter limits without changing the generic initializer output.
+The package-owned `raften.config.render_starter_policy()` bytes are the normative generic serialized example; the implementation does not contain a general-purpose TOML writer. The root [adopted policy](../../repo-context.toml) began from that template and may add repository-specific classifications or tighter limits without changing the generic initializer output. Its historical filename is selected explicitly by this repository's wrapper, as described in [decision 0009](../decisions/0009-raften-name.md).
 
 ## Root keys
 

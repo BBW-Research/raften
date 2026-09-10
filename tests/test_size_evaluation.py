@@ -4,15 +4,15 @@ import unittest
 from dataclasses import replace
 from datetime import date
 
-from repo_context.config import starter_policy
-from repo_context.diagnostics import (
+from raften.config import starter_policy
+from raften.diagnostics import (
     CFG_EFFECTIVE_POLICY,
     CFG_UNCLASSIFIED_PATH,
     EXC_EXPIRED,
     FILE_HARD_BYTES,
     FILE_WARN_BYTES,
 )
-from repo_context.model import (
+from raften.model import (
     ContentState,
     ContextSet,
     ExactSelector,
@@ -25,7 +25,7 @@ from repo_context.model import (
     Severity,
     WorktreeKind,
 )
-from repo_context.sizes import (
+from raften.sizes import (
     classification_counts,
     classify_content,
     compile_size_policy,

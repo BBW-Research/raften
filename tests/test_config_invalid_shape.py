@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from repo_context.diagnostics import (
+from raften.diagnostics import (
     CFG_MISSING_KEY,
     CFG_PARSE,
     CFG_TYPE,
@@ -162,7 +162,7 @@ scan = false''',
             (
                 replace_once(
                     STARTER_POLICY_TEXT,
-                    'patterns = ["uv.lock", "**/uv.lock", "package-lock.json", "**/package-lock.json", "repo-context.debt.json"]',
+                    'patterns = ["uv.lock", "**/uv.lock", "package-lock.json", "**/package-lock.json", "raften.debt.json"]',
                     'patterns = "uv.lock"',
                 ),
                 "file_rule[0].patterns",

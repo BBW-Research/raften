@@ -1,6 +1,6 @@
 # 0007: Preserve the repo-context CLI under a distinct distribution name
 
-- Status: accepted
+- Status: superseded by [decision 0009](0009-raften-name.md) for product and package identity; versioning policy retained
 - Date: 2026-09-02
 
 ## Context

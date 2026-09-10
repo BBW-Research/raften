@@ -3,8 +3,8 @@ from __future__ import annotations
 import unittest
 from dataclasses import replace
 
-from repo_context.config import starter_policy
-from repo_context.diagnostics import (
+from raften.config import starter_policy
+from raften.diagnostics import (
     CFG_INCONSISTENT,
     DOC_AUTHORED_SYMLINK,
     DOC_FRAGMENT_MISSING,
@@ -18,12 +18,12 @@ from repo_context.diagnostics import (
     DOC_UNSAFE_DESTINATION,
     DOC_TEXT_UNAVAILABLE,
 )
-from repo_context.docs import (
+from raften.docs import (
     compile_documentation_policy,
     documentation_text_paths,
     evaluate_documentation,
 )
-from repo_context.model import (
+from raften.model import (
     ContentState,
     DocumentationEdge,
     DocumentationSettings,

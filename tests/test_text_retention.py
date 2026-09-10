@@ -4,9 +4,9 @@ import unittest
 from dataclasses import replace
 from datetime import date
 
-from repo_context.config import starter_policy
-from repo_context.model import ContentState, FileKind, FileRule, InventoryEntry, InventorySource, WorktreeKind
-from repo_context.sizes import compile_size_policy, evaluate_sizes
+from raften.config import starter_policy
+from raften.model import ContentState, FileKind, FileRule, InventoryEntry, InventorySource, WorktreeKind
+from raften.sizes import compile_size_policy, evaluate_sizes
 
 
 class ExplicitTextRetentionTests(unittest.TestCase):

@@ -12,7 +12,7 @@ fi
 ARTIFACTS=$1
 WHEELHOUSE=$2
 PYTHON=${PYTHON:-python3}
-VERSION=$(PYTHONPATH="$ROOT/src" "$PYTHON" -P -c 'import repo_context; print(repo_context.__version__)')
+VERSION=$(PYTHONPATH="$ROOT/src" "$PYTHON" -P -c 'import raften; print(raften.__version__)')
 PROJECT_NAME=$("$PYTHON" -I -c 'import pathlib, sys, tomllib; print(tomllib.loads(pathlib.Path(sys.argv[1]).read_text())["project"]["name"])' "$ROOT/pyproject.toml")
 
 PYTHONPATH="$ROOT" "$PYTHON" -P -m release_tools.qualification \
