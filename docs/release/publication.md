@@ -1,10 +1,12 @@
 # Repository publication
 
-The canonical repository is [`BBW-Research/raften`](https://github.com/BBW-Research/raften), GitHub repository ID `1354736712`. It remains private as of 2026-09-10. The private rename and current review workflow are recorded in [decision 0010](../decisions/0010-canonical-repository-and-review-controls.md); artifact publication follows the [release guide](index.md).
+The canonical repository is [`BBW-Research/raften`](https://github.com/BBW-Research/raften), GitHub repository ID `1354736712`. Source access became public on 2026-09-10 after the repository and retained GitHub history were reviewed and approved for publication. The private rename and current review workflow are recorded in [decision 0010](../decisions/0010-canonical-repository-and-review-controls.md); artifact publication follows the [release guide](index.md).
 
 ## Completed preparation
 
 The product, distribution, Python package, and CLI rename was merged through [PR #3](https://github.com/BBW-Research/raften/pull/3). Fresh Raften builds and supported-platform qualification are recorded in the [acceptance evidence](../quality/acceptance.md#distribution-and-pilots). The GitHub repository was then renamed from `BBW-Research/repo-context` while private, retaining its identity, history, and protection settings.
+
+Public source access was enabled from reviewed commit `e8de7fc6f07e28b37af90a01a82fd395120d2520` after all six jobs passed in [workflow run 34472708304](https://github.com/BBW-Research/raften/actions/runs/34472708304). Anonymous clone access and the existing repository controls were verified after the visibility change.
 
 GitHub redirects ordinary web and Git references after a rename, but callers of hosted Actions need explicit updates. Do not reuse the former repository name while those redirects are needed. See GitHub's [rename behavior](https://docs.github.com/en/repositories/creating-and-managing-repositories/renaming-a-repository).
 
