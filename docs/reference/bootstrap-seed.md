@@ -1,17 +1,17 @@
-# Scene-maker seed
+# Bootstrap seed
 
 ## Source
 
-The bootstrap implementation is copied from `BBW-Research/scene-maker` at commit `9e792124bc61f55150416b8bf803862c6c634c78`.
+The bootstrap implementation is a project-owned source snapshot retained for characterization and compatibility checks. Its copied files are identified by content hashes in the source manifest.
 
 - Source path: `tools/check_repository_policy.py`
 - Git blob: `a18f52d15c8f70a53bad2e0d961f5fa355a50a84`
 - Local frozen path: `tools/check_repository_policy.py`
-- Provenance manifest: `reference/scene-maker/SOURCE.json`
+- Provenance manifest: `reference/bootstrap/SOURCE.json`
 
-The working scene-maker workflow and Lychee configuration are preserved under `reference/scene-maker/`. The enormous scene-maker migration inventory is intentionally not copied; the starter policy contains no legacy oversized files.
+The original workflow and Lychee configuration are preserved under `reference/bootstrap/`. The project-specific migration inventory is omitted; the starter policy contains no legacy oversized files.
 
-The completed [Phase 7 compatibility classification](scene-maker-compatibility.md) records every equivalent diagnostic and intended target improvement. No comparison defect remains.
+The completed [Phase 7 compatibility classification](bootstrap-compatibility.md) records every equivalent diagnostic and intended target improvement. No comparison defect remains.
 
 ## Seed behavior to preserve initially
 
@@ -38,7 +38,7 @@ The source oracle is exercised directly by responsibility. `tests/support/reposi
 | Inline link extraction, documentation discovery, indexes, siblings, child indexes, and entrypoint targets | `tests/test_seed_docs.py` |
 | Base-policy reads and every non-weakening comparison | `tests/test_seed_ratchet.py` |
 | Argument defaults, exit codes, stdout/stderr, deterministic ordering, missing-base behavior, and repository-root inference | `tests/test_seed_cli.py` |
-| Snapshot repository, commit, verbatim modes, Git blobs, and checker SHA-256 | `tests/test_seed_provenance.py` |
+| Snapshot identity and owner, verbatim modes, Git blobs, and checker SHA-256 | `tests/test_seed_provenance.py` |
 
 ## Intended differences and deferred target cases
 

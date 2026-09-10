@@ -9,7 +9,7 @@ description = "Policy checks for code and documentation in agentic coding projec
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 license = "MIT"
-license-files = ["LICENSE", "NOTICE"]
+license-files = ["LICENSE"]
 dependencies = []
 authors = [
   {name = "Raften contributors"},

@@ -1,6 +1,6 @@
-# Scene-maker compatibility classification
+# Bootstrap compatibility classification
 
-This is the Phase 7 classification of observable differences between the frozen scene-maker checker and `repo-context` version 1. The source characterization remains authoritative for seed behavior; this report records whether each paired result is an equivalent diagnostic, an intended improvement, or a defect.
+This is the Phase 7 classification of observable differences between the frozen bootstrap checker and `repo-context` version 1. The source characterization remains authoritative for seed behavior; this report records whether each paired result is an equivalent diagnostic, an intended improvement, or a defect.
 
 ## Classification rules
 

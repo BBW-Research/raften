@@ -18,8 +18,8 @@ scan = false
 reason = "Machine-generated dependency resolution data is not useful bootstrap context."
 
 [[file_rule]]
-name = "frozen-scene-maker"
-patterns = ["tools/check_repository_policy.py", "reference/scene-maker/repository-policy.yml", "reference/scene-maker/lychee.toml"]
+name = "frozen-bootstrap"
+patterns = ["tools/check_repository_policy.py", "reference/bootstrap/repository-policy.yml", "reference/bootstrap/lychee.toml"]
 kind = "vendored"
 scan = true
 warn_bytes = 20480

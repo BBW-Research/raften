@@ -159,7 +159,6 @@ class ReleaseQualificationTests(unittest.TestCase):
             "/AGENTS.md",
             "/CHANGELOG.md",
             "/LICENSE",
-            "/NOTICE",
             "/pyproject.toml",
             "/release_tools/",
             "/repo-context.toml",

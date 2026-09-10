@@ -1,7 +1,6 @@
 {
-  "repository": "BBW-Research/scene-maker",
-  "source_commit": "9e792124bc61f55150416b8bf803862c6c634c78",
-  "introduced_commit": "933ce791f98ecb42e9de6a794527efc57acde59e",
+  "snapshot": "bootstrap",
+  "owner": "BBW-Research",
   "copied_files": {
     "tools/check_repository_policy.py": {
       "source_path": "tools/check_repository_policy.py",
@@ -9,12 +8,12 @@
       "sha256": "bb796f2304f3692089a5e87cef55a7fbe3e7c4c9521d6d2299b738a84f7ebd11",
       "mode": "verbatim"
     },
-    "reference/scene-maker/repository-policy.yml": {
+    "reference/bootstrap/repository-policy.yml": {
       "source_path": ".github/workflows/repository-policy.yml",
       "git_blob_sha1": "593d5ed1e2f82af314334cd60afef18b3e0ef129",
       "mode": "verbatim"
     },
-    "reference/scene-maker/lychee.toml": {
+    "reference/bootstrap/lychee.toml": {
       "source_path": "lychee.toml",
       "git_blob_sha1": "475114c29bdf25f4b101fa3415217d8ae27cbae2",
       "mode": "verbatim"
@@ -22,7 +21,7 @@
   },
   "adapted_files": {
     ".github/workflows/repository-policy.yml": "Uses scripts/validate and includes ARCHITECTURE.md in the offline link pass.",
-    "tests/fixtures/seed/clean-policy.json": "Clean comparison policy adapted from the retired root JSON policy without scene-maker's project-specific migration inventory."
+    "tests/fixtures/seed/clean-policy.json": "Clean comparison policy adapted from the retired root JSON policy without the original project-specific migration inventory."
   },
   "adapted_file_hashes": {
     "tests/fixtures/seed/clean-policy.json": {
@@ -30,6 +29,6 @@
     }
   },
   "retired_adaptations": {
-    "config/repository_policy.v1.json": "Retired after Phase 7 self-hosting; tests/fixtures/seed/clean-policy.json retains clean comparison defaults without scene-maker's project-specific migration inventory."
+    "config/repository_policy.v1.json": "Retired after Phase 7 self-hosting; tests/fixtures/seed/clean-policy.json retains clean comparison defaults without the original project-specific migration inventory."
   }
 }

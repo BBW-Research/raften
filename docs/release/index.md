@@ -48,11 +48,11 @@ Copy the release `raften-<version>.pyz` into a project-controlled tools director
 $ python3 tools/raften-<version>.pyz check --repo .
 ```
 
-The zipapp contains the `raften` Python sources, a generated entrypoint, `LICENSE`, and `NOTICE`. It requires no installation and is byte-identical when built from the same source with the same `SOURCE_DATE_EPOCH`. The consuming repository's `scripts/context-check` should name the pinned file explicitly rather than select a moving download.
+The zipapp contains the `raften` Python sources, a generated entrypoint, and `LICENSE`. It requires no installation and is byte-identical when built from the same source with the same `SOURCE_DATE_EPOCH`. The consuming repository's `scripts/context-check` should name the pinned file explicitly rather than select a moving download.
 
 ### Vendored source
 
-Copy the reviewed `src/raften` directory to a versioned project location such as `vendor/raften/src/raften`, retain both `LICENSE` and `NOTICE`, and make the project-local wrapper select only that source tree:
+Copy the reviewed `src/raften` directory to a versioned project location such as `vendor/raften/src/raften`, retain `LICENSE`, and make the project-local wrapper select only that source tree:
 
 ```sh
 #!/bin/sh

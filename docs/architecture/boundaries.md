@@ -115,4 +115,4 @@ Runtime checks must not perform network requests. Remote-link validation is outs
 
 ## Source-fixture boundary
 
-`tools/check_repository_policy.py` is a frozen source oracle copied from scene-maker. Production modules must not import it. Characterization and paired-compatibility tests may import or execute it by path. Normal local validation, bootstrap, and CI select the standalone package through `scripts/context-check`; oracle execution within those workflows is test-only, never the repository policy entrypoint.
+`tools/check_repository_policy.py` is a frozen source oracle copied from bootstrap. Production modules must not import it. Characterization and paired-compatibility tests may import or execute it by path. Normal local validation, bootstrap, and CI select the standalone package through `scripts/context-check`; oracle execution within those workflows is test-only, never the repository policy entrypoint.

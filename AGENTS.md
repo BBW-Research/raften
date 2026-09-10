@@ -7,7 +7,7 @@
 - The completed executable build sequence is `docs/plans/completed/standalone-tool.md`.
 - The completed Codex assignment is retained in `docs/prompts/codex-build.md`.
 - Architecture boundaries are summarized in `ARCHITECTURE.md` and expanded under `docs/architecture/`.
-- The scene-maker source snapshot and known limitations are documented under `docs/reference/` and `reference/scene-maker/`.
+- The bootstrap source snapshot and known limitations are documented under `docs/reference/` and `reference/bootstrap/`.
 
 ## Authority
 
@@ -23,7 +23,7 @@ When lower-authority material conflicts with a higher-authority contract, preser
 
 1. Read the relevant spec, decision records, implementation plan or completion evidence, and source characterization before editing.
 2. For follow-up work, read the completed plan and relevant evidence, then create a focused active plan only when phased execution is warranted.
-3. Add or tighten tests before refactoring behavior inherited from scene-maker.
+3. Add or tighten tests before refactoring behavior inherited from bootstrap.
 4. Make the smallest coherent change that closes the phase acceptance gate.
 5. Run `scripts/validate` before claiming completion.
 6. Update the relevant plan or completion evidence when behavior, accepted state, or material risks change.
@@ -36,7 +36,7 @@ When lower-authority material conflicts with a higher-authority contract, preser
 - All diagnostics are stable, sorted, and testable. Human-readable wording may improve without changing diagnostic identity.
 - Git-visible authored text is governed by default. Generated, vendored, lock, fixture, and legal material must be classified explicitly rather than hidden behind broad exclusions.
 - Policy limits may tighten but must not silently weaken relative to a configured base revision.
-- `tools/check_repository_policy.py` is the frozen test oracle copied from scene-maker. Do not edit it; production behavior belongs in `src/raften/`.
+- `tools/check_repository_policy.py` is the frozen test oracle copied from bootstrap. Do not edit it; production behavior belongs in `src/raften/`.
 - Never add project-specific exemptions to shared engine code.
 - Keep every authored code and documentation file below the repository policy ceiling. Split by responsibility, not merely to satisfy byte counts.
 

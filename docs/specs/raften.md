@@ -294,4 +294,4 @@ The first release should produce a wheel and source distribution. An optional zi
 
 ## Definition of done
 
-The tool is complete when every item in `docs/quality/acceptance.md` passes, the target CLI replaces the seed checker in `scripts/context-check`, the repository validates itself with the new engine, the fixture suite demonstrates intended parity and intended differences from scene-maker, and the active implementation plan records no unfinished release-blocking work.
+The tool is complete when every item in `docs/quality/acceptance.md` passes, the target CLI replaces the seed checker in `scripts/context-check`, the repository validates itself with the new engine, the fixture suite demonstrates intended parity and intended differences from bootstrap, and the active implementation plan records no unfinished release-blocking work.

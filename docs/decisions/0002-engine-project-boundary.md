@@ -5,7 +5,7 @@
 
 ## Context
 
-Copying the scene-maker script into every project would make adoption easy but would cause divergent bug fixes and project-specific behavior. Embedding every project policy inside one central tool would create the opposite problem: the shared package would accumulate repository assumptions and become difficult to upgrade safely.
+Copying the bootstrap script into every project would make adoption easy but would cause divergent bug fixes and project-specific behavior. Embedding every project policy inside one central tool would create the opposite problem: the shared package would accumulate repository assumptions and become difficult to upgrade safely.
 
 ## Decision
 

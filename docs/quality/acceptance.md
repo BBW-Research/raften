@@ -50,7 +50,7 @@ The standalone tool satisfies technical release criteria only when every item be
 
 ## Extraction and self-hosting
 
-- [x] The frozen scene-maker source hash remains verified.
+- [x] The frozen bootstrap source hash remains verified.
 - [x] Characterization tests cover all inherited seed behavior.
 - [x] Intended differences from the seed are explicit and tested.
 - [x] Production code does not import the seed checker.
@@ -65,6 +65,6 @@ The completed Phase 8 evidence qualified artifacts under the former distribution
 - [x] Raften wheel and source distribution build in isolation from the reviewed release commit.
 - [x] Installed Raften CLI works in clean environments across the supported release matrix.
 - [x] A vendorable offline distribution path is documented and tested.
-- [x] Migration from the scene-maker JSON policy is documented.
-- [x] `scene-maker`, `nano-dllm`, and `research-vault` have been piloted without adding project-specific engine branches.
+- [x] Migration from the bootstrap JSON policy is documented.
+- [x] `private-pilot`, `nano-dllm`, and `research-vault` have been piloted without adding project-specific engine branches.
 - [x] The repository enforces required CI and pull requests and maintains ownership mappings for policy-sensitive files.

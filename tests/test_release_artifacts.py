@@ -159,7 +159,6 @@ Version: 1.0.0
 Requires-Python: <3.14,>=3.12
 License-Expression: MIT
 License-File: LICENSE
-License-File: NOTICE
 Classifier: Operating System :: MacOS
 Classifier: Operating System :: POSIX :: Linux
 Classifier: Programming Language :: Python :: 3.12
@@ -186,7 +185,6 @@ fixture
                     "raften-1.0.0.dist-info/licenses/LICENSE",
                     "license\n",
                 )
-            archive.writestr("raften-1.0.0.dist-info/licenses/NOTICE", "notice\n")
             if unsafe:
                 archive.writestr("../escape", "x")
 
@@ -196,7 +194,6 @@ fixture
             f"{root}/CHANGELOG.md": b"# Changelog\n",
             f"{root}/LICENSE": b"license\n",
             f"{root}/README.md": b"# fixture\n",
-            f"{root}/NOTICE": b"notice\n",
             f"{root}/pyproject.toml": b"[project]\nname='raften'\n",
             f"{root}/src/raften/__init__.py": b"",
             f"{root}/src/raften/cli.py": b"",

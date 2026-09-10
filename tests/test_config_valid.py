@@ -286,14 +286,14 @@ class AdoptedRootPolicyTests(unittest.TestCase):
         self.assertNotEqual(policy, starter_policy())
         rules = {rule.name: rule for rule in policy.file_rules}
 
-        frozen = rules["frozen-scene-maker"]
+        frozen = rules["frozen-bootstrap"]
         self.assertEqual(frozen.kind, FileKind.VENDORED)
         self.assertEqual(
             frozen.patterns,
             (
                 "tools/check_repository_policy.py",
-                "reference/scene-maker/repository-policy.yml",
-                "reference/scene-maker/lychee.toml",
+                "reference/bootstrap/repository-policy.yml",
+                "reference/bootstrap/lychee.toml",
             ),
         )
         self.assertTrue(frozen.scan)
