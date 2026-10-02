@@ -52,24 +52,6 @@ def _open_parent(
         _fail_parent(path, error)
 
 
-def _open_root_anchor(root: Path) -> int:
-    descriptor: int | None = None
-    try:
-        descriptor = os.open(root, _directory_flags())
-        _require_selected_root(root, descriptor, None)
-        return descriptor
-    except InitializationError:
-        _close_optional(descriptor)
-        raise
-    except OSError as error:
-        _close_optional(descriptor)
-        _fail(
-            INIT_DESTINATION,
-            "selected repository root could not be anchored safely",
-            details=(("error_type", type(error).__name__),),
-        )
-
-
 def _require_unchanged_parent(
     *,
     root_path: Path,

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from datetime import date
 from pathlib import Path
 from typing import Never
@@ -15,17 +14,18 @@ from raften.diagnostics import (
     INIT_REPOSITORY_DIRTY,
     operational_diagnostic,
 )
+from raften.init_namespace import NamespaceGuard, bind_namespace
 from raften.init_recovery import _Artifact
 from raften.init_safety import (
     InitializationError,
     _fail,
-    _open_root_anchor,
     _require_safe_install_primitives,
 )
 from raften.init_transaction import _write_artifacts
 from raften.inventory import (
     RepositoryAccessError,
     RepositoryHandle,
+    _resolve_repository_root,
     capture_clean_repository,
     inventory_worktree,
     open_repository,
@@ -70,31 +70,33 @@ def _initialize_repository(
     capture_debt: bool,
     force: bool,
 ) -> InitResult:
-    repository = open_repository(repository_path)
+    root = _resolve_repository_root(repository_path)
     _require_safe_install_primitives()
-    root_anchor_fd = _open_root_anchor(repository.root)
-    try:
+    with bind_namespace(root) as namespace:
+        repository = open_repository(root)
+        namespace.verify()
         return _initialize_anchored(
             repository,
-            root_anchor_fd,
+            namespace.root_fd,
             config_path=config_path,
             capture_debt=capture_debt,
             force=force,
+            namespace=namespace,
         )
-    finally:
-        os.close(root_anchor_fd)
 
 
 def _initialize_anchored(
     repository: RepositoryHandle,
     root_anchor_fd: int,
     *,
+    namespace: NamespaceGuard,
     config_path: str,
     capture_debt: bool,
     force: bool,
 ) -> InitResult:
     manifest_path = debt_manifest_path(config_path)
     snapshot = inventory_worktree(repository)
+    namespace.verify()
     excluded = frozenset({config_path, manifest_path})
     entries = tuple(entry for entry in snapshot.entries if entry.path not in excluded)
     compiled = compile_size_policy(starter_policy())
@@ -108,6 +110,7 @@ def _initialize_anchored(
         snapshot=snapshot,
         defer_content_paths=content_paths,
     )
+    namespace.verify()
     if clean_capture is None:
         _fail_dirty()
     clean_state = clean_capture.state
@@ -129,6 +132,7 @@ def _initialize_anchored(
         read_verified_content,
         evaluation_date=date.min,
     )
+    namespace.verify()
     if pending_content:
         raise RuntimeError("size evaluation did not consume expected content")
     manifest = capture_debt_manifest(sizes.files)
@@ -151,6 +155,7 @@ def _initialize_anchored(
         if capture_debt
         else (_Artifact(manifest_path, render_debt_manifest(manifest)),)
     )
+    namespace.verify()
     _write_artifacts(
         repository.root,
         artifacts,

@@ -100,6 +100,26 @@ class CleanRepositoryCapture:
 def open_repository(candidate: str | os.PathLike[str]) -> RepositoryHandle:
     """Validate and canonicalize one explicitly selected Git worktree root."""
 
+    root = _resolve_repository_root(candidate)
+    output = _run_git(
+        root,
+        operation="validate-root",
+        arguments=("rev-parse", "--is-inside-work-tree", "--show-prefix"),
+        failure_code=GIT_INVALID_ROOT,
+        failure_message="repository root is not an accessible Git worktree",
+    )
+    if output not in {b"true\n\n", b"true\r\n\r\n"}:
+        _fail(
+            GIT_INVALID_ROOT,
+            "repository root must be the exact top level of a non-bare Git worktree",
+            details=(("root", os.fspath(candidate)),),
+        )
+    return RepositoryHandle(root=root)
+
+
+def _resolve_repository_root(candidate: str | os.PathLike[str]) -> Path:
+    """Canonicalize the selected root without observing Git state."""
+
     supplied = os.fspath(candidate)
     if not supplied:
         _fail(
@@ -124,20 +144,7 @@ def open_repository(candidate: str | os.PathLike[str]) -> RepositoryHandle:
             "repository root is not a directory",
             details=(("root", str(supplied)),),
         )
-    output = _run_git(
-        root,
-        operation="validate-root",
-        arguments=("rev-parse", "--is-inside-work-tree", "--show-prefix"),
-        failure_code=GIT_INVALID_ROOT,
-        failure_message="repository root is not an accessible Git worktree",
-    )
-    if output not in {b"true\n\n", b"true\r\n\r\n"}:
-        _fail(
-            GIT_INVALID_ROOT,
-            "repository root must be the exact top level of a non-bare Git worktree",
-            details=(("root", str(supplied)),),
-        )
-    return RepositoryHandle(root=root)
+    return root
 
 
 def inventory_worktree(repository: RepositoryHandle) -> InventorySnapshot:

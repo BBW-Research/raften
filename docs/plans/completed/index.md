@@ -1,5 +1,6 @@
 # Completed implementation plans
 
+- [Security audit remediation](security-audit.md)
 - [Build the standalone tool](standalone-tool.md)
 - [Completion evidence index](standalone-tool-evidence.md)
 - [Phase 0 evidence](standalone-tool-evidence-phase-0.md)
