@@ -7,6 +7,7 @@ from datetime import date
 from typing import Any
 
 from raften.diagnostics import (
+    CFG_RESOURCE_LIMIT,
     CFG_MISSING_KEY,
     CFG_TYPE,
     CFG_UNKNOWN_KEY,
@@ -17,12 +18,29 @@ from raften.model import Diagnostic, JsonValue
 
 
 MISSING = object()
+MAX_POLICY_BYTES = 1024 * 1024
+MAX_SECTION_RECORDS = 1024
+MAX_DIAGNOSTICS = 128
+MAX_PATTERN_COMPARISONS = 32768
+
+
+class ConfigurationError(ValueError):
+    """One or more deterministic policy diagnostics."""
+
+    def __init__(self, diagnostics: tuple[Diagnostic, ...]) -> None:
+        if not diagnostics:
+            raise ValueError("ConfigurationError requires at least one diagnostic")
+        self.diagnostics = diagnostics
+        first = diagnostics[0]
+        suffix = "" if len(diagnostics) == 1 else f" ({len(diagnostics)} errors)"
+        super().__init__(f"{first.code} {first.field_path}: {first.message}{suffix}")
 
 
 class Validator:
     def __init__(self, source_path: str) -> None:
         self.source_path = source_path
         self.diagnostics: list[Diagnostic] = []
+        self.pattern_comparisons = 0
 
     def add(
         self,
@@ -33,6 +51,7 @@ class Validator:
         details: tuple[tuple[str, JsonValue], ...] = (),
         hint: str | None = None,
     ) -> None:
+        self.require_limit("diagnostics", len(self.diagnostics) + 1, MAX_DIAGNOSTICS, field_path)
         self.diagnostics.append(
             config_diagnostic(
                 code,
@@ -43,6 +62,19 @@ class Validator:
                 hint=hint,
             )
         )
+
+    def require_limit(self, resource: str, actual: int, limit: int, field_path: str) -> None:
+        if actual > limit:
+            raise ConfigurationError((config_diagnostic(
+                CFG_RESOURCE_LIMIT, self.source_path, field_path,
+                "configuration exceeds an operational safety limit",
+                details=(("resource", resource), ("limit", limit)),
+            ),))
+
+    def compare_pattern(self, field_path: str) -> None:
+        self.pattern_comparisons += 1
+        self.require_limit("pattern_comparisons", self.pattern_comparisons,
+                           MAX_PATTERN_COMPARISONS, field_path)
 
     def keys(
         self,
@@ -113,6 +145,7 @@ class Validator:
         if type(value) is not list:
             self.type_error(field_path, "array of tables", value)
             return []
+        self.require_limit("section_records", len(value), MAX_SECTION_RECORDS, field_path)
         result: list[tuple[int, dict[str, Any]]] = []
         for index, item in enumerate(value):
             item_path = f"{field_path}[{index}]"
@@ -220,6 +253,7 @@ class Validator:
         if type(value) is not list:
             self.type_error(field_path, "array", value)
             return None
+        self.require_limit("array_items", len(value), MAX_SECTION_RECORDS, field_path)
         return value
 
     def type_error(self, field_path: str, expected: str, actual: object) -> None:
