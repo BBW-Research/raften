@@ -13,7 +13,7 @@ from raften.config_records import (
 )
 from raften.config_rules import parse_file_rules, parse_path_overrides
 from raften.config_template import DEFAULT_POLICY_TOML, render_policy_template
-from raften.config_validation import Validator
+from raften.config_validation import ConfigurationError, Validator, MAX_POLICY_BYTES
 from raften.config_values import parse_enum, parse_path_list, parse_pattern_list
 from raften.diagnostics import (
     CFG_INCONSISTENT,
@@ -52,23 +52,13 @@ _TOP_LEVEL_KEYS = frozenset(
 )
 
 
-class ConfigurationError(ValueError):
-    """One or more deterministic policy diagnostics."""
-
-    def __init__(self, diagnostics: tuple[Diagnostic, ...]) -> None:
-        if not diagnostics:
-            raise ValueError("ConfigurationError requires at least one diagnostic")
-        self.diagnostics = diagnostics
-        first = diagnostics[0]
-        suffix = "" if len(diagnostics) == 1 else f" ({len(diagnostics)} errors)"
-        super().__init__(f"{first.code} {first.field_path}: {first.message}{suffix}")
-
 
 def parse_policy(
     data: bytes,
     *,
     source_path: str = "raften.toml",
 ) -> Policy:
+    Validator(source_path).require_limit("policy_bytes", len(data), MAX_POLICY_BYTES, "$")
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError as error:
@@ -96,7 +86,9 @@ def parse_policy(
 
 
 def load_policy(path: Path) -> Policy:
-    return parse_policy(path.read_bytes(), source_path=path.as_posix())
+    with path.open("rb") as stream:
+        data = stream.read(MAX_POLICY_BYTES + 1)
+    return parse_policy(data, source_path=path.as_posix())
 
 
 def render_starter_policy(*, debt_manifest_path: str = "raften.debt.json") -> bytes:

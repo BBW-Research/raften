@@ -12,14 +12,13 @@ from raften.config_values import (
     parse_selector,
 )
 from raften.diagnostics import (
-    CFG_AMBIGUOUS_OVERRIDE,
     CFG_CATCH_ALL,
     CFG_DUPLICATE_NAME,
     CFG_DUPLICATE_SELECTOR,
     CFG_INCONSISTENT,
     CFG_MISSING_KEY,
 )
-from raften.matcher import pattern_specificity, patterns_provably_disjoint
+from raften.config_patterns import PatternAmbiguities
 from raften.model import (
     ExactSelector,
     FileKind,
@@ -161,7 +160,8 @@ def parse_path_overrides(
 ) -> tuple[PathOverride, ...]:
     result: list[tuple[int, PathOverride]] = []
     exact_selectors: dict[str, int] = {}
-    pattern_selectors: list[tuple[int, str]] = []
+    pattern_selectors: dict[str, int] = {}
+    ambiguities = PatternAmbiguities(validator)
     for index, table in validator.array_of_tables(root, "path_override"):
         parent = f"path_override[{index}]"
         validator.keys(
@@ -184,14 +184,7 @@ def parse_path_overrides(
             else:
                 exact_selectors[selector.path] = index
         elif isinstance(selector, PatternSelector):
-            duplicate = next(
-                (
-                    other_index
-                    for other_index, pattern in pattern_selectors
-                    if pattern == selector.pattern
-                ),
-                None,
-            )
+            duplicate = pattern_selectors.get(selector.pattern)
             if duplicate is not None:
                 validator.add(
                     CFG_DUPLICATE_SELECTOR,
@@ -200,18 +193,8 @@ def parse_path_overrides(
                     details=(("first_index", duplicate),),
                 )
             else:
-                for other_index, other_pattern in pattern_selectors:
-                    if (
-                        pattern_specificity(other_pattern) == pattern_specificity(selector.pattern)
-                        and not patterns_provably_disjoint(other_pattern, selector.pattern)
-                    ):
-                        validator.add(
-                            CFG_AMBIGUOUS_OVERRIDE,
-                            f"{parent}.pattern",
-                            "equal-specificity pattern overrides are not provably disjoint",
-                            details=(("other_index", other_index), ("other_pattern", other_pattern)),
-                        )
-                pattern_selectors.append((index, selector.pattern))
+                ambiguities.add(index, selector.pattern, f"{parent}.pattern")
+                pattern_selectors[selector.pattern] = index
         if selector is not None and warn_bytes is not None and hard_bytes is not None:
             result.append((index, PathOverride(selector, warn_bytes, hard_bytes)))
     return tuple(item for _index, item in result)

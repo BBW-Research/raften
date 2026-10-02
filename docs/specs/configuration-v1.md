@@ -56,6 +56,8 @@ Exact selectors are unique and pattern selectors are unique. Exact overrides tak
 
 Equal-specificity patterns are accepted only when static analysis proves them disjoint through an aligned, differing literal path component. Ordinary wildcard components preserve later component alignment. Around `**`, only the anchored prefix before the first recursive component and anchored suffix after the last recursive component can prove disjointness; interior recursive matches remain conservatively ambiguous. Otherwise equal-specificity patterns are rejected rather than made declaration-order-dependent.
 
+Ambiguity diagnostics retain only the first earlier declaration-order witness for each conflicting selector. Specificity groups are indexed once. Fixed operational ceilings, independent of repository policy, limit policy input to 1 MiB, each record section or value array to 1,024 items, ambiguity comparisons across both selector sections to 32,768, and accumulated diagnostics to 128. Crossing a ceiling aborts parsing with one `CFG016` diagnostic containing `resource` and `limit`; no partially validated policy is returned. These limits constrain untrusted validation work and cannot be raised in TOML.
+
 ## Documentation
 
 `[documentation]` requires exactly these keys:
@@ -125,6 +127,7 @@ Every failure has a stable code and field path. Array-of-table indexes are zero-
 | `CFG013` | Internally inconsistent settings |
 | `CFG014` | Inventoried path is unclassified at evaluation time |
 | `CFG015` | Effective run-time file policy is incomplete or ineffective |
+| `CFG016` | Configuration exceeds a fixed operational input, record, comparison, or diagnostic ceiling |
 | `EXC001` | Broad intentional-exception selector |
 | `EXC002` | Exception expired at the explicit evaluation date |
 
