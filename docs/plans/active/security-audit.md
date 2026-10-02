@@ -1,0 +1,20 @@
+# Security audit remediation
+
+The October 2, 2026 Codex Security Cloud scan of `eb0466c` reported six availability and initialization-integrity findings. Each has its own GitHub issue and will receive a separate PR. The fixes form a reviewable sequence; runtime dependencies remain standard-library-only and the frozen bootstrap oracle remains unchanged.
+
+## Acceptance gates
+
+- [x] [CI duration bounds](https://github.com/BBW-Research/raften/issues/12): explicit job timeouts and fail-closed aggregation.
+- [ ] [Policy ambiguity amplification](https://github.com/BBW-Research/raften/issues/9): bound input, records, comparison work, and diagnostics while retaining deterministic conflict witnesses.
+- [ ] [Markdown delimiter rescanning](https://github.com/BBW-Research/raften/issues/8): index delimiter matches and enforce an operational parse ceiling.
+- [ ] [Git metadata volume](https://github.com/BBW-Research/raften/issues/7): bound child output, records, and paths and reap failed children.
+- [ ] [Content materialization](https://github.com/BBW-Research/raften/issues/10): bound current and base content before allocation and aggregate retained Markdown.
+- [ ] [Initialization root identity](https://github.com/BBW-Research/raften/issues/11): detect namespace substitution throughout validation and before publication.
+
+Each phase adds focused regression coverage, updates the authoritative contract, runs `scripts/validate`, and receives independent read-only review. PR descriptions record remaining platform or hosted-validation limitations. Opening the PRs does not authorize merging them or closing cloud findings before merge.
+
+## Evidence
+
+CI jobs use conservative ceilings of 30 minutes for each qualification matrix entry, 10 minutes for offline links, and 5 minutes for the result aggregator. The existing aggregator accepts only `success`, including when a prerequisite times out or is cancelled. Same-ref cancellation and the four-platform/version qualification matrix remain in effect. These are operational budgets, not measured performance guarantees; hosted runs will provide fresh timing evidence.
+
+CI validation: `scripts/validate` passed 525 tests (one filesystem-capability skip); the new regression checks all jobs for finite timeouts and executes the aggregator against every success/failure/cancelled/skipped prerequisite combination. A deliberately stalled hosted job was not run.

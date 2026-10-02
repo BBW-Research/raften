@@ -81,3 +81,5 @@ Run `scripts/benchmark` to produce the non-gating JSON baseline for the 10,000-p
 ## Validation command
 
 `scripts/validate` is the required local gate. It runs the standalone CLI through `scripts/context-check`, compile checks, tests, and `git diff --check`; source-oracle execution is confined to characterization and paired-compatibility tests. CI additionally runs offline Lychee as an independent defense.
+
+CI bounds each qualification matrix job to 30 minutes, offline links to 10 minutes, and the required-result aggregator to 5 minutes. The aggregator accepts only successful prerequisites, so a timeout cannot satisfy the required check. These conservative ceilings bound stalled runs while preserving full pull-request qualification.
