@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from raften.inventory import (
     RepositoryAccessError,
@@ -16,6 +16,14 @@ from raften.inventory import (
     repository_is_clean,
 )
 from tests.support.repository import RepositoryFixture
+
+
+def process_result(completed):
+    process = MagicMock()
+    process.__enter__.return_value = process
+    process.wait.return_value = completed.returncode
+    process.poll.return_value = completed.returncode
+    return process
 
 
 class GitBoundaryTests(unittest.TestCase):
@@ -40,7 +48,7 @@ class GitBoundaryTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as directory:
             with patch.dict(os.environ, hostile, clear=False):
-                with patch("raften.inventory.subprocess.run", return_value=completed) as run:
+                with patch("raften.inventory.subprocess.Popen", return_value=process_result(completed)) as run, patch("raften.inventory.collect_output", return_value=completed.stdout):
                     handle = open_repository(directory)
 
         arguments = run.call_args.args[0]
@@ -126,7 +134,7 @@ class GitBoundaryTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as directory:
             handle = RepositoryHandle(Path(directory).resolve())
-            with patch("raften.inventory.subprocess.run", side_effect=outputs) as run:
+            with patch("raften.inventory.subprocess.Popen", side_effect=[process_result(item) for item in outputs]) as run, patch("raften.inventory.collect_output", return_value=b""):
                 snapshot = inventory_worktree(handle)
         self.assertEqual(snapshot.entries, ())
         commands = [call.args[0][9:] for call in run.call_args_list]
@@ -214,7 +222,7 @@ class GitBoundaryTests(unittest.TestCase):
         failed = subprocess.CompletedProcess([], 9, b"", b"failure")
         with tempfile.TemporaryDirectory() as directory:
             handle = RepositoryHandle(Path(directory))
-            with patch("raften.inventory.subprocess.run", return_value=failed):
+            with patch("raften.inventory.subprocess.Popen", return_value=process_result(failed)), patch("raften.inventory.collect_output", return_value=b""):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     inventory_worktree(handle)
         self.assertEqual(raised.exception.diagnostics[0].code, "GIT002")
