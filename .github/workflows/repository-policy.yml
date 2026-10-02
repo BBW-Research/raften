@@ -17,6 +17,7 @@ jobs:
   qualification:
     name: Qualification (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -48,6 +49,7 @@ jobs:
   links:
     name: Offline documentation links
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - name: Check out source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -68,6 +70,7 @@ jobs:
       - qualification
       - links
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - name: Require every qualification result
         env:
