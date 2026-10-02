@@ -6,6 +6,7 @@ import html
 from bisect import bisect_right
 from dataclasses import dataclass
 
+from raften.markdown_limits import DelimiterRuns, ParseBudget
 from raften.markdown_lines import physical_lines
 from raften.markdown_normalization import (
     _ASCII_PUNCTUATION,
@@ -31,9 +32,12 @@ def extract_links(
     text: str,
     known_directories: frozenset[str],
     line_starts: tuple[int, ...],
+    *,
+    budget: ParseBudget | None = None,
 ) -> LinkExtraction:
     """Extract local links and ranges hidden from block and HTML parsing."""
 
+    budget = budget or ParseBudget(source_path, text)
     definitions, definition_ranges = _reference_definitions(text)
     visible = _mask_ranges(text, definition_ranges)
     closing_brackets = _bracket_pairs(visible)
@@ -65,7 +69,7 @@ def extract_links(
         end = closing + 1
         suffix_start: int | None = None
         if end < len(visible) and visible[end] == "(":
-            parsed = _parse_inline_destination(visible, end)
+            parsed = _budgeted_destination(visible, end, budget)
             if parsed is not None:
                 suffix_start = end
                 destination, end = parsed
@@ -135,11 +139,16 @@ def heading_display_text(
     *,
     defined_reference_labels: frozenset[str] = frozenset(),
     _depth: int = 0,
+    _budget: ParseBudget | None = None,
 ) -> str:
     """Project supported inline-to-display reduction for heading slugs."""
 
+    budget = _budget or ParseBudget("<heading>", value)
+    budget.charge(len(value))
     if _depth >= 64:
         return value
+    runs = DelimiterRuns(value)
+    brackets = _bracket_pairs(value)
     output: list[str] = []
     index = 0
     while index < len(value):
@@ -154,11 +163,14 @@ def heading_display_text(
             continue
         if character == "`":
             run = _run_length(value, index, "`")
-            closing = _find_equal_run(value, index + run, "`", run)
+            closing = runs.closing(index + run, "`", run)
             if closing is not None:
                 output.append(value[index + run : closing])
                 index = closing + run
                 continue
+            output.append(value[index : index + run])
+            index += run
+            continue
         if character in {"*", "_", "~"}:
             run = _run_length(value, index, character)
             intraword_underscore = (
@@ -168,8 +180,7 @@ def heading_display_text(
                 and value[index - 1].isalnum()
                 and value[index + run].isalnum()
             )
-            closing = None if intraword_underscore else _find_equal_run(
-                value,
+            closing = None if intraword_underscore else runs.closing(
                 index + run,
                 character,
                 run,
@@ -180,12 +191,17 @@ def heading_display_text(
                         value[index + run : closing],
                         defined_reference_labels=defined_reference_labels,
                         _depth=_depth + 1,
+                        _budget=budget,
                     )
                 )
                 index = closing + run
                 continue
+            output.append(value[index : index + run])
+            index += run
+            continue
         if character == "<":
             html_end = inline_html_span_end(value, index)
+            budget.charge((html_end or len(value)) - index)
             if html_end is not None:
                 index = html_end
                 continue
@@ -198,18 +214,19 @@ def heading_display_text(
                 else index
             )
             if value[opening] == "[":
-                closing = _find_closing_bracket(value, opening)
+                closing = brackets.get(opening)
                 if closing is not None:
                     output.append(
                         heading_display_text(
                             value[opening + 1 : closing],
                             defined_reference_labels=defined_reference_labels,
                             _depth=_depth + 1,
+                            _budget=budget,
                         )
                     )
                     index = closing + 1
                     if index < len(value) and value[index] == "(":
-                        parsed = _parse_inline_destination(value, index)
+                        parsed = _budgeted_destination(value, index, budget)
                         if parsed is not None:
                             index = parsed[1]
                     elif index < len(value) and value[index] == "[":
@@ -320,6 +337,13 @@ def _valid_title_remainder(value: str) -> bool:
         return False
     end = _find_unescaped(stripped, closing, 1)
     return end is not None and not stripped[end + 1 :].strip(" \t")
+
+
+def _budgeted_destination(text: str, opening: int, budget: ParseBudget) -> tuple[str, int] | None:
+    result = _parse_inline_destination(text, opening)
+    # Failed parses may scan the remaining suffix; charge its conservative upper bound.
+    budget.charge((len(text) if result is None else result[1]) - opening)
+    return result
 
 
 def _parse_inline_destination(text: str, opening: int) -> tuple[str, int] | None:
@@ -512,24 +536,6 @@ def _find_unescaped(
         if not _is_escaped(text, found):
             return found
         index = found + 1
-    return None
-
-
-def _find_equal_run(
-    text: str,
-    start: int,
-    character: str,
-    length: int,
-) -> int | None:
-    index = start
-    while index < len(text):
-        found = text.find(character, index)
-        if found < 0:
-            return None
-        run = _run_length(text, found, character)
-        if run == length:
-            return found
-        index = found + run
     return None
 
 
