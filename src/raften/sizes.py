@@ -7,6 +7,8 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 from datetime import date
 
+from raften import resource_limits as limits
+from raften.markdown_limits import MAX_MARKDOWN_BYTES
 from raften.diagnostics import (
     CFG_EFFECTIVE_POLICY,
     CFG_UNCLASSIFIED_PATH,
@@ -64,6 +66,8 @@ class SizePolicyError(ValueError):
 def classify_content(data: bytes) -> ClassifiedContent:
     """Classify exact raw bytes without normalizing encoding or line endings."""
 
+    limits.require_resource("content_bytes", len(data), limits.MAX_CONTENT_BYTES,
+                            operation="classify-content")
     if b"\x00" in data:
         return ClassifiedContent(ContentState.CONTAINS_NUL, len(data), None)
     try:
@@ -87,7 +91,13 @@ def evaluate_sizes(
     diagnostics = list(_expired_exception_diagnostics(compiled, evaluation_date))
     files: list[FileAssessment] = []
     documents: list[TextDocument] = []
+    retained_bytes = 0
     for entry in ordered_entries:
+        if entry.path in retain_text_paths and entry.kind is WorktreeKind.REGULAR:
+            limits.require_resource("markdown_bytes", entry.size_bytes or 0, MAX_MARKDOWN_BYTES,
+                                    operation="retain-text", path=entry.path)
+            limits.require_resource("retained_text_bytes", retained_bytes + (entry.size_bytes or 0),
+                                    limits.MAX_RETAINED_TEXT_BYTES, operation="retain-text", path=entry.path)
         assessment, file_diagnostics, document = _evaluate_file(
             compiled,
             entry,
@@ -98,6 +108,11 @@ def evaluate_sizes(
         files.append(assessment)
         diagnostics.extend(file_diagnostics)
         if document is not None:
+            limits.require_resource("markdown_bytes", document.size_bytes, MAX_MARKDOWN_BYTES,
+                                    operation="retain-text", path=entry.path)
+            retained_bytes += document.size_bytes
+            limits.require_resource("retained_text_bytes", retained_bytes, limits.MAX_RETAINED_TEXT_BYTES,
+                                    operation="retain-text", path=entry.path)
             documents.append(document)
 
     contexts: list[ContextAssessment] = []
@@ -248,6 +263,8 @@ def _evaluate_file(
             None,
         )
 
+    limits.require_resource("content_bytes", entry.size_bytes or 0, limits.MAX_CONTENT_BYTES,
+                            operation="evaluate-content", path=entry.path)
     raw = read_content(entry)
     classified = classify_content(raw)
     content_identity = f"sha256:{hashlib.sha256(raw).hexdigest()}"

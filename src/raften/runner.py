@@ -11,6 +11,8 @@ from raften.command_paths import (
     validate_candidate_command_path,
     validate_command_path,
 )
+from raften import resource_limits as limits
+from raften.config_validation import MAX_POLICY_BYTES
 from raften.config import ConfigurationError, parse_policy
 from raften.debt import DebtManifestError, debt_manifest_path, parse_debt_manifest
 from raften.diagnostics import (
@@ -83,10 +85,14 @@ class _ContentCache:
     repository: RepositoryHandle
     retained_paths: frozenset[str]
     values: dict[str, bytes] = field(default_factory=dict)
+    byte_limits: dict[str, int] = field(default_factory=dict)
 
     def read(self, entry: InventoryEntry) -> bytes:
         if entry.path in self.values:
             return self.values[entry.path]
+        limits.require_resource("content_bytes", entry.size_bytes or 0,
+                                self.byte_limits.get(entry.path, limits.MAX_CONTENT_BYTES),
+                                operation="read-worktree", path=entry.path)
         data = read_worktree_bytes(self.repository, entry)
         if entry.path in self.retained_paths:
             self.values[entry.path] = data
@@ -102,7 +108,10 @@ class _BaseContentCache:
     def read(self, entry: BaseTreeEntry) -> bytes:
         if entry.object_id in self.values:
             return self.values[entry.object_id]
-        data = read_base_blob(self.repository, entry)
+        if entry.object_id in self.retained_object_ids:
+            data = read_base_blob(self.repository, entry, max_bytes=MAX_POLICY_BYTES)
+        else:
+            data = read_base_blob(self.repository, entry)
         if entry.object_id in self.retained_object_ids:
             self.values[entry.object_id] = data
         return data
@@ -211,6 +220,8 @@ def _run_repository(
     content = _ContentCache(
         repository,
         frozenset({config_path, debt_manifest_path(config_path)}),
+        byte_limits={config_path: MAX_POLICY_BYTES,
+                     debt_manifest_path(config_path): limits.MAX_MANIFEST_BYTES},
     )
     policy = _load_current_policy(repository, snapshot, content, config_path)
     compiled_documentation = compile_documentation_policy(policy)

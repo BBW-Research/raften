@@ -5,10 +5,12 @@ from __future__ import annotations
 import errno
 import hashlib
 import os
+import io
 import stat
 from pathlib import Path
 from typing import Never
 
+from raften import resource_limits as limits
 from raften.diagnostics import GIT_FILESYSTEM, GIT_PATH_CHANGED
 from raften.git_records import validate_git_repository_path
 from raften.model import (
@@ -106,6 +108,8 @@ def read_regular_bytes(root: Path, entry: InventoryEntry) -> bytes:
         raise ValueError("worktree content reads require a regular inventory entry")
     if entry.identity is None:
         raise ValueError("regular inventory entry lacks snapshot identity")
+    limits.require_resource("content_bytes", entry.identity.size_bytes,
+                            limits.MAX_CONTENT_BYTES, operation="read-worktree", path=entry.path)
     _require_current_identity(root, entry, "content-lstat")
     try:
         descriptor = _open_snapshot_file(root, entry.path)
@@ -273,15 +277,15 @@ def _open_snapshot_file(root: Path, path: str) -> int:
 
 
 def _read_descriptor(descriptor: int, expected_size: int) -> bytes:
-    chunks: list[bytes] = []
+    output = io.BytesIO()
     remaining = expected_size + 1
     while remaining:
         chunk = os.read(descriptor, min(1024 * 1024, remaining))
         if not chunk:
-            return b"".join(chunks)
-        chunks.append(chunk)
+            return output.getvalue()
+        output.write(chunk)
         remaining -= len(chunk)
-    return b"".join(chunks)
+    return output.getvalue()
 
 
 def _hash_descriptor(
