@@ -5,8 +5,9 @@ from __future__ import annotations
 import hashlib
 import os
 import re
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 
+from raften import resource_limits as limits
 from raften.diagnostics import GIT_UNMERGED_INDEX, GIT_UNSAFE_PATH
 from raften.matcher import candidate_path_validation_error
 from raften.model import (
@@ -146,6 +147,8 @@ def parse_base_tree(output: bytes) -> tuple[BaseTreeEntry, ...]:
 def decode_git_path(record: bytes, *, operation: str, index: int) -> str:
     """Strictly decode and structurally validate one NUL-framed Git path."""
 
+    limits.require_resource("path_bytes", len(record), limits.MAX_GIT_PATH_BYTES,
+                            operation=operation)
     try:
         path = record.decode("utf-8", errors="strict")
     except UnicodeDecodeError as error:
@@ -238,15 +241,22 @@ def require_object_id(
         )
 
 
-def _split_nul_records(output: bytes, operation: str) -> tuple[bytes, ...]:
-    if not output:
-        return ()
-    if not output.endswith(b"\x00"):
+def _split_nul_records(output: bytes, operation: str) -> Iterator[bytes]:
+    limits.require_resource("stdout_bytes", len(output), limits.MAX_GIT_OUTPUT_BYTES,
+                            operation=operation)
+    limits.require_resource("records", output.count(b"\x00"), limits.MAX_GIT_RECORDS,
+                            operation=operation)
+    if output and not output.endswith(b"\x00"):
         malformed_git_output(operation, "Git output is not NUL terminated")
-    records = tuple(output[:-1].split(b"\x00"))
-    if any(not record for record in records):
-        malformed_git_output(operation, "Git output contains an empty NUL record")
-    return records
+    start = 0
+    while start < len(output):
+        end = output.find(b"\x00", start)
+        if end == start:
+            malformed_git_output(operation, "Git output contains an empty NUL record")
+        limits.require_resource("record_bytes", end - start, limits.MAX_GIT_PATH_BYTES + 128,
+                                operation=operation)
+        yield output[start:end]
+        start = end + 1
 
 
 def _decode_mode(raw: bytes, operation: str, record_index: int) -> GitFileMode:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import os
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -15,6 +16,8 @@ from raften.diagnostics import (
     GIT_INVALID_ROOT,
     GIT_UNSAFE_PATH,
 )
+from raften import resource_limits as limits
+from raften.git_output import collect_output
 from raften.git_executable import resolve_git_executable
 from raften.git_records import (
     decode_git_path,
@@ -165,6 +168,8 @@ def inventory_worktree(repository: RepositoryHandle) -> InventorySnapshot:
         ),
         operation="list-untracked",
     )
+    limits.require_resource("inventory_paths", len(tracked) + len(untracked),
+                            limits.MAX_GIT_RECORDS, operation="inventory")
     unknown_deleted = deleted.difference(tracked)
     if unknown_deleted:
         _malformed(
@@ -528,6 +533,7 @@ def _run_git(
     failure_code: str = GIT_COMMAND,
     failure_message: str = "Git command failed",
     accepted_return_codes: frozenset[int] = frozenset({0}),
+    max_output_bytes: int | None = None,
 ) -> bytes:
     try:
         git_executable, safe_path = resolve_git_executable(root)
@@ -553,16 +559,24 @@ def _run_git(
         *arguments,
     ]
     try:
-        completed = subprocess.run(
-            command,
-            cwd=root,
-            check=False,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+        deadline = time.monotonic() + GIT_TIMEOUT_SECONDS
+        with subprocess.Popen(
+            command, cwd=root, stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             env=_git_environment(safe_path),
-            timeout=GIT_TIMEOUT_SECONDS,
-        )
+        ) as process:
+            try:
+                output = collect_output(
+                    process.stdout, process.stderr, operation=operation,
+                    deadline=deadline,
+                    max_bytes=limits.MAX_GIT_OUTPUT_BYTES if max_output_bytes is None else max_output_bytes,
+                    records=operation in {"list-index", "list-deleted", "list-untracked", "list-base-tree"},
+                )
+                return_code = process.wait(timeout=max(0, deadline - time.monotonic()))
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                process.wait()
     except (OSError, subprocess.TimeoutExpired, ValueError) as error:
         _fail(
             GIT_COMMAND,
@@ -572,16 +586,16 @@ def _run_git(
                 ("error_type", type(error).__name__),
             ),
         )
-    if completed.returncode not in accepted_return_codes:
+    if return_code not in accepted_return_codes:
         _fail(
             failure_code,
             failure_message,
             details=(
                 ("operation", operation),
-                ("return_code", completed.returncode),
+                ("return_code", return_code),
             ),
         )
-    return completed.stdout
+    return output
 
 
 def _git_environment(safe_path: str) -> dict[str, str]:
