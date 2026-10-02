@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import io
 import json
 import posixpath
 import re
 from collections.abc import Sequence
 from typing import Any, Never
 
+from raften import resource_limits as limits
 from raften.diagnostics import (
     CFG_DUPLICATE_SELECTOR,
     CFG_MISSING_KEY,
@@ -100,7 +102,14 @@ def render_debt_manifest(manifest: MigrationDebtManifest) -> bytes:
             for entry in manifest.entries
         ],
     }
-    return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    output = io.BytesIO()
+    for text in json.JSONEncoder(ensure_ascii=False, indent=2).iterencode(value):
+        chunk = text.encode("utf-8")
+        limits.require_resource("manifest_bytes", output.tell() + len(chunk) + 1,
+                                limits.MAX_MANIFEST_BYTES, operation="render-manifest")
+        output.write(chunk)
+    output.write(b"\n")
+    return output.getvalue()
 
 
 def parse_debt_manifest(
@@ -110,6 +119,8 @@ def parse_debt_manifest(
 ) -> MigrationDebtManifest:
     """Parse a strict JSON sidecar into sorted immutable records."""
 
+    limits.require_resource("manifest_bytes", len(data), limits.MAX_MANIFEST_BYTES,
+                            operation="parse-manifest", path=source_path)
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError as error:

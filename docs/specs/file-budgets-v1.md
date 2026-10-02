@@ -1,5 +1,9 @@
 # Version 1 file and context budgets
 
+## Operational content envelope
+
+Repository-controlled policy thresholds do not govern host memory safety. Materialized current files and expanded base blobs are limited to 16 MiB each, current/base policy to 1 MiB, and migration manifests to 8 MiB. Retained Markdown or entrypoint input is limited to 256 KiB per file and 16 MiB of raw UTF-8 bytes in aggregate. Worktree snapshot sizes are checked before opening content; base blobs are size-queried before expansion and their output is independently bounded during collection. Crossing a ceiling aborts with `GIT010`, including in `audit`; direct Markdown parsing has its separate `DOC012` envelope. Binary classification, exact UTF-8 decoding, raw-byte hashing, debt comparison, one-read reuse, and snapshot identity checks retain their semantics within this envelope. Unscanned regular files whose bytes are not needed remain metadata-only; initialization's clean-state hashing already streams such blobs without retaining their contents.
+
 This contract defines deterministic file classification, plaintext detection, byte thresholds, context-set accounting, intentional-exception application, audit records, and explain data. Configuration shapes and static validation belong to the [version 1 configuration schema](configuration-v1.md); repository paths and pattern matching belong to the [version 1 path and glob contract](repository-paths-and-globs-v1.md).
 
 ## Evaluation inputs

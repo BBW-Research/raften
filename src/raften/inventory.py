@@ -487,6 +487,8 @@ def list_base_tree(
 def read_base_blob(
     repository: RepositoryHandle,
     entry: BaseTreeEntry,
+    *,
+    max_bytes: int | None = None,
 ) -> bytes:
     """Read exact base blob bytes by object identity, never by revision:path syntax."""
 
@@ -501,12 +503,24 @@ def read_base_blob(
             ),
         )
     _require_object_id(entry.object_id, operation="read-base-blob")
+    ceiling = limits.MAX_CONTENT_BYTES if max_bytes is None else min(max_bytes, limits.MAX_CONTENT_BYTES)
+    size_output = _run_git(
+        repository.root, operation="size-base-blob",
+        arguments=("cat-file", "-s", entry.object_id),
+        failure_code=GIT_BASE_OBJECT,
+        failure_message="base blob size is unavailable", max_output_bytes=64,
+    )
+    if not size_output.endswith(b"\n") or not size_output[:-1].isdigit():
+        _malformed("size-base-blob", "Git returned an invalid expanded blob size")
+    limits.require_resource("content_bytes", int(size_output), ceiling,
+                            operation="read-base-blob", path=entry.path)
     return _run_git(
         repository.root,
         operation="read-base-blob",
         arguments=("cat-file", "blob", entry.object_id),
         failure_code=GIT_BASE_OBJECT,
         failure_message="base blob is unavailable or has the wrong type",
+        max_output_bytes=ceiling,
     )
 
 
