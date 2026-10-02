@@ -7,6 +7,7 @@ import unicodedata
 from bisect import bisect_right
 from html.parser import HTMLParser
 
+from raften.markdown_limits import DelimiterRuns, ParseBudget
 from raften.markdown_lines import is_line_start, line_bounds, line_starts, physical_lines
 from raften.markdown_links import extract_links, heading_display_text, inline_html_tag_end
 from raften.model import Anchor, AnchorKind, MarkdownDocument, SourceLocation
@@ -20,6 +21,7 @@ def parse_markdown(
 ) -> MarkdownDocument:
     """Extract supported links and anchors without repository access."""
 
+    budget = ParseBudget(source_path, text)
     source_line_starts = line_starts(text)
     block_visible, inline_visible = _mask_ignored_regions(text)
     extraction = extract_links(
@@ -27,6 +29,7 @@ def parse_markdown(
         inline_visible,
         known_directories,
         source_line_starts,
+        budget=budget,
     )
     heading_visible = _mask_ranges(block_visible, extraction.definition_ranges)
     html_visible = _mask_ranges(
@@ -40,6 +43,7 @@ def parse_markdown(
         html_visible,
         source_line_starts,
         extraction.defined_reference_labels,
+        budget,
     )
     return MarkdownDocument(source_path, extraction.links, anchors)
 
@@ -47,6 +51,7 @@ def parse_markdown(
 def _mask_ignored_regions(text: str) -> tuple[str, str]:
     block_visible = list(text)
     inline_visible = list(text)
+    runs = DelimiterRuns(text)
     fence: tuple[str, int] | None = None
     index = 0
     while index < len(text):
@@ -76,7 +81,7 @@ def _mask_ignored_regions(text: str) -> tuple[str, str]:
             continue
         if text[index] == "`" and not _is_escaped(text, index):
             run = _run_length(text, index, "`")
-            closing = _find_equal_run(text, index + run, "`", run)
+            closing = runs.closing(index + run, "`", run)
             if closing is not None:
                 end = closing + run
                 _blank(inline_visible, index, end)
@@ -114,30 +119,13 @@ def _closes_fence(line: str, fence: tuple[str, int]) -> bool:
     return run >= minimum and not line[indent + run :].strip(" \t")
 
 
-def _find_equal_run(
-    text: str,
-    start: int,
-    character: str,
-    length: int,
-) -> int | None:
-    index = start
-    while index < len(text):
-        found = text.find(character, index)
-        if found < 0:
-            return None
-        run = _run_length(text, found, character)
-        if run == length:
-            return found
-        index = found + run
-    return None
-
-
 def _extract_anchors(
     source_path: str,
     heading_text: str,
     html_text: str,
     line_starts: tuple[int, ...],
     defined_reference_labels: frozenset[str],
+    budget: ParseBudget,
 ) -> tuple[Anchor, ...]:
     candidates: list[tuple[int, AnchorKind, str]] = []
     lines = tuple((offset, line) for offset, line, _end in physical_lines(heading_text))
@@ -165,6 +153,7 @@ def _extract_anchors(
                 heading_display_text(
                     value,
                     defined_reference_labels=defined_reference_labels,
+                    _budget=budget,
                 )
             )
             if not base:

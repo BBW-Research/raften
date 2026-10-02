@@ -18,6 +18,8 @@ The extractor uses a stateful scan rather than regular-expression-only parsing. 
 
 An unclosed fence or comment remains ignored through end of file. An unmatched inline backtick run is ordinary text.
 
+Delimiter runs and bracket pairs are indexed once per parsing scope. Unmatched runs remain whole ordinary-text runs, including during heading reduction; a suffix of an unmatched run does not reopen a shorter span. Fixed operational limits allow at most 256 KiB of UTF-8 per document and 2,097,152 units of nested-heading and destination/HTML rescan work per document. Failed destination or HTML scans conservatively charge the remaining suffix; successful scans charge the consumed range. Crossing either ceiling raises `DOC012` with `resource` and `limit`, aborting the command as an operational failure rather than returning a partial graph. These ceilings are independent of configurable file budgets, which can be exceeded by legitimate migration debt.
+
 ## Links and references
 
 Version 1 extracts inline navigation links and images with balanced labels and destinations. Destinations may be bare or angle-bracketed and may have an ignored single- or double-quoted or parenthesized title. Backslash escapes for ASCII punctuation are decoded at the ordered source-markup step below.
@@ -72,7 +74,7 @@ Configured entrypoints are parsed with the same rules but do not become graph ro
 
 ## Diagnostics
 
-All `DOC` diagnostics are blocking errors and sort by source path, real source position, code, and structured details. Link failures use the opening `[` position.
+`DOC001` through `DOC011` are blocking policy errors and sort by source path, real source position, code, and structured details. Link failures use the opening `[` position.
 
 | Code | Meaning |
 | --- | --- |
@@ -87,3 +89,4 @@ All `DOC` diagnostics are blocking errors and sort by source path, real source p
 | `DOC009` | A normalized local target is absent or not a current file. |
 | `DOC010` | A requested fragment is absent from its Markdown target. |
 | `DOC011` | A governed Markdown document is unreachable from all configured roots. |
+| `DOC012` | A fixed Markdown byte or parsing-work ceiling was exceeded; the command aborts with operational exit code 2, including audit. |
