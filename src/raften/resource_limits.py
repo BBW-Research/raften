@@ -20,6 +20,7 @@ MAX_COMMAND_MATCH_WORK = 128_000_000
 MAX_SELECTOR_CHECKS = 4_000_000
 MAX_CONTEXT_MEMBERSHIPS = 100_000
 MAX_CONTEXT_PATTERN_REFS = 100_000
+MAX_COMMAND_DIAGNOSTICS = 65_536
 
 
 def require_resource(resource: str, actual: int, limit: int, *, operation: str,

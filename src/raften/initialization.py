@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 from typing import Never
+from raften import resource_limits as limits
 from raften.evaluation_limits import EvaluationBudget
 
 from raften.command_paths import validate_command_path
@@ -190,6 +191,8 @@ def _fail_debt_required(
     manifest: MigrationDebtManifest,
     sizes: SizeEvaluation,
 ) -> Never:
+    limits.require_resource("diagnostics", len(manifest.entries), limits.MAX_COMMAND_DIAGNOSTICS,
+                            operation="retain-diagnostics")
     assessments = {item.entry.path: item for item in sizes.files}
     diagnostics = tuple(
         operational_diagnostic(

@@ -5,12 +5,15 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
+from raften.diagnostic_limits import DiagnosticBuffer
 from raften.evaluation_limits import EvaluationBudget
+from raften import markdown_limits as markdown_limits
 
 from raften.diagnostics import (
     CFG_INCONSISTENT,
     DOC_AUTHORED_SYMLINK,
     DOC_UNREACHABLE,
+    DOC_RESOURCE_LIMIT,
     diagnostic_sort_key,
     policy_diagnostic,
 )
@@ -108,17 +111,19 @@ def evaluate_documentation(
         )
 
     known_directories = _known_directories(ordered_entries)
+    semantic_budget = markdown_limits.SemanticBudget()
     parsed = tuple(
         parse_markdown(
             path,
             document.text,
             known_directories=known_directories,
+            semantic_budget=semantic_budget,
         )
         for path, document in sorted(documents_by_path.items())
     )
     parsed_by_path = {document.path: document for document in parsed}
 
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer(code=DOC_RESOURCE_LIMIT)
     governed, discovery_diagnostics = _discover_governed(compiled, ordered_entries)
     diagnostics.extend(discovery_diagnostics)
     diagnostics.extend(
@@ -188,7 +193,7 @@ def evaluate_documentation(
 def _root_exclusion_diagnostics(
     compiled: CompiledDocumentationPolicy,
 ) -> tuple[Diagnostic, ...]:
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer(code=DOC_RESOURCE_LIMIT)
     for root_index, root in enumerate(compiled.policy.documentation.roots):
         for exclusion_index, exclusion in enumerate(compiled.exclusions):
             compiled.budget.selectors(1)
@@ -215,7 +220,7 @@ def _discover_governed(
     entries: Sequence[InventoryEntry],
 ) -> tuple[tuple[str, ...], tuple[Diagnostic, ...]]:
     governed: list[str] = []
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer(code=DOC_RESOURCE_LIMIT)
     for entry in entries:
         if not entry.path.endswith(".md") or not _under_any_root(compiled, entry.path):
             continue
@@ -268,6 +273,7 @@ def _build_directories(
     governed: tuple[str, ...],
 ) -> tuple[DocumentationDirectory, ...]:
     directory_paths: set[str] = set()
+    walked: set[tuple[str, str]] = set()
     for path in governed:
         _charge_roots(compiled, path)
         parent = _parent_path(path)
@@ -276,6 +282,16 @@ def _build_directories(
                 continue
             current = parent
             while True:
+                key = (root_directory, current)
+                if key in walked:
+                    break
+                markdown_limits.require_semantic("directory_walk_records", len(walked) + 1,
+                                                 markdown_limits.MAX_DIRECTORY_RECORDS)
+                walked.add(key)
+                compiled.budget.matcher.charge(len(current) + 1)
+                if current not in directory_paths:
+                    markdown_limits.require_semantic("graph_directories", len(directory_paths) + 1,
+                                                     markdown_limits.MAX_DIRECTORY_RECORDS)
                 directory_paths.add(current)
                 if current == root_directory:
                     break
@@ -333,6 +349,10 @@ def _known_directories(entries: Sequence[InventoryEntry]) -> frozenset[str]:
             continue
         parent = _parent_path(entry.path)
         while parent:
+            if parent in directories:
+                break
+            markdown_limits.require_semantic("known_directories", len(directories) + 1,
+                                             markdown_limits.MAX_DIRECTORY_RECORDS)
             directories.add(parent)
             parent = _parent_path(parent)
     return frozenset(directories)

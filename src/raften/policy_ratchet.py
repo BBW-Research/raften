@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from raften.diagnostic_limits import DiagnosticBuffer
 from raften.diagnostics import (
     RAT_FILE_LIMIT_INCREASED,
     RAT_FILE_POLICY_WEAKENED,
@@ -38,7 +39,7 @@ def compare_policies(
     """Report every conservative v1 weakening relative to the base policy."""
 
     budget = budget or EvaluationBudget()
-    findings: list[Diagnostic] = []
+    findings = DiagnosticBuffer()
     _compare_file_rules(current, base, policy_path, findings, budget)
     _compare_overrides(current, base, policy_path, findings, budget)
     findings.extend(compare_policy_domains(current, base, policy_path, budget=budget))

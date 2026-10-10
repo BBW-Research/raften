@@ -7,7 +7,7 @@ The October 8, 2026 Codex Security Cloud scan of `c162828` reported five new fin
 - [x] [Report amplification](https://github.com/BBW-Research/raften/issues/19): preserve version 1 output with lazy projection and bounded atomic encoding.
 - [x] [Glob amplification](https://github.com/BBW-Research/raften/issues/22): bound patterns before compilation and matcher work before allocation.
 - [x] [Selector cross product](https://github.com/BBW-Research/raften/issues/20): bound aggregate evaluation work and context retention.
-- [ ] [Markdown amplification](https://github.com/BBW-Research/raften/issues/21): bound semantic objects, graph edges, and diagnostics before retention.
+- [x] [Markdown amplification](https://github.com/BBW-Research/raften/issues/21): bound semantic objects, graph edges, and diagnostics before retention.
 - [ ] [Git administration ownership](https://github.com/BBW-Research/raften/issues/23): verify ordinary and linked-worktree administration and revalidate later commands.
 
 ## Evidence
@@ -19,3 +19,5 @@ Other fixes are in progress. PR creation does not authorize merging or marking c
 Glob validation: `BASE_REF=origin/main scripts/validate` passed 572 tests on Python 3.13 with one filesystem-capability skip. Seven resource regressions cover scalar/list configuration refusal, byte/token boundaries, class-range cost, shared budgets, and refusal before character-table scans. Independent review passed 112 focused tests and compared 91,892 match outcomes against the prior implementation without a mismatch. Cumulative command accounting follows in the selector fix.
 
 Selector validation: `BASE_REF=origin/main scripts/validate` passed 579 tests on Python 3.13 with one filesystem-capability skip. Six selector regressions cover real maximum context records, pre-read rejection, duplicate match sharing, independent membership/reference bounds, inclusive ceilings, and repeat evaluation. The benchmark continues after a report-boundary refusal and records `audit_status` rather than disabling the ceiling. The official 100,000-path benchmark completed with 100,000 Git paths and content reads, 7,731 retained bytes, and a 1,000-level documentation workload; its full audit correctly refused above the report envelope. Independent read-only review passed 122 focused tests and found no blocker.
+
+Markdown validation: `BASE_REF=origin/main scripts/validate` passed 587 tests on Python 3.13 with one filesystem-capability skip. Eight new regressions cover adjacent and external links, combined anchor candidates, shared semantic limits, repeated reference normalization, inclusive counts, retained destination bytes, distinct graph edges, directory metadata, and producer/final diagnostic refusal. Independent read-only review verified pre-retention checks and compatibility of graph deduplication and migration diagnostic reconciliation.

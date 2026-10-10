@@ -269,10 +269,14 @@ def _run_repository(
         evaluation_date=evaluation_date,
         budget=budget,
     )
+    size_diagnostics = reconcile_size_diagnostics(sizes.diagnostics, ratchet)
+    limits.require_resource("diagnostics", sum(map(len, (
+        size_diagnostics, documentation.diagnostics, ratchet.diagnostics, policy_diagnostics))),
+        limits.MAX_COMMAND_DIAGNOSTICS, operation="retain-diagnostics")
     diagnostics = tuple(
         sorted(
             (
-                *reconcile_size_diagnostics(sizes.diagnostics, ratchet),
+                *size_diagnostics,
                 *documentation.diagnostics,
                 *ratchet.diagnostics,
                 *policy_diagnostics,

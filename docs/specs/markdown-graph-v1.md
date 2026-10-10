@@ -18,7 +18,9 @@ The extractor uses a stateful scan rather than regular-expression-only parsing. 
 
 An unclosed fence or comment remains ignored through end of file. An unmatched inline backtick run is ordinary text.
 
-Delimiter runs and bracket pairs are indexed once per parsing scope. Unmatched runs remain whole ordinary-text runs, including during heading reduction; a suffix of an unmatched run does not reopen a shorter span. Fixed operational limits allow at most 256 KiB of UTF-8 per document and 2,097,152 units of nested-heading and destination/HTML rescan work per document. Failed destination or HTML scans conservatively charge the remaining suffix; successful scans charge the consumed range. Crossing either ceiling raises `DOC012` with `resource` and `limit`, aborting the command as an operational failure rather than returning a partial graph. These ceilings are independent of configurable file budgets, which can be exceeded by legitimate migration debt.
+Delimiter runs and bracket pairs are indexed once per parsing scope. Unmatched runs remain whole ordinary-text runs, including during heading reduction; a suffix of an unmatched run does not reopen a shorter span. Fixed operational limits allow at most 256 KiB of UTF-8 per document and 2,097,152 units of nested-heading and destination/HTML rescan work per document. Failed destination or HTML scans conservatively charge the remaining suffix; successful scans charge the consumed range. Every recognized link destination also charges its length before normalization, including repeated reference destinations and omitted external links. Crossing a ceiling raises `DOC012` with `resource` and `limit`, aborting the command as an operational failure rather than returning a partial graph. These ceilings are independent of configurable file budgets, which can be exceeded by legitimate migration debt.
+
+Semantic retention allows 4,096 recognized links and 4,096 heading or explicit-anchor candidates per document, and 65,536 of each across the evaluation. Candidates count before deduplication or omission. Retained link fields (raw destination, normalized target, and fragment) allow 2 MiB of UTF-8 per document and 16 MiB overall. Distinct graph edges, known directories, graph directories, and root/directory traversal pairs each allow 65,536 records; repeated traversal pairs stop ancestor walks. Checks precede insertion into the retained collections. Documentation diagnostic producers also stop at the command diagnostic ceiling described in [output](output-v1.md), using `DOC012`.
 
 ## Links and references
 
@@ -89,4 +91,4 @@ Configured entrypoints are parsed with the same rules but do not become graph ro
 | `DOC009` | A normalized local target is absent or not a current file. |
 | `DOC010` | A requested fragment is absent from its Markdown target. |
 | `DOC011` | A governed Markdown document is unreachable from all configured roots. |
-| `DOC012` | A fixed Markdown byte or parsing-work ceiling was exceeded; the command aborts with operational exit code 2, including audit. |
+| `DOC012` | A fixed Markdown byte, work, semantic-retention, or documentation-diagnostic ceiling was exceeded; the command aborts with operational exit code 2, including audit. |

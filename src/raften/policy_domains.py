@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import posixpath
 from datetime import date
+from raften.diagnostic_limits import DiagnosticBuffer
 from raften.evaluation_limits import EvaluationBudget
 
 from raften.diagnostics import (
@@ -53,7 +54,7 @@ def compare_policy_domains(
     policy_path: str,
     *, budget: EvaluationBudget | None = None,
 ) -> tuple[Diagnostic, ...]:
-    findings: list[Diagnostic] = []
+    findings = DiagnosticBuffer()
     _compare_ratchet_settings(current, base, policy_path, findings)
     _compare_documentation(current, base, policy_path, findings)
     _compare_entrypoints(current, base, policy_path, findings)

@@ -7,7 +7,7 @@ import unicodedata
 from bisect import bisect_right
 from html.parser import HTMLParser
 
-from raften.markdown_limits import DelimiterRuns, ParseBudget
+from raften.markdown_limits import DelimiterRuns, ParseBudget, SemanticBudget
 from raften.markdown_lines import is_line_start, line_bounds, line_starts, physical_lines
 from raften.markdown_links import extract_links, heading_display_text, inline_html_tag_end
 from raften.model import Anchor, AnchorKind, MarkdownDocument, SourceLocation
@@ -18,10 +18,11 @@ def parse_markdown(
     text: str,
     *,
     known_directories: frozenset[str] = frozenset(),
+    semantic_budget: SemanticBudget | None = None,
 ) -> MarkdownDocument:
     """Extract supported links and anchors without repository access."""
 
-    budget = ParseBudget(source_path, text)
+    budget = ParseBudget(source_path, text, semantic=semantic_budget)
     source_line_starts = line_starts(text)
     block_visible, inline_visible = _mask_ignored_regions(text)
     extraction = extract_links(
@@ -132,13 +133,15 @@ def _extract_anchors(
     for line_index, (offset, line) in enumerate(lines):
         atx = _atx_heading(line)
         if atx is not None:
+            budget.anchor()
             candidates.append((offset, AnchorKind.HEADING, atx))
         if line_index > 0 and _is_setext_underline(line):
             previous_offset, previous = lines[line_index - 1]
             if previous.strip() and _atx_heading(previous) is None:
+                budget.anchor()
                 candidates.append((previous_offset, AnchorKind.HEADING, previous.strip()))
 
-    parser = _ExplicitIdParser(line_starts)
+    parser = _ExplicitIdParser(line_starts, budget)
     parser.feed(html_text)
     parser.close()
     candidates.extend(parser.candidates)
@@ -229,9 +232,10 @@ def _slug(value: str) -> str:
 
 
 class _ExplicitIdParser(HTMLParser):
-    def __init__(self, line_starts: tuple[int, ...]) -> None:
+    def __init__(self, line_starts: tuple[int, ...], budget: ParseBudget) -> None:
         super().__init__(convert_charrefs=True)
         self._line_starts = line_starts
+        self._budget = budget
         self.candidates: list[tuple[int, AnchorKind, str]] = []
 
     def handle_starttag(
@@ -260,6 +264,7 @@ class _ExplicitIdParser(HTMLParser):
             return
         line, column = self.getpos()
         offset = self._line_starts[line - 1] + column
+        self._budget.anchor()
         self.candidates.append((offset, AnchorKind.EXPLICIT, identifier))
 
 

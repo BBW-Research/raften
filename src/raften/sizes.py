@@ -9,6 +9,7 @@ from datetime import date
 from dataclasses import replace
 
 from raften import resource_limits as limits
+from raften.diagnostic_limits import DiagnosticBuffer
 from raften.markdown_limits import MAX_MARKDOWN_BYTES
 from raften.diagnostics import (
     CFG_EFFECTIVE_POLICY,
@@ -94,7 +95,7 @@ def evaluate_sizes(
         compiled = replace(compiled, budget=EvaluationBudget())
     preflight_size_work(compiled, len(entries))
     ordered_entries = tuple(sorted(entries, key=lambda item: item.path))
-    diagnostics = list(_expired_exception_diagnostics(compiled, evaluation_date))
+    diagnostics = DiagnosticBuffer(_expired_exception_diagnostics(compiled, evaluation_date))
     files: list[FileAssessment] = []
     documents: list[TextDocument] = []
     retained_bytes = 0
@@ -412,7 +413,7 @@ def _evaluate_context(
     exact_indexes = {path: index for index, path in enumerate(context.paths)}
     members: list[ContextMember] = []
     missing: list[str] = []
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer()
     total_bytes = 0
     for path in sorted(member_paths):
         entry = entries_by_path.get(path)
@@ -511,7 +512,7 @@ def _expired_exception_diagnostics(
     compiled: CompiledSizePolicy,
     evaluation_date: date,
 ) -> tuple[Diagnostic, ...]:
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer()
     for index, exception in enumerate(compiled.policy.exceptions.records):
         if exception_is_expired(exception, evaluation_date):
             diagnostics.append(

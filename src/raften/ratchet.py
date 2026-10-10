@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from datetime import date
 
+from raften.diagnostic_limits import DiagnosticBuffer
 from raften.diagnostics import (
     FILE_HARD_BYTES,
     RAT_BASE_TYPE_CHANGED,
@@ -177,7 +178,7 @@ def _evaluate_git(
     read_base: BaseContentReader,
 ) -> tuple[list[FileRatchetAssessment], list[Diagnostic]]:
     files: list[FileRatchetAssessment] = []
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer()
     for current in candidates:
         path = current.entry.path
         hard = _ordinary_hard(current)
@@ -263,7 +264,7 @@ def _evaluate_manifest(
             raise ValueError(f"duplicate migration-debt path {entry.path!r}")
         by_path[entry.path] = entry
     files: list[FileRatchetAssessment] = []
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer()
     for current in candidates:
         path = current.entry.path
         hard = _ordinary_hard(current)

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections import defaultdict, deque
+from raften import markdown_limits as limits
 
+from raften.diagnostic_limits import DiagnosticBuffer
 from raften.diagnostics import (
     DOC_FRAGMENT_MISSING,
     DOC_LOCAL_TARGET_MISSING,
@@ -14,6 +16,7 @@ from raften.diagnostics import (
     DOC_MISSING_SIBLING_LINK,
     DOC_TEXT_UNAVAILABLE,
     DOC_UNREACHABLE,
+    DOC_RESOURCE_LIMIT,
     DOC_UNSAFE_DESTINATION,
     policy_diagnostic,
 )
@@ -44,7 +47,7 @@ def content_diagnostics(
     parsed: dict[str, MarkdownDocument],
     assessments: dict[str, FileAssessment],
 ) -> tuple[Diagnostic, ...]:
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer(code=DOC_RESOURCE_LIMIT)
     governed_set = set(governed)
     for path in governed:
         if path not in parsed:
@@ -103,7 +106,7 @@ def structure_diagnostics(
     navigation_targets: dict[str, frozenset[str]],
 ) -> tuple[Diagnostic, ...]:
     governed_set = set(governed)
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer(code=DOC_RESOURCE_LIMIT)
     for directory in directories:
         index_path = directory.index_path
         if settings.require_directory_indexes and index_path not in governed_set:
@@ -181,7 +184,7 @@ def link_diagnostics(
         for path, document in parsed.items()
         if path.endswith(".md")
     }
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer(code=DOC_RESOURCE_LIMIT)
     for source_path in source_paths:
         document = parsed.get(source_path)
         if document is None:
@@ -259,7 +262,7 @@ def entrypoint_diagnostics(
     entries: dict[str, InventoryEntry],
     parsed: dict[str, MarkdownDocument],
 ) -> tuple[Diagnostic, ...]:
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer(code=DOC_RESOURCE_LIMIT)
     for entrypoint_index, entrypoint in enumerate(policy.entrypoints):
         entry = entries.get(entrypoint.path)
         document = parsed.get(entrypoint.path)
@@ -304,14 +307,16 @@ def documentation_edges(
     parsed: dict[str, MarkdownDocument],
 ) -> tuple[DocumentationEdge, ...]:
     governed_set = set(governed)
-    edge_pairs = {
-        (source, link.target_path)
-        for source in governed
-        for link in (() if parsed.get(source) is None else parsed[source].links)
-        if link.kind is LinkKind.NAVIGATION
-        and link.resolution_error is None
-        and link.target_path in governed_set
-    }
+    edge_pairs: set[tuple[str, str]] = set()
+    for source in governed:
+        for link in (() if parsed.get(source) is None else parsed[source].links):
+            if (link.kind is not LinkKind.NAVIGATION or link.resolution_error is not None
+                    or link.target_path not in governed_set):
+                continue
+            pair = (source, link.target_path)
+            if pair not in edge_pairs:
+                limits.require_semantic("graph_edges", len(edge_pairs) + 1, limits.MAX_GRAPH_EDGES)
+                edge_pairs.add(pair)
     return tuple(DocumentationEdge(source, target) for source, target in sorted(edge_pairs))
 
 
