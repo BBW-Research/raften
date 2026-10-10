@@ -1,5 +1,5 @@
 # Active implementation plans
 
-- [October security follow-up](security-followup.md)
+No implementation plans are active.
 
 Completed work is recorded in the [completed plan index](../completed/index.md).

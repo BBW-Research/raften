@@ -78,17 +78,22 @@ def _initialize_repository(
     root = _resolve_repository_root(repository_path)
     _require_safe_install_primitives()
     with bind_namespace(root) as namespace:
-        repository = open_repository(root)
-        namespace.verify()
-        return _initialize_anchored(
-            repository,
-            namespace.root_fd,
-            config_path=config_path,
-            capture_debt=capture_debt,
-            force=force,
-            namespace=namespace,
-            budget=budget,
-        )
+        try:
+            repository = open_repository(root)
+            namespace.verify()
+            return _initialize_anchored(
+                repository,
+                namespace.root_fd,
+                config_path=config_path,
+                capture_debt=capture_debt,
+                force=force,
+                namespace=namespace,
+                budget=budget,
+            )
+        except RepositoryAccessError:
+            # Preserve initialization's stronger namespace-change diagnostic.
+            namespace.verify()
+            raise
 
 
 def _initialize_anchored(

@@ -46,10 +46,10 @@ class GitBoundaryTests(unittest.TestCase):
             stdout=b"true\n\n",
             stderr=b"",
         )
-        with tempfile.TemporaryDirectory() as directory:
+        with RepositoryFixture() as repository:
             with patch.dict(os.environ, hostile, clear=False):
                 with patch("raften.inventory.subprocess.Popen", return_value=process_result(completed)) as run, patch("raften.inventory.collect_output", return_value=completed.stdout):
-                    handle = open_repository(directory)
+                    handle = open_repository(repository.root)
 
         arguments = run.call_args.args[0]
         options = run.call_args.kwargs
@@ -65,6 +65,8 @@ class GitBoundaryTests(unittest.TestCase):
                 f"core.hooksPath={os.devnull}",
                 "-c",
                 "core.untrackedCache=false",
+                f"--git-dir={handle.administration.gitdir}",
+                f"--work-tree={handle.root}",
                 "rev-parse",
                 "--is-inside-work-tree",
                 "--show-prefix",
@@ -76,6 +78,8 @@ class GitBoundaryTests(unittest.TestCase):
         self.assertIs(options["stderr"], subprocess.PIPE)
         self.assertNotIn("GIT_DIR", options["env"])
         self.assertNotIn("GIT_WORK_TREE", options["env"])
+        self.assertEqual(options["env"]["GIT_COMMON_DIR"], str(handle.administration.common))
+        self.assertEqual(options["env"]["GIT_OBJECT_DIRECTORY"], str(handle.administration.common / "objects"))
         self.assertEqual(options["env"]["GIT_CONFIG_COUNT"], "0")
         self.assertEqual(options["env"]["LC_ALL"], "C")
         self.assertEqual(options["env"]["GIT_NO_LAZY_FETCH"], "1")
@@ -132,12 +136,12 @@ class GitBoundaryTests(unittest.TestCase):
             subprocess.CompletedProcess([], 0, b"", b""),
             subprocess.CompletedProcess([], 0, b"", b""),
         )
-        with tempfile.TemporaryDirectory() as directory:
-            handle = RepositoryHandle(Path(directory).resolve())
+        with RepositoryFixture() as repository:
+            handle = open_repository(repository.root)
             with patch("raften.inventory.subprocess.Popen", side_effect=[process_result(item) for item in outputs]) as run, patch("raften.inventory.collect_output", return_value=b""):
                 snapshot = inventory_worktree(handle)
         self.assertEqual(snapshot.entries, ())
-        commands = [call.args[0][9:] for call in run.call_args_list]
+        commands = [call.args[0][11:] for call in run.call_args_list]
         self.assertEqual(
             commands,
             [
@@ -220,8 +224,8 @@ class GitBoundaryTests(unittest.TestCase):
 
     def test_git_command_failure_receives_the_stable_command_code(self) -> None:
         failed = subprocess.CompletedProcess([], 9, b"", b"failure")
-        with tempfile.TemporaryDirectory() as directory:
-            handle = RepositoryHandle(Path(directory))
+        with RepositoryFixture() as repository:
+            handle = open_repository(repository.root)
             with patch("raften.inventory.subprocess.Popen", return_value=process_result(failed)), patch("raften.inventory.collect_output", return_value=b""):
                 with self.assertRaises(RepositoryAccessError) as raised:
                     inventory_worktree(handle)
