@@ -11,6 +11,7 @@ from unittest.mock import patch
 from raften import inventory
 from raften.git_records import parse_base_tree, parse_index_entries, parse_path_records
 from raften.repository_errors import RepositoryAccessError
+from tests.support.repository import RepositoryFixture
 
 
 OBJECT = b"a" * 40
@@ -28,13 +29,14 @@ class GitResourceTests(unittest.TestCase):
 
         from contextlib import ExitStack
         with ExitStack() as stack:
-            directory = stack.enter_context(tempfile.TemporaryDirectory())
+            repository = stack.enter_context(RepositoryFixture())
+            handle = inventory.open_repository(repository.root)
             stack.enter_context(patch("raften.inventory.subprocess.Popen", side_effect=spawn))
             stack.enter_context(patch("raften.inventory.GIT_TIMEOUT_SECONDS", timeout))
             for key, value in ceilings.items():
                 stack.enter_context(patch(f"raften.resource_limits.{key}", value))
             try:
-                return inventory._run_git(Path(directory), operation=operation, arguments=())
+                return inventory._run_git(handle, operation=operation, arguments=())
             finally:
                 self.assertEqual(len(children), 1)
                 self.assertIsNotNone(children[0].poll())

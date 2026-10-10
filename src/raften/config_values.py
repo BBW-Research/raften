@@ -15,6 +15,8 @@ from raften.diagnostics import (
     CFG_VALUE,
 )
 from raften.matcher import (
+    PatternLimitError,
+    compile_pattern,
     narrow_pattern_error,
     path_validation_error,
     pattern_has_wildcards,
@@ -93,11 +95,21 @@ def parse_pattern_value(
     value = validator.string(table, key, parent=parent, required=required)
     if value is None:
         return None
+    _require_pattern_limits(validator, value, child_path(parent, key))
     error = pattern_validation_error(value)
     if error is not None:
         validator.add(CFG_PATTERN, child_path(parent, key), error, details=(("value", value),))
         return None
     return value
+
+
+def _require_pattern_limits(validator: Validator, value: str, field_path: str) -> None:
+    try:
+        compile_pattern(value)
+    except PatternLimitError as error:
+        validator.require_limit(error.resource, error.actual, error.limit, field_path)
+    except ValueError:
+        pass  # Syntax diagnostics retain their existing identity and details.
 
 
 def parse_path_list(
@@ -219,6 +231,8 @@ def _parse_string_list(
         if type(value) is not str:
             validator.type_error(item_path, "string", value)
             continue
+        if pattern:
+            _require_pattern_limits(validator, value, item_path)
         error = pattern_validation_error(value) if pattern else path_validation_error(value)
         if error is not None:
             validator.add(

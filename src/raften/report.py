@@ -13,6 +13,7 @@ from raften.report_json import render_json
 from raften.report_sarif import render_sarif
 from raften.report_text import render_text
 from raften.run_model import RunStatus
+from raften.evaluation_limits import EvaluationBudget
 
 
 __all__ = ("command_exit_code", "render_emergency_failure", "render_report")
@@ -22,14 +23,15 @@ def render_report(
     command: str,
     outcome: ReportOutcome,
     output_format: OutputFormat,
+    *, budget: EvaluationBudget | None = None,
 ) -> str:
     if output_format is OutputFormat.TEXT:
-        return render_text(command, outcome)
+        return render_text(command, outcome, budget=budget)
     if output_format is OutputFormat.JSON:
-        return render_json(command, outcome)
+        return render_json(command, outcome, budget=budget)
     if command != "check":
         raise ValueError("SARIF output is supported only for check")
-    return render_sarif(command, outcome)
+    return render_sarif(command, outcome, budget=budget)
 
 
 def command_exit_code(command: str, outcome: ReportOutcome) -> int:

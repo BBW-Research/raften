@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from urllib.parse import quote
 
 from raften import __version__
@@ -14,13 +13,16 @@ from raften.report_common import (
     outcome_status,
 )
 from raften.run_model import PathExplanation, RepositoryRun, RunStatus
+from raften.report_encoding import encode_report
+from raften.evaluation_limits import EvaluationBudget
 
 
 SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
 
 
-def render_sarif(command: str, outcome: ReportOutcome) -> str:
-    diagnostics = outcome_diagnostics(command, outcome)
+def render_sarif(command: str, outcome: ReportOutcome, *,
+                 budget: EvaluationBudget | None = None) -> str:
+    diagnostics = outcome_diagnostics(command, outcome, budget=budget)
     artifact_paths = _artifact_paths(outcome)
     rules = []
     for code in sorted({item.code for item in diagnostics}):
@@ -48,14 +50,14 @@ def render_sarif(command: str, outcome: ReportOutcome) -> str:
                         "executionSuccessful": outcome_status(outcome) is RunStatus.COMPLETE,
                     }
                 ],
-                "results": [
+                "results": (
                     _result_value(item, artifact_paths)
                     for item in diagnostics
-                ],
+                ),
             }
         ],
     }
-    return json.dumps(document, ensure_ascii=False, indent=2) + "\n"
+    return encode_report(document)
 
 
 def _result_value(

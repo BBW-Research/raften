@@ -1,11 +1,20 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 
 from release_tools.benchmark import run_benchmarks
 
 
 class ReleaseBenchmarkTests(unittest.TestCase):
+    def test_audit_output_limit_is_reported_without_aborting_scale_measurement(self) -> None:
+        with mock.patch("raften.resource_limits.MAX_REPORT_ITEMS", 100):
+            report = run_benchmarks((100,), include_git=False)
+        workload = report["workloads"][0]
+        self.assertEqual(workload["path_count"], 100)
+        self.assertEqual(workload["content_reads"], 100)
+        self.assertEqual(workload["audit_status"], "operational_error")
+        self.assertGreater(workload["audit_json_bytes"], 0)
     def test_small_synthetic_workload_reports_correct_counts_without_timing_budgets(self) -> None:
         report = run_benchmarks((100,), include_git=False)
         workload = report["workloads"][0]

@@ -100,6 +100,7 @@ def extract_links(
         if destination is None:
             index += 1
             continue
+        budget.link(destination)
         if suffix_start is not None:
             html_ranges.append((suffix_start, end))
             skip_starts[suffix_start] = max(skip_starts.get(suffix_start, 0), end)
@@ -122,6 +123,8 @@ def extract_links(
             known_directories,
         )
         if link is not None and not nested_navigation:
+            budget.retain_link(sum(len(value.encode("utf-8")) for value in (
+                link.raw_destination, link.target_path or "", link.fragment or "")))
             links.append(link)
         if kind is LinkKind.NAVIGATION and not nested_navigation:
             active_navigation_end = closing

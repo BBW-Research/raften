@@ -17,6 +17,7 @@ from raften.diagnostics import (
     GIT_UNSAFE_PATH,
 )
 from raften import resource_limits as limits
+from raften.git_administration import GitAdministration, administration_command, bind_administration
 from raften.git_output import collect_output
 from raften.git_executable import resolve_git_executable
 from raften.git_records import (
@@ -77,6 +78,7 @@ GIT_TIMEOUT_SECONDS = 120
 @dataclass(frozen=True, slots=True)
 class RepositoryHandle:
     root: Path
+    administration: GitAdministration | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,8 +103,9 @@ def open_repository(candidate: str | os.PathLike[str]) -> RepositoryHandle:
     """Validate and canonicalize one explicitly selected Git worktree root."""
 
     root = _resolve_repository_root(candidate)
+    repository = RepositoryHandle(root, bind_administration(root))
     output = _run_git(
-        root,
+        repository,
         operation="validate-root",
         arguments=("rev-parse", "--is-inside-work-tree", "--show-prefix"),
         failure_code=GIT_INVALID_ROOT,
@@ -114,7 +117,7 @@ def open_repository(candidate: str | os.PathLike[str]) -> RepositoryHandle:
             "repository root must be the exact top level of a non-bare Git worktree",
             details=(("root", os.fspath(candidate)),),
         )
-    return RepositoryHandle(root=root)
+    return repository
 
 
 def _resolve_repository_root(candidate: str | os.PathLike[str]) -> Path:
@@ -152,7 +155,7 @@ def inventory_worktree(repository: RepositoryHandle) -> InventorySnapshot:
 
     tracked = _parse_index_entries(
         _run_git(
-            repository.root,
+            repository,
             operation="list-index",
             arguments=("ls-files", "--stage", "-t", "-z"),
         )
@@ -160,7 +163,7 @@ def inventory_worktree(repository: RepositoryHandle) -> InventorySnapshot:
     deleted = set(
         _parse_path_records(
             _run_git(
-                repository.root,
+                repository,
                 operation="list-deleted",
                 arguments=("ls-files", "--deleted", "-z"),
             ),
@@ -169,7 +172,7 @@ def inventory_worktree(repository: RepositoryHandle) -> InventorySnapshot:
     )
     untracked = _parse_path_records(
         _run_git(
-            repository.root,
+            repository,
             operation="list-untracked",
             arguments=("ls-files", "--others", "--exclude-standard", "-z"),
         ),
@@ -341,14 +344,14 @@ def repository_remains_clean(
 
 def _resolve_head_revision(repository: RepositoryHandle) -> BaseRevision | None:
     output = _run_git(
-        repository.root,
+        repository,
         operation="resolve-head-revision",
         arguments=("rev-parse", "--verify", "--quiet", "--end-of-options", "HEAD^{commit}"),
         accepted_return_codes=frozenset({0, 1}),
     )
     if not output:
         symbolic = _run_git(
-            repository.root,
+            repository,
             operation="resolve-unborn-head",
             arguments=("symbolic-ref", "--quiet", "HEAD"),
             failure_message="HEAD is unavailable or malformed",
@@ -368,7 +371,7 @@ def _resolve_head_revision(repository: RepositoryHandle) -> BaseRevision | None:
                 "Git returned a malformed unborn branch reference",
             )
         _run_git(
-            repository.root,
+            repository,
             operation="verify-unborn-head",
             arguments=("show-ref", "--verify", "--quiet", branch_ref),
             failure_message="HEAD is unavailable or malformed",
@@ -454,7 +457,7 @@ def resolve_base_revision(repository: RepositoryHandle, ref: str) -> BaseRevisio
             details=(("requested_ref", ref),),
         )
     output = _run_git(
-        repository.root,
+        repository,
         operation="resolve-base-revision",
         arguments=("rev-parse", "--verify", "--end-of-options", f"{ref}^{{commit}}"),
         failure_code=GIT_BASE_REVISION,
@@ -482,7 +485,7 @@ def list_base_tree(
 
     _require_object_id(revision.commit_id, operation="list-base-tree")
     output = _run_git(
-        repository.root,
+        repository,
         operation="list-base-tree",
         arguments=("ls-tree", "-r", "-t", "-z", "--full-tree", revision.commit_id),
         failure_code=GIT_BASE_OBJECT,
@@ -512,7 +515,7 @@ def read_base_blob(
     _require_object_id(entry.object_id, operation="read-base-blob")
     ceiling = limits.MAX_CONTENT_BYTES if max_bytes is None else min(max_bytes, limits.MAX_CONTENT_BYTES)
     size_output = _run_git(
-        repository.root, operation="size-base-blob",
+        repository, operation="size-base-blob",
         arguments=("cat-file", "-s", entry.object_id),
         failure_code=GIT_BASE_OBJECT,
         failure_message="base blob size is unavailable", max_output_bytes=64,
@@ -522,7 +525,7 @@ def read_base_blob(
     limits.require_resource("content_bytes", int(size_output), ceiling,
                             operation="read-base-blob", path=entry.path)
     return _run_git(
-        repository.root,
+        repository,
         operation="read-base-blob",
         arguments=("cat-file", "blob", entry.object_id),
         failure_code=GIT_BASE_OBJECT,
@@ -547,7 +550,7 @@ def worktree_path(repository: RepositoryHandle, path: RepositoryPath) -> Path:
 
 
 def _run_git(
-    root: Path,
+    repository: RepositoryHandle,
     *,
     operation: str,
     arguments: tuple[str, ...],
@@ -556,67 +559,77 @@ def _run_git(
     accepted_return_codes: frozenset[int] = frozenset({0}),
     max_output_bytes: int | None = None,
 ) -> bytes:
-    try:
-        git_executable, safe_path = resolve_git_executable(root)
-    except (OSError, RuntimeError, ValueError) as error:
-        _fail(
-            GIT_COMMAND,
-            "trusted Git executable could not be resolved",
-            details=(
-                ("operation", operation),
-                ("error_type", type(error).__name__),
-            ),
-        )
-    command = [
-        git_executable,
-        "-c",
-        f"core.excludesFile={os.devnull}",
-        "-c",
-        "core.fsmonitor=false",
-        "-c",
-        f"core.hooksPath={os.devnull}",
-        "-c",
-        "core.untrackedCache=false",
-        *arguments,
-    ]
-    try:
-        deadline = time.monotonic() + GIT_TIMEOUT_SECONDS
-        with subprocess.Popen(
-            command, cwd=root, stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            env=_git_environment(safe_path),
-        ) as process:
-            try:
-                output = collect_output(
-                    process.stdout, process.stderr, operation=operation,
-                    deadline=deadline,
-                    max_bytes=limits.MAX_GIT_OUTPUT_BYTES if max_output_bytes is None else max_output_bytes,
-                    records=operation in {"list-index", "list-deleted", "list-untracked", "list-base-tree"},
-                )
-                return_code = process.wait(timeout=max(0, deadline - time.monotonic()))
-            finally:
-                if process.poll() is None:
-                    process.kill()
-                process.wait()
-    except (OSError, subprocess.TimeoutExpired, ValueError) as error:
-        _fail(
-            GIT_COMMAND,
-            "Git command could not be executed",
-            details=(
-                ("operation", operation),
-                ("error_type", type(error).__name__),
-            ),
-        )
-    if return_code not in accepted_return_codes:
-        _fail(
-            failure_code,
-            failure_message,
-            details=(
-                ("operation", operation),
-                ("return_code", return_code),
-            ),
-        )
-    return output
+    root = repository.root
+    administration = repository.administration
+    if administration is None:
+        _fail(GIT_INVALID_ROOT, "Git operation requires a validated repository handle")
+    with administration_command(root, administration):
+        try:
+            git_executable, safe_path = resolve_git_executable(root)
+        except (OSError, RuntimeError, ValueError) as error:
+            _fail(
+                GIT_COMMAND,
+                "trusted Git executable could not be resolved",
+                details=(
+                    ("operation", operation),
+                    ("error_type", type(error).__name__),
+                ),
+            )
+        command = [
+            git_executable,
+            "-c",
+            f"core.excludesFile={os.devnull}",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            f"core.hooksPath={os.devnull}",
+            "-c",
+            "core.untrackedCache=false",
+            f"--git-dir={administration.gitdir}",
+            f"--work-tree={root}",
+            *arguments,
+        ]
+        environment = _git_environment(safe_path)
+        environment.update({"GIT_COMMON_DIR": os.fspath(administration.common),
+                            "GIT_OBJECT_DIRECTORY": os.fspath(administration.common / "objects")})
+        try:
+            deadline = time.monotonic() + GIT_TIMEOUT_SECONDS
+            with subprocess.Popen(
+                command, cwd=root, stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                env=environment,
+            ) as process:
+                try:
+                    output = collect_output(
+                        process.stdout, process.stderr, operation=operation,
+                        deadline=deadline,
+                        max_bytes=limits.MAX_GIT_OUTPUT_BYTES if max_output_bytes is None else max_output_bytes,
+                        records=operation in {"list-index", "list-deleted", "list-untracked", "list-base-tree"},
+                    )
+                    return_code = process.wait(timeout=max(0, deadline - time.monotonic()))
+                finally:
+                    if process.poll() is None:
+                        process.kill()
+                    process.wait()
+        except (OSError, subprocess.TimeoutExpired, ValueError) as error:
+            _fail(
+                GIT_COMMAND,
+                "Git command could not be executed",
+                details=(
+                    ("operation", operation),
+                    ("error_type", type(error).__name__),
+                ),
+            )
+        if return_code not in accepted_return_codes:
+            _fail(
+                failure_code,
+                failure_message,
+                details=(
+                    ("operation", operation),
+                    ("return_code", return_code),
+                ),
+            )
+        return output
 
 
 def _git_environment(safe_path: str) -> dict[str, str]:

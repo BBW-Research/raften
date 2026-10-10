@@ -1,4 +1,4 @@
-"""Retain namespace change witnesses until initialization starts publication."""
+"""Retain directory rename witnesses for initialization and Git command scopes."""
 
 from __future__ import annotations
 

@@ -48,6 +48,10 @@ Empty, nested, unclosed, unmatched, descending-range, and malformed-range classe
 
 Matching compares Unicode code points exactly, independent of locale and operating system. `?` counts code points, not UTF-8 bytes or user-perceived grapheme clusters. The matcher uses iterative dynamic programming across components and tokens, so recursive stars and repeated ordinary stars do not invoke regular-expression backtracking.
 
+Patterns have fixed operational ceilings of 4,096 UTF-8 bytes and 1,024 weighted tokens across all components. Every ordinary token and recursive component counts once; a character-class token counts once per range. Bytes are checked before syntax scanning or compilation, and weighted tokens before returning compiled patterns. Configuration overflow is one `CFG016`; direct compilation raises `PatternLimitError`, a `PatternSyntaxError` subclass. These safety limits cannot be raised by policy.
+
+Each standalone match or `matches_any` call allows at most 1,000,000 work units. Component-table cells, literal comparison length, and token-by-character cells (including class-range cost) are charged before allocation. Explicit budgets can be shared across calls. Impossible minimum/exact component lengths and unreachable suffix states short-circuit without token-table allocation. Exhaustion fails with `GIT010`, `operation=match-pattern`, and `resource=matcher_work` rather than returning a guessed match result.
+
 ## Literal metacharacters in Git names
 
 Candidate filenames may contain literal pattern metacharacters. Those characters are interpreted only in the configured pattern, never in the candidate path. The catch-all `**` still governs such a file. Because version 1 exact selectors reject glob metacharacters, a Git filename containing `*`, `?`, `[` or `]` cannot receive an exact override; repositories needing that distinction must use an unambiguous pattern until a future selector encoding is specified.

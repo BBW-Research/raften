@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 from raften import __version__
 from raften.report_common import (
     ReportOutcome,
@@ -13,24 +11,27 @@ from raften.report_common import (
     summary_value,
 )
 from raften.report_data import audit_value, check_value, explanation_value
+from raften.report_encoding import encode_report
 from raften.run_model import InitResult, PathExplanation, RunStatus
+from raften.evaluation_limits import EvaluationBudget
 
 
 JSON_SCHEMA_VERSION = 1
 
 
-def render_json(command: str, outcome: ReportOutcome) -> str:
-    diagnostics = outcome_diagnostics(command, outcome)
+def render_json(command: str, outcome: ReportOutcome, *,
+                budget: EvaluationBudget | None = None) -> str:
+    diagnostics = outcome_diagnostics(command, outcome, budget=budget)
     document = {
         "schema_version": JSON_SCHEMA_VERSION,
         "tool": {"name": "raften", "version": __version__},
         "command": command,
         "status": outcome_status(outcome).value,
         "summary": summary_value(diagnostics),
-        "diagnostics": [diagnostic_value(item) for item in diagnostics],
+        "diagnostics": (diagnostic_value(item) for item in diagnostics),
         "data": _data_value(command, outcome),
     }
-    return json.dumps(document, ensure_ascii=False, indent=2) + "\n"
+    return encode_report(document)
 
 
 def _data_value(command: str, outcome: ReportOutcome) -> object:
@@ -46,5 +47,5 @@ def _data_value(command: str, outcome: ReportOutcome) -> object:
     if isinstance(outcome, PathExplanation):
         return explanation_value(outcome)
     if command == "audit":
-        return audit_value(outcome)
+        return audit_value(outcome, lazy=True)
     return check_value(outcome)

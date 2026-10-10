@@ -6,9 +6,15 @@ The facade delegates pure Git-output decoding to `git_records.py`, trusted execu
 
 ## Root validation
 
-`open_repository()` rejects an empty or NUL-containing input, resolves the supplied directory once, accepts a symlink to a root by returning its canonical target, and requires the candidate to be the exact top level of a non-bare Git worktree. A repository subdirectory is rejected rather than silently changing the selected target. Linked worktrees are supported without assuming whether `.git` is a directory or file.
+`open_repository()` rejects an empty or NUL-containing input, resolves the supplied directory once, accepts a symlink to a root by returning its canonical target, and requires the candidate to be the exact top level of a non-bare Git worktree. A repository subdirectory is rejected rather than silently changing the selected target. Before any Git child, `git_administration.py` binds the administration identity carried by `RepositoryHandle`: an in-root real `.git` directory, or a regular no-follow gitfile whose target is exactly a common directory's `worktrees/<id>` registration. The registration's bounded `commondir` pointer must name that common directory and its `gitdir` backlink must name the canonical selected root's `.git` entry. This follows Git's documented [linked-worktree registration](https://git-scm.com/docs/git-worktree). Unrelated or separate-git-dir gitfiles, submodule gitfiles without this registration, nested common indirection, symlinks, and special pointer files refuse with `GIT001`.
 
-Every later Git invocation uses the validated root as its explicit current working directory. The process current directory therefore has no effect on inventory or base access.
+Every Git invocation uses the validated root as its explicit current working directory, pins `--git-dir` and `--work-tree`, and supplies absolute validated `GIT_COMMON_DIR` and `GIT_OBJECT_DIRECTORY` values. It verifies the immutable binding before spawning and after reaping the child, including on failed collection. A root-only handle cannot invoke the transport. Administration changes abort with `GIT005` before results are consumed; the process current directory and renewed Git discovery have no effect on inventory or base access.
+
+Each child scope also retains descriptor-bound namespace guards for the selected root and, when external, the common directory. The same macOS vnode rename notifications and conservative timestamp fallback described below detect root or ancestor substitution restored before the child returns. Scope exit verifies the guards even when Git fails, and releases every descriptor and event queue. Git namespace failures map to `GIT005`.
+
+Binding performs one bounded no-follow scan of administration-root metadata and Git input directories (`objects`, `refs`, `info`, `logs`, and `reftable`), rejecting symlinks and special files without reading object bodies. Disabled hooks, non-recursed submodules, other worktree registrations, and `rr-cache` are omitted. Nonempty `objects/info/alternates` refuses external object borrowing. Pointer files allow 8,192 bytes; scans allow 250,000 entries, 4,096 retained directories, and 4,096 retained root/info metadata files, with `GIT010` on overflow. Directory device/inode/mode/size/mtime/ctime witnesses detect later leaf replacement and out-and-back directory changes. Root/info metadata and pointer files retain the same full witnesses to catch in-place indirection changes; canonical ancestors retain no-follow directory identities. Checks depend on retained directory and metadata-file counts rather than object-file count. Concurrent administrative activity is conservatively refused, and timestamp witnesses assume faithful filesystem change reporting. Initialization retains its stronger namespace guard and `INIT002` diagnostic when that guard is invalidated.
+
+Valid `sharedindex.<object-id>` files retain no-follow device/inode/mode/size witnesses plus their containing directory's replacement witness, allowing Git's documented [split-index timestamp refresh](https://git-scm.com/docs/git-update-index#_split_index) during reads. Freshness updates preserve binding; replacement or symlink insertion still refuses.
 
 Initialization binds the canonical directory namespace before Git validation. It retains no-follow directory descriptors for the root and every canonical ancestor below the filesystem root. It rechecks that binding after root validation, inventory, clean-state capture, content evaluation, and immediately before artifact publication. Direct or ancestor out-and-back renames invalidate preflight even when the selected pathname again names the original inode. The same retained root descriptor authorizes transaction writes. Preflight witnesses stop being checked when Raften's own staging begins; existing descriptor-relative parent and root identity barriers remain active during publication.
 
@@ -75,11 +81,11 @@ Base metadata is sorted independently of Git output. Directories use mode `04000
 
 | Code | Meaning |
 | --- | --- |
-| `GIT001` | The explicit root is absent, not a directory, not a worktree root, bare, or a repository subdirectory |
+| `GIT001` | The explicit root or its Git administration is unavailable, unsafe, or not owned by the selected worktree |
 | `GIT002` | Git could not execute, timed out, or a current-inventory command failed |
 | `GIT003` | Git returned malformed framing, metadata, object identity, or non-UTF-8 path data |
 | `GIT004` | Git returned an unsafe or noncanonical repository path |
-| `GIT005` | A listed worktree path disappeared, appeared, or changed through an unsafe intermediate component |
+| `GIT005` | A listed worktree path or bound Git administration changed or redirected through an unsafe component |
 | `GIT006` | A requested base ref is empty, missing, unavailable, or does not resolve to a commit |
 | `GIT007` | A base tree or selected base blob is unavailable or has the wrong object type |
 | `GIT008` | The index contains unresolved merge stages |

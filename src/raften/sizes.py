@@ -6,8 +6,10 @@ import hashlib
 from collections import Counter
 from collections.abc import Callable, Sequence
 from datetime import date
+from dataclasses import replace
 
 from raften import resource_limits as limits
+from raften.diagnostic_limits import DiagnosticBuffer
 from raften.markdown_limits import MAX_MARKDOWN_BYTES
 from raften.diagnostics import (
     CFG_EFFECTIVE_POLICY,
@@ -49,7 +51,9 @@ from raften.size_policy import (
     effective_policy_error,
     exception_is_expired,
     resolve_effective_policy,
+    preflight_size_work,
 )
+from raften.evaluation_limits import EvaluationBudget
 
 
 ContentReader = Callable[[InventoryEntry], bytes]
@@ -87,8 +91,11 @@ def evaluate_sizes(
 ) -> SizeEvaluation:
     """Evaluate one sorted inventory while reading each scanned regular file once."""
 
+    if compiled.budget is None:
+        compiled = replace(compiled, budget=EvaluationBudget())
+    preflight_size_work(compiled, len(entries))
     ordered_entries = tuple(sorted(entries, key=lambda item: item.path))
-    diagnostics = list(_expired_exception_diagnostics(compiled, evaluation_date))
+    diagnostics = DiagnosticBuffer(_expired_exception_diagnostics(compiled, evaluation_date))
     files: list[FileAssessment] = []
     documents: list[TextDocument] = []
     retained_bytes = 0
@@ -117,8 +124,10 @@ def evaluate_sizes(
 
     contexts: list[ContextAssessment] = []
     entries_by_path = {entry.path: entry for entry in ordered_entries}
+    context_matches: dict[str, tuple[str, ...]] = {}
     for context in compiled.contexts:
-        assessment, context_diagnostics = _evaluate_context(context, entries_by_path)
+        assessment, context_diagnostics = _evaluate_context(
+            context, entries_by_path, compiled.budget, context_matches)
         contexts.append(assessment)
         diagnostics.extend(context_diagnostics)
 
@@ -139,6 +148,9 @@ def content_paths_for_evaluation(
 ) -> frozenset[str]:
     """Return regular paths whose bytes the corresponding evaluation will read."""
 
+    if compiled.budget is None:
+        compiled = replace(compiled, budget=EvaluationBudget())
+    preflight_size_work(compiled, len(entries), contexts=False)
     paths: set[str] = set()
     for entry in entries:
         policy = resolve_effective_policy(compiled, entry.path, evaluation_date)
@@ -371,24 +383,37 @@ def _effective_policy_diagnostic(
 def _evaluate_context(
     compiled: CompiledContextSet,
     entries_by_path: dict[str, InventoryEntry],
+    budget: EvaluationBudget,
+    context_matches: dict[str, tuple[str, ...]],
 ) -> tuple[ContextAssessment, tuple[Diagnostic, ...]]:
     context = compiled.context
-    member_paths = set(context.paths)
-    pattern_indexes_by_path: dict[str, tuple[int, ...]] = {}
-    for path in entries_by_path:
-        matched = tuple(
-            pattern_index
-            for pattern_index, pattern in enumerate(compiled.patterns)
-            if match_path(pattern, path)
-        )
-        if matched:
+    budget.selectors(len(context.paths))
+    member_paths: set[str] = set()
+    for path in context.paths:
+        if path not in member_paths:
+            budget.member()
             member_paths.add(path)
-            pattern_indexes_by_path[path] = matched
+    pattern_indexes_by_path: dict[str, list[int]] = {}
+    for pattern_index, pattern in enumerate(compiled.patterns):
+        if pattern.source not in context_matches:
+            budget.selectors(len(entries_by_path))
+            matched_paths: list[str] = []
+            for path in entries_by_path:
+                if match_path(pattern, path, budget=budget.matcher):
+                    budget.references(1)
+                    matched_paths.append(path)
+            context_matches[pattern.source] = tuple(matched_paths)
+        for path in context_matches[pattern.source]:
+            if path not in member_paths:
+                budget.member()
+                member_paths.add(path)
+            budget.references(1)
+            pattern_indexes_by_path.setdefault(path, []).append(pattern_index)
 
     exact_indexes = {path: index for index, path in enumerate(context.paths)}
     members: list[ContextMember] = []
     missing: list[str] = []
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer()
     total_bytes = 0
     for path in sorted(member_paths):
         entry = entries_by_path.get(path)
@@ -411,7 +436,7 @@ def _evaluate_context(
                 path,
                 entry,
                 required_exact,
-                pattern_indexes_by_path.get(path, ()),
+                tuple(pattern_indexes_by_path.get(path, ())),
                 counted_bytes,
             )
         )
@@ -487,7 +512,7 @@ def _expired_exception_diagnostics(
     compiled: CompiledSizePolicy,
     evaluation_date: date,
 ) -> tuple[Diagnostic, ...]:
-    diagnostics: list[Diagnostic] = []
+    diagnostics = DiagnosticBuffer()
     for index, exception in enumerate(compiled.policy.exceptions.records):
         if exception_is_expired(exception, evaluation_date):
             diagnostics.append(

@@ -1,5 +1,13 @@
 # Version 1 file and context budgets
 
+## Operational selector envelope
+
+One CLI command shares an explicit budget across file resolution, contexts, documentation selectors, base-policy matching, explain projection, and diagnostic filtering. At most 4,000,000 selector checks and 128,000,000 matcher work units are allowed. Before reading scanned content, command orchestration preflights inventory count multiplied by file selectors and distinct context patterns, plus exact context paths and documentation checks. Documentation includes three root passes (discovery, root attribution, and directory construction) and exclusions. Individual evaluators also preflight their own work against the remaining budget. Resolution charges its conservative selector upper bound, including exact override and exception comparisons; path validation, prefix/exact comparisons, token cardinality, glob tables, and base-pattern overlap work are charged before expensive loops or allocation as defined by the [glob contract](repository-paths-and-globs-v1.md#unicode-and-complexity).
+
+Identical patterns share compiled objects within a size policy. Contexts share match results by pattern within one evaluation; there is no unbounded global cache. At most 100,000 context memberships (including missing exact members) and 100,000 pattern references are retained, charging both the shared match cache and member pattern-index records before insertion. Overflow aborts with one `GIT010`, operational exit `2`, and no partial evaluation. These host-safety bounds cannot be raised by repository policy.
+
+Compiled policies remain reusable: independent library evaluations create fresh budgets unless the caller explicitly supplies one to share a command session.
+
 ## Operational content envelope
 
 Repository-controlled policy thresholds do not govern host memory safety. Materialized current files and expanded base blobs are limited to 16 MiB each, current/base policy to 1 MiB, and migration manifests to 8 MiB. Retained Markdown or entrypoint input is limited to 256 KiB per file and 16 MiB of raw UTF-8 bytes in aggregate. Worktree snapshot sizes are checked before opening content; base blobs are size-queried before expansion and their output is independently bounded during collection. Crossing a ceiling aborts with `GIT010`, including in `audit`; direct Markdown parsing has its separate `DOC012` envelope. Binary classification, exact UTF-8 decoding, raw-byte hashing, debt comparison, one-read reuse, and snapshot identity checks retain their semantics within this envelope. Unscanned regular files whose bytes are not needed remain metadata-only; initialization's clean-state hashing already streams such blobs without retaining their contents.

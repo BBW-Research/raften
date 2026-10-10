@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
+from raften.evaluation_limits import EvaluationBudget
 
 from raften.command_paths import (
     validate_candidate_command_path,
@@ -69,7 +70,7 @@ from raften.run_model import (
     RunOutcome,
     RunStatus,
 )
-from raften.size_policy import compile_size_policy
+from raften.size_policy import compile_size_policy, preflight_size_work
 from raften.sizes import SizePolicyError, evaluate_sizes, explain_size_path
 
 
@@ -123,6 +124,7 @@ def run_repository(
     config_path: str | Path = "raften.toml",
     base_ref: str | None = None,
     evaluation_date: date,
+    budget: EvaluationBudget | None = None,
 ) -> RunOutcome:
     """Evaluate current policy and any requested historical comparison."""
 
@@ -132,6 +134,7 @@ def run_repository(
             config_path=validate_command_path(config_path, "--config"),
             base_ref=base_ref,
             evaluation_date=evaluation_date,
+            budget=budget or EvaluationBudget(),
         )
     except ConfigurationError as error:
         return CommandFailure(RunStatus.CONFIGURATION_ERROR, error.diagnostics)
@@ -148,6 +151,7 @@ def explain_repository_path(
     config_path: str | Path = "raften.toml",
     base_ref: str | None = None,
     evaluation_date: date,
+    budget: EvaluationBudget | None = None,
 ) -> ExplainOutcome:
     """Evaluate the repository and project one path's complete provenance."""
 
@@ -155,11 +159,13 @@ def explain_repository_path(
         selected_path = validate_candidate_command_path(path, "PATH")
     except ConfigurationError as error:
         return CommandFailure(RunStatus.CONFIGURATION_ERROR, error.diagnostics)
+    budget = budget or EvaluationBudget()
     outcome = run_repository(
         repository_path,
         config_path=config_path,
         base_ref=base_ref,
         evaluation_date=evaluation_date,
+        budget=budget,
     )
     if isinstance(outcome, CommandFailure):
         return outcome
@@ -167,13 +173,15 @@ def explain_repository_path(
         return CommandFailure(outcome.status, outcome.diagnostics)
     try:
         file_explanation = explain_size_path(
-            compile_size_policy(outcome.policy),
+            compile_size_policy(outcome.policy, budget=budget),
             selected_path,
             evaluation_date,
             outcome.sizes,
         )
     except SizePolicyError as error:
         return CommandFailure(RunStatus.CONFIGURATION_ERROR, error.diagnostics)
+    except RepositoryAccessError as error:
+        return CommandFailure(RunStatus.OPERATIONAL_ERROR, error.diagnostics)
     documentation = outcome.documentation
     inbound = tuple(
         sorted(
@@ -214,6 +222,7 @@ def _run_repository(
     config_path: str,
     base_ref: str | None,
     evaluation_date: date,
+    budget: EvaluationBudget,
 ) -> RepositoryRun:
     repository = open_repository(repository_path)
     snapshot = inventory_worktree(repository)
@@ -224,10 +233,15 @@ def _run_repository(
                      debt_manifest_path(config_path): limits.MAX_MANIFEST_BYTES},
     )
     policy = _load_current_policy(repository, snapshot, content, config_path)
-    compiled_documentation = compile_documentation_policy(policy)
+    compiled_documentation = compile_documentation_policy(policy, budget=budget)
+    compiled_sizes = compile_size_policy(policy, budget=budget)
+    preflight_size_work(compiled_sizes, len(snapshot.entries), extra_checks=(
+        len(snapshot.entries) * (3 * len(compiled_documentation.root_directories)
+                                 + len(compiled_documentation.exclusions))
+        + len(policy.documentation.roots) * len(compiled_documentation.exclusions)))
     retained_paths = documentation_text_paths(compiled_documentation, snapshot.entries)
     sizes = evaluate_sizes(
-        compile_size_policy(policy),
+        compiled_sizes,
         snapshot.entries,
         content.read,
         evaluation_date=evaluation_date,
@@ -253,11 +267,16 @@ def _run_repository(
         config_path=config_path,
         base_ref=base_ref,
         evaluation_date=evaluation_date,
+        budget=budget,
     )
+    size_diagnostics = reconcile_size_diagnostics(sizes.diagnostics, ratchet)
+    limits.require_resource("diagnostics", sum(map(len, (
+        size_diagnostics, documentation.diagnostics, ratchet.diagnostics, policy_diagnostics))),
+        limits.MAX_COMMAND_DIAGNOSTICS, operation="retain-diagnostics")
     diagnostics = tuple(
         sorted(
             (
-                *reconcile_size_diagnostics(sizes.diagnostics, ratchet),
+                *size_diagnostics,
                 *documentation.diagnostics,
                 *ratchet.diagnostics,
                 *policy_diagnostics,
@@ -326,6 +345,7 @@ def _evaluate_baseline(
     config_path: str,
     base_ref: str | None,
     evaluation_date: date,
+    budget: EvaluationBudget,
 ) -> tuple[FileRatchetEvaluation, tuple[Diagnostic, ...], str | None]:
     if base_ref is None:
         return (
@@ -413,7 +433,7 @@ def _evaluate_baseline(
     )
     return (
         ratchet,
-        compare_policies(current_policy, base_policy, policy_path=config_path),
+        compare_policies(current_policy, base_policy, policy_path=config_path, budget=budget),
         revision.commit_id,
     )
 
