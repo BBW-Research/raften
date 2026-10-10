@@ -16,14 +16,17 @@ from raften.report_common import (
 from raften.report_data import audit_value, explanation_value
 from raften.run_model import InitResult, PathExplanation, RunStatus
 from raften.report_encoding import join_report
+from raften.evaluation_limits import EvaluationBudget
 
 
-def render_text(command: str, outcome: ReportOutcome) -> str:
-    return join_report(line + "\n" for line in _text_lines(command, outcome))
+def render_text(command: str, outcome: ReportOutcome, *,
+                budget: EvaluationBudget | None = None) -> str:
+    return join_report(line + "\n" for line in _text_lines(command, outcome, budget))
 
 
-def _text_lines(command: str, outcome: ReportOutcome) -> Iterator[str]:
-    diagnostics = outcome_diagnostics(command, outcome)
+def _text_lines(command: str, outcome: ReportOutcome,
+                budget: EvaluationBudget | None) -> Iterator[str]:
+    diagnostics = outcome_diagnostics(command, outcome, budget=budget)
     if outcome_status(outcome) is RunStatus.COMPLETE:
         if isinstance(outcome, InitResult):
             yield from (f"Wrote {_quoted(path)}." for path in outcome.written_paths)

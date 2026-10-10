@@ -33,7 +33,8 @@ from raften.model import (
     WorktreeKind,
 )
 from raften.report_json import render_json
-from raften.run_model import RepositoryRun, RunStatus
+from raften.run_model import CommandFailure, RepositoryRun, RunStatus
+from raften.repository_errors import RepositoryAccessError
 from raften.size_policy import compile_size_policy
 from raften.sizes import evaluate_sizes
 
@@ -114,7 +115,15 @@ def _benchmark_count(count: int, *, include_git: bool) -> dict[str, object]:
     check_json_bytes = len(render_json("check", run).encode("utf-8"))
     check_render_seconds = time.perf_counter() - started
     started = time.perf_counter()
-    audit_json_bytes = len(render_json("audit", run).encode("utf-8"))
+    audit_status = RunStatus.COMPLETE
+    try:
+        audit_report = render_json("audit", run)
+    except RepositoryAccessError as error:
+        if any(dict(item.details).get("operation") != "render-report" for item in error.diagnostics):
+            raise
+        audit_status = RunStatus.OPERATIONAL_ERROR
+        audit_report = render_json("audit", CommandFailure(audit_status, error.diagnostics))
+    audit_json_bytes = len(audit_report.encode("utf-8"))
     audit_render_seconds = time.perf_counter() - started
     peak_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     peak_rss_bytes = peak_rss if sys.platform == "darwin" else peak_rss * 1_024
@@ -160,6 +169,7 @@ def _benchmark_count(count: int, *, include_git: bool) -> dict[str, object]:
         "documentation_edge_count": len(documentation.edges),
         "check_json_bytes": check_json_bytes,
         "audit_json_bytes": audit_json_bytes,
+        "audit_status": audit_status.value,
         "peak_rss_bytes": peak_rss_bytes,
     }
 

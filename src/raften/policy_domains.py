@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import posixpath
 from datetime import date
+from raften.evaluation_limits import EvaluationBudget
 
 from raften.diagnostics import (
     RAT_CONTEXT_WEAKENED,
@@ -50,13 +51,14 @@ def compare_policy_domains(
     current: Policy,
     base: Policy,
     policy_path: str,
+    *, budget: EvaluationBudget | None = None,
 ) -> tuple[Diagnostic, ...]:
     findings: list[Diagnostic] = []
     _compare_ratchet_settings(current, base, policy_path, findings)
     _compare_documentation(current, base, policy_path, findings)
     _compare_entrypoints(current, base, policy_path, findings)
     _compare_contexts(current, base, policy_path, findings)
-    _compare_exceptions(current, base, policy_path, findings)
+    _compare_exceptions(current, base, policy_path, findings, budget or EvaluationBudget())
     return tuple(findings)
 
 
@@ -246,9 +248,10 @@ def _compare_exceptions(
     base: Policy,
     policy_path: str,
     findings: list[Diagnostic],
+    budget: EvaluationBudget,
 ) -> None:
-    compiled_current = compile_size_policy(current)
-    compiled_base = compile_size_policy(base)
+    compiled_current = compile_size_policy(current, budget=budget)
+    compiled_base = compile_size_policy(base, budget=budget)
     current_by_selector = {
         selector_key(item.selector): (index, item)
         for index, item in enumerate(current.exceptions.records)

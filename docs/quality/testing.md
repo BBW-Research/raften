@@ -78,6 +78,8 @@ Track:
 
 Run `scripts/benchmark` to produce the non-gating JSON baseline for the 10,000-path, 100,000-path, and 1,000-level documentation workloads. The current reviewed measurements and methodology are recorded with the [Phase 8 pilot results](../pilots/index.md#scale-baseline). Tests assert workload counts and relationships, not elapsed-time ceilings.
 
+The benchmark records `audit_status` alongside encoded audit bytes. A scale workload above the fixed report envelope records the bounded operational-failure document and continues inventory and engine measurement; it does not disable output limits to produce a full audit.
+
 ## Validation command
 
 `scripts/validate` is the required local gate. It runs the standalone CLI through `scripts/context-check`, compile checks, tests, and `git diff --check`; source-oracle execution is confined to characterization and paired-compatibility tests. CI additionally runs offline Lychee as an independent defense.

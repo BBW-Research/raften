@@ -13,13 +13,15 @@ from raften.report_common import (
 from raften.report_data import audit_value, check_value, explanation_value
 from raften.report_encoding import encode_report
 from raften.run_model import InitResult, PathExplanation, RunStatus
+from raften.evaluation_limits import EvaluationBudget
 
 
 JSON_SCHEMA_VERSION = 1
 
 
-def render_json(command: str, outcome: ReportOutcome) -> str:
-    diagnostics = outcome_diagnostics(command, outcome)
+def render_json(command: str, outcome: ReportOutcome, *,
+                budget: EvaluationBudget | None = None) -> str:
+    diagnostics = outcome_diagnostics(command, outcome, budget=budget)
     document = {
         "schema_version": JSON_SCHEMA_VERSION,
         "tool": {"name": "raften", "version": __version__},

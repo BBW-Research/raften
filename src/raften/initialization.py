@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 from typing import Never
+from raften.evaluation_limits import EvaluationBudget
 
 from raften.command_paths import validate_command_path
 from raften.config import ConfigurationError, render_starter_policy, starter_policy
@@ -44,6 +45,7 @@ def initialize_repository(
     config_path: str | Path = "raften.toml",
     capture_debt: bool = False,
     force: bool = False,
+    budget: EvaluationBudget | None = None,
 ) -> InitOutcome:
     """Create canonical initialization artifacts after all preconditions pass."""
 
@@ -54,6 +56,7 @@ def initialize_repository(
             config_path=selected_config,
             capture_debt=capture_debt,
             force=force,
+            budget=budget or EvaluationBudget(),
         )
     except ConfigurationError as error:
         return CommandFailure(RunStatus.CONFIGURATION_ERROR, error.diagnostics)
@@ -69,6 +72,7 @@ def _initialize_repository(
     config_path: str,
     capture_debt: bool,
     force: bool,
+    budget: EvaluationBudget,
 ) -> InitResult:
     root = _resolve_repository_root(repository_path)
     _require_safe_install_primitives()
@@ -82,6 +86,7 @@ def _initialize_repository(
             capture_debt=capture_debt,
             force=force,
             namespace=namespace,
+            budget=budget,
         )
 
 
@@ -93,13 +98,14 @@ def _initialize_anchored(
     config_path: str,
     capture_debt: bool,
     force: bool,
+    budget: EvaluationBudget,
 ) -> InitResult:
     manifest_path = debt_manifest_path(config_path)
     snapshot = inventory_worktree(repository)
     namespace.verify()
     excluded = frozenset({config_path, manifest_path})
     entries = tuple(entry for entry in snapshot.entries if entry.path not in excluded)
-    compiled = compile_size_policy(starter_policy())
+    compiled = compile_size_policy(starter_policy(), budget=budget)
     content_paths = content_paths_for_evaluation(
         compiled,
         entries,

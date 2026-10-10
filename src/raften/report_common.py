@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import Enum
+from raften.evaluation_limits import EvaluationBudget
 
 from raften.matcher import compile_pattern, match_path
 from raften.model import Diagnostic, ExactSelector, JsonValue, Selector, Severity
@@ -32,6 +33,7 @@ def outcome_status(outcome: ReportOutcome) -> RunStatus:
 def outcome_diagnostics(
     command: str,
     outcome: ReportOutcome,
+    *, budget: EvaluationBudget | None = None,
 ) -> tuple[Diagnostic, ...]:
     if isinstance(outcome, CommandFailure):
         return outcome.diagnostics
@@ -39,16 +41,18 @@ def outcome_diagnostics(
         return outcome.diagnostics
     if isinstance(outcome, InitResult):
         return ()
+    selected = budget or EvaluationBudget()
     return tuple(
         item
         for item in outcome.run.diagnostics
-        if _diagnostic_applies_to_explanation(item, outcome)
+        if _diagnostic_applies_to_explanation(item, outcome, selected)
     )
 
 
 def _diagnostic_applies_to_explanation(
     diagnostic: Diagnostic,
     outcome: PathExplanation,
+    budget: EvaluationBudget,
 ) -> bool:
     selected = outcome.file.path
     if diagnostic.location is not None:
@@ -61,7 +65,8 @@ def _diagnostic_applies_to_explanation(
             selector = records[exception_index].selector
             if isinstance(selector, ExactSelector):
                 return selector.path == selected
-            return match_path(compile_pattern(selector.pattern), selected)
+            budget.selectors(1)
+            return match_path(compile_pattern(selector.pattern), selected, budget=budget.matcher)
     context_index = details.get("context_index")
     if isinstance(context_index, int) and not isinstance(context_index, bool):
         contexts = outcome.run.policy.context_sets

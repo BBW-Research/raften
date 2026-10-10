@@ -19,6 +19,7 @@ from raften.report import (
 )
 from raften.run_model import CommandFailure, RunStatus
 from raften.repository_errors import RepositoryAccessError
+from raften.evaluation_limits import EvaluationBudget
 from raften.runner import explain_repository_path, initialize_repository, run_repository
 
 
@@ -108,9 +109,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     output_format = OutputFormat.TEXT if args.command == "init" else OutputFormat(args.format)
+    budget = EvaluationBudget()
     try:
-        outcome = _dispatch(args)
-        rendered = render_report(args.command, outcome, output_format)
+        outcome = _dispatch(args, budget)
+        rendered = render_report(args.command, outcome, output_format, budget=budget)
         exit_code = command_exit_code(args.command, outcome)
     except RepositoryAccessError as error:
         outcome = CommandFailure(RunStatus.OPERATIONAL_ERROR, error.diagnostics)
@@ -132,13 +134,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     return exit_code
 
 
-def _dispatch(args):
+def _dispatch(args, budget: EvaluationBudget):
     if args.command == "init":
         return initialize_repository(
             args.repo,
             config_path=args.config,
             capture_debt=args.capture_debt,
             force=args.force,
+            budget=budget,
         )
     evaluation_date = args.evaluation_date or datetime.now(timezone.utc).date()
     if args.command == "explain":
@@ -148,12 +151,14 @@ def _dispatch(args):
             config_path=args.config,
             base_ref=args.base_ref,
             evaluation_date=evaluation_date,
+            budget=budget,
         )
     return run_repository(
         args.repo,
         config_path=args.config,
         base_ref=args.base_ref,
         evaluation_date=evaluation_date,
+        budget=budget,
     )
 
 

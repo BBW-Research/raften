@@ -14,9 +14,11 @@ class MatcherResourceTests(unittest.TestCase):
     def test_pattern_and_work_limits_are_inclusive(self) -> None:
         self.assertEqual(compile_pattern("😀" * 1024).source, "😀" * 1024)
         self.assertEqual(len(compile_pattern("?" * 1024).components[0].tokens), 1024)
-        self.assertTrue(match_path("*", "ab", budget=MatchBudget(limit=13)))
+        measured = MatchBudget()
+        self.assertTrue(match_path("*", "ab", budget=measured))
+        self.assertTrue(match_path("*", "ab", budget=MatchBudget(limit=measured.work)))
         with self.assertRaises(RepositoryAccessError):
-            match_path("*", "ab", budget=MatchBudget(limit=12))
+            match_path("*", "ab", budget=MatchBudget(limit=measured.work - 1))
 
     def test_shared_budget_accounts_for_multiple_matches(self) -> None:
         budget = MatchBudget(limit=25)

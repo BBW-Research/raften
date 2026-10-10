@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from raften.evaluation_limits import EvaluationBudget
 
 from raften.diagnostics import (
     CFG_INCONSISTENT,
@@ -46,15 +47,18 @@ class CompiledDocumentationPolicy:
     policy: Policy
     exclusions: tuple[CompiledPattern, ...]
     root_directories: tuple[str, ...]
+    budget: EvaluationBudget | None = None
 
 
-def compile_documentation_policy(policy: Policy) -> CompiledDocumentationPolicy:
+def compile_documentation_policy(policy: Policy, *,
+                                 budget: EvaluationBudget | None = None) -> CompiledDocumentationPolicy:
     """Compile documentation exclusions once for repeated path evaluation."""
 
     return CompiledDocumentationPolicy(
         policy,
         tuple(compile_pattern(pattern) for pattern in policy.documentation.exclude),
         tuple(_parent_path(root) for root in policy.documentation.roots),
+        budget,
     )
 
 
@@ -82,6 +86,11 @@ def evaluate_documentation(
 ) -> DocumentationEvaluation:
     """Build and check a documentation graph without repository access."""
 
+    if compiled.budget is None:
+        compiled = replace(compiled, budget=EvaluationBudget())
+    compiled.budget.preflight(
+        len(entries) * (3 * len(compiled.root_directories) + len(compiled.exclusions))
+        + len(compiled.policy.documentation.roots) * len(compiled.exclusions))
     ordered_entries = tuple(sorted(entries, key=lambda item: item.path))
     entries_by_path = {entry.path: entry for entry in ordered_entries}
     documents_by_path = _unique_text_documents(text_documents)
@@ -182,7 +191,8 @@ def _root_exclusion_diagnostics(
     diagnostics: list[Diagnostic] = []
     for root_index, root in enumerate(compiled.policy.documentation.roots):
         for exclusion_index, exclusion in enumerate(compiled.exclusions):
-            if matches_any((exclusion,), root):
+            compiled.budget.selectors(1)
+            if matches_any((exclusion,), root, budget=compiled.budget.matcher):
                 diagnostics.append(
                     policy_diagnostic(
                         CFG_INCONSISTENT,
@@ -209,7 +219,8 @@ def _discover_governed(
     for entry in entries:
         if not entry.path.endswith(".md") or not _under_any_root(compiled, entry.path):
             continue
-        if matches_any(compiled.exclusions, entry.path):
+        compiled.budget.selectors(len(compiled.exclusions))
+        if matches_any(compiled.exclusions, entry.path, budget=compiled.budget.matcher):
             continue
         if entry.source is InventorySource.DELETED or entry.kind is WorktreeKind.MISSING:
             continue
@@ -258,6 +269,7 @@ def _build_directories(
 ) -> tuple[DocumentationDirectory, ...]:
     directory_paths: set[str] = set()
     for path in governed:
+        _charge_roots(compiled, path)
         parent = _parent_path(path)
         for root_directory in compiled.root_directories:
             if not _under_directory(path, root_directory):
@@ -291,15 +303,23 @@ def _build_directories(
 
 
 def _under_any_root(compiled: CompiledDocumentationPolicy, path: str) -> bool:
+    _charge_roots(compiled, path)
     return any(_under_directory(path, directory) for directory in compiled.root_directories)
 
 
 def _root_indexes(compiled: CompiledDocumentationPolicy, path: str) -> tuple[int, ...]:
+    _charge_roots(compiled, path)
     return tuple(
         index
         for index, directory in enumerate(compiled.root_directories)
         if _under_directory(path, directory)
     )
+
+
+def _charge_roots(compiled: CompiledDocumentationPolicy, path: str) -> None:
+    assert compiled.budget is not None
+    compiled.budget.selectors(len(compiled.root_directories))
+    compiled.budget.matcher.charge(len(compiled.root_directories) * (len(path) + 1))
 
 
 def _under_directory(path: str, directory: str) -> bool:

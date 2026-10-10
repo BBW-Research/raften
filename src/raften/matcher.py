@@ -151,22 +151,25 @@ def match_path(pattern: CompiledPattern | str, path: str, *,
                budget: MatchBudget | None = None) -> bool:
     """Return whether a pattern matches one complete canonical repository path."""
 
+    selected = budget or MatchBudget()
+    selected.charge(len(path))
     error = candidate_path_validation_error(path)
     if error is not None:
         raise ValueError(error)
     compiled = compile_pattern(pattern) if isinstance(pattern, str) else pattern
-    return _match_compiled(compiled, path.split("/"), budget or MatchBudget())
+    return _match_compiled(compiled, path.split("/"), selected)
 
 
 def matches_any(patterns: tuple[CompiledPattern, ...], path: str, *,
                 budget: MatchBudget | None = None) -> bool:
     """Return whether any precompiled pattern matches a repository path."""
 
+    selected = budget or MatchBudget()
+    selected.charge(len(path))
     error = candidate_path_validation_error(path)
     if error is not None:
         raise ValueError(error)
     components = path.split("/")
-    selected = budget or MatchBudget()
     return any(_match_compiled(pattern, components, selected) for pattern in patterns)
 
 
@@ -301,6 +304,7 @@ def _match_component(component: PatternComponent, value: str,
         return component.literal == value
     tokens = component.tokens
     value_count = len(value)
+    selected.charge(len(tokens))
     minimum = sum(not isinstance(token, _StarToken) for token in tokens)
     if minimum > value_count or (minimum != value_count and minimum == len(tokens)):
         return False

@@ -25,6 +25,7 @@ from raften.model import (
 )
 from raften.policy_comparison import compare_limits, ratchet_finding, selector_key
 from raften.policy_domains import compare_policy_domains
+from raften.evaluation_limits import EvaluationBudget
 
 
 def compare_policies(
@@ -32,13 +33,15 @@ def compare_policies(
     base: Policy,
     *,
     policy_path: str = "raften.toml",
+    budget: EvaluationBudget | None = None,
 ) -> tuple[Diagnostic, ...]:
     """Report every conservative v1 weakening relative to the base policy."""
 
+    budget = budget or EvaluationBudget()
     findings: list[Diagnostic] = []
-    _compare_file_rules(current, base, policy_path, findings)
-    _compare_overrides(current, base, policy_path, findings)
-    findings.extend(compare_policy_domains(current, base, policy_path))
+    _compare_file_rules(current, base, policy_path, findings, budget)
+    _compare_overrides(current, base, policy_path, findings, budget)
+    findings.extend(compare_policy_domains(current, base, policy_path, budget=budget))
     return tuple(sorted(findings, key=diagnostic_sort_key))
 
 
@@ -47,6 +50,7 @@ def _compare_file_rules(
     base: Policy,
     policy_path: str,
     findings: list[Diagnostic],
+    budget: EvaluationBudget,
 ) -> None:
     check_limits = base.ratchet.forbid_limit_increases
     check_structure = base.ratchet.forbid_exclusion_expansion
@@ -115,6 +119,7 @@ def _compare_file_rules(
                     findings,
                     check_limits=check_limits,
                     check_structure=check_structure,
+                    budget=budget,
                 )
             else:
                 for pattern in sorted(added_patterns):
@@ -142,6 +147,7 @@ def _compare_file_rules(
                 findings,
                 check_limits=check_limits,
                 check_structure=check_structure,
+                budget=budget,
             )
         else:
             for pattern in sorted(current_rule.patterns):
@@ -286,9 +292,10 @@ def _compare_new_scanned_rule(
     *,
     check_limits: bool,
     check_structure: bool,
+    budget: EvaluationBudget,
 ) -> None:
     overlapping = tuple(
-        base for base in base_rules if base.scan and _rule_patterns_overlap(current, base)
+        base for base in base_rules if base.scan and _rule_patterns_overlap(current, base, budget)
     )
     if (
         check_structure
@@ -325,6 +332,7 @@ def _compare_overrides(
     base: Policy,
     policy_path: str,
     findings: list[Diagnostic],
+    budget: EvaluationBudget,
 ) -> None:
     if not base.ratchet.forbid_limit_increases:
         return
@@ -365,7 +373,8 @@ def _compare_overrides(
         if key in base_by_selector:
             continue
         for _base_index, base_override in base_by_selector.values():
-            if _override_can_displace(current_override, base_override) and (
+            budget.selectors(1)
+            if _override_can_displace(current_override, base_override, budget) and (
                 current_override.warn_bytes > base_override.warn_bytes
                 or current_override.hard_bytes > base_override.hard_bytes
             ):
@@ -382,21 +391,26 @@ def _compare_overrides(
                 break
 
 
-def _rule_patterns_overlap(left: FileRule, right: FileRule) -> bool:
-    return any(
-        not patterns_provably_disjoint(left_pattern, right_pattern)
-        for left_pattern in left.patterns
-        for right_pattern in right.patterns
-    )
+def _rule_patterns_overlap(left: FileRule, right: FileRule, budget: EvaluationBudget) -> bool:
+    for left_pattern in left.patterns:
+        for right_pattern in right.patterns:
+            budget.selectors(1)
+            budget.matcher.charge(len(left_pattern) + len(right_pattern))
+            if not patterns_provably_disjoint(left_pattern, right_pattern):
+                return True
+    return False
 
 
-def _override_can_displace(current: PathOverride, base: PathOverride) -> bool:
+def _override_can_displace(current: PathOverride, base: PathOverride,
+                          budget: EvaluationBudget) -> bool:
     current_selector = current.selector
     base_selector = base.selector
     if isinstance(base_selector, ExactSelector):
         return False
     if isinstance(current_selector, ExactSelector):
-        return match_path(compile_pattern(base_selector.pattern), current_selector.path)
+        return match_path(compile_pattern(base_selector.pattern), current_selector.path,
+                          budget=budget.matcher)
+    budget.matcher.charge(len(current_selector.pattern) + len(base_selector.pattern))
     return (
         pattern_specificity(current_selector.pattern) > pattern_specificity(base_selector.pattern)
         and not patterns_provably_disjoint(current_selector.pattern, base_selector.pattern)
