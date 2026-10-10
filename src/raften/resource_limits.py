@@ -11,6 +11,8 @@ MAX_GIT_PATH_BYTES = 8192
 MAX_CONTENT_BYTES = 16 * 1024 * 1024
 MAX_MANIFEST_BYTES = 8 * 1024 * 1024
 MAX_RETAINED_TEXT_BYTES = 16 * 1024 * 1024
+MAX_REPORT_BYTES = 16 * 1024 * 1024
+MAX_REPORT_ITEMS = 100_000
 
 
 def require_resource(resource: str, actual: int, limit: int, *, operation: str,

@@ -18,6 +18,7 @@ from raften.report import (
     render_report,
 )
 from raften.run_model import CommandFailure, RunStatus
+from raften.repository_errors import RepositoryAccessError
 from raften.runner import explain_repository_path, initialize_repository, run_repository
 
 
@@ -111,6 +112,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         outcome = _dispatch(args)
         rendered = render_report(args.command, outcome, output_format)
         exit_code = command_exit_code(args.command, outcome)
+    except RepositoryAccessError as error:
+        outcome = CommandFailure(RunStatus.OPERATIONAL_ERROR, error.diagnostics)
+        exit_code = 2
+        rendered = render_report(args.command, outcome, output_format)
     except Exception as error:
         outcome = _internal_failure(error)
         exit_code = 2

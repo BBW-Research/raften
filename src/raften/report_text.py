@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 
 from raften.model import Diagnostic, Severity
 from raften.report_common import (
@@ -14,27 +15,30 @@ from raften.report_common import (
 )
 from raften.report_data import audit_value, explanation_value
 from raften.run_model import InitResult, PathExplanation, RunStatus
+from raften.report_encoding import join_report
 
 
 def render_text(command: str, outcome: ReportOutcome) -> str:
+    return join_report(line + "\n" for line in _text_lines(command, outcome))
+
+
+def _text_lines(command: str, outcome: ReportOutcome) -> Iterator[str]:
     diagnostics = outcome_diagnostics(command, outcome)
-    lines: list[str] = []
     if outcome_status(outcome) is RunStatus.COMPLETE:
         if isinstance(outcome, InitResult):
-            lines.extend(f"Wrote {_quoted(path)}." for path in outcome.written_paths)
+            yield from (f"Wrote {_quoted(path)}." for path in outcome.written_paths)
         elif isinstance(outcome, PathExplanation):
-            lines.extend(_explanation_lines(explanation_value(outcome)))
+            yield from _explanation_lines(explanation_value(outcome))
         elif command == "audit":
-            lines.extend(_audit_lines(audit_value(outcome)))
-    lines.extend(_diagnostic_line(item) for item in diagnostics)
+            yield from _audit_lines(audit_value(outcome))
+    yield from (_diagnostic_line(item) for item in diagnostics)
     counts = summary_value(diagnostics)
-    lines.append(
+    yield (
         "Summary: "
         f"{_count(counts['errors'], 'error')}, "
         f"{_count(counts['warnings'], 'warning')}, "
         f"{_count(counts['notes'], 'note')}."
     )
-    return "\n".join(lines) + "\n"
 
 
 def _diagnostic_line(diagnostic: Diagnostic) -> str:
@@ -60,38 +64,38 @@ def _diagnostic_line(diagnostic: Diagnostic) -> str:
     )
 
 
-def _audit_lines(data: dict[str, object]) -> list[str]:
-    lines = [
+def _audit_lines(data: dict[str, object]) -> Iterator[str]:
+    yield (
         f"Audit: {data['inventory_count']} inventory paths, "
         f"{data['governed_document_count']} governed documents, "
         f"baseline={data['baseline_source']}."
-    ]
+    )
     classifications = data["classification_counts"]
     classification_text = ", ".join(
         f"{item['kind']}={item['count']}"
         for item in classifications
     )
-    lines.append(f"Classifications: {classification_text or 'none'}.")
+    yield (f"Classifications: {classification_text or 'none'}.")
     largest = data["largest_governed_files"]
     if largest:
-        lines.append("Largest governed files:")
+        yield ("Largest governed files:")
         for item in largest[:10]:
-            lines.append(_audit_file_line(item))
+            yield (_audit_file_line(item))
     above_warning = data["files_above_warning"]
     if above_warning:
-        lines.append("Files above warning thresholds:")
+        yield ("Files above warning thresholds:")
         for item in above_warning:
-            lines.append(_audit_file_line(item, include_state=True))
+            yield (_audit_file_line(item, include_state=True))
     contexts = data["contexts"]
     if contexts:
-        lines.append("Context sets:")
+        yield ("Context sets:")
         for item in contexts:
-            lines.append(
+            yield (
                 f"  {_quoted(item['name'])}: {item['total_bytes']} bytes, "
                 f"state={item['limit_state']}."
             )
     documentation = data["documentation"]
-    lines.append(
+    yield (
         f"Documentation: {documentation['directory_count']} directories, "
         f"max depth={documentation['max_depth']}, "
         f"{len(documentation['unreachable_paths'])} unreachable."
@@ -101,31 +105,30 @@ def _audit_lines(data: dict[str, object]) -> list[str]:
         key=lambda item: (-item["fan_out"], item["path"]),
     )
     if directories:
-        lines.append("Highest documentation fan-out:")
+        yield ("Highest documentation fan-out:")
         for item in directories[:10]:
-            lines.append(
+            yield (
                 f"  {_quoted(item['path'])}: depth={item['depth']}, "
                 f"fan_out={item['fan_out']}."
             )
     migration = data["migration"]
     if migration:
-        lines.append("Migration candidates:")
+        yield ("Migration candidates:")
         for item in migration:
-            lines.append(
+            yield (
                 f"  {_quoted(item['path'])}: status={item['status']}, "
                 f"ceiling={item['ceiling_bytes']}."
             )
     exceptions = data["exceptions"]
     if exceptions:
-        lines.append("Intentional exceptions:")
+        yield ("Intentional exceptions:")
         for item in exceptions:
-            lines.append(
+            yield (
                 f"  {item['index']}: selector={json.dumps(item['selector'], ensure_ascii=True, sort_keys=True)}, "
                 f"owner={_quoted(item['owner'])}, expired={_bool(item['expired'])}, "
                 f"selected_paths={item['selected_path_count']}."
             )
-    lines.append(f"Changes from base: {len(data['changes_from_base'])}.")
-    return lines
+    yield (f"Changes from base: {len(data['changes_from_base'])}.")
 
 
 def _explanation_lines(data: dict[str, object]) -> list[str]:

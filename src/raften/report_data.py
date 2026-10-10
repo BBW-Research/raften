@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Iterable
 from datetime import date
 
 from raften.model import (
@@ -15,6 +16,7 @@ from raften.report_common import diagnostic_value, selector_value
 from raften.run_model import PathExplanation, RepositoryRun
 from raften.size_policy import exception_is_expired
 from raften.sizes import classification_counts, largest_governed_files
+from raften import resource_limits as limits
 
 
 def check_value(run: RepositoryRun) -> dict[str, object]:
@@ -28,7 +30,16 @@ def check_value(run: RepositoryRun) -> dict[str, object]:
     }
 
 
-def audit_value(run: RepositoryRun) -> dict[str, object]:
+def audit_value(run: RepositoryRun, *, lazy: bool = False) -> dict[str, object]:
+    row_count = (len(run.sizes.files) * 2 + len(run.ratchet.files)
+                 + len(run.documentation.directories)
+                 + sum(len(item.members) for item in run.sizes.contexts))
+    limits.require_resource("report_rows", row_count, limits.MAX_REPORT_ITEMS,
+                            operation="render-report")
+
+    def rows(values: Iterable[object]) -> object:
+        return iter(values) if lazy else list(values)
+
     largest = largest_governed_files(run.sizes)
     above_warning = tuple(
         item
@@ -53,17 +64,17 @@ def audit_value(run: RepositoryRun) -> dict[str, object]:
     )
     return {
         **check_value(run),
-        "largest_governed_files": [
+        "largest_governed_files": rows(
             _file_value(item, run.evaluation_date) for item in largest
-        ],
-        "files_above_warning": [
+        ),
+        "files_above_warning": rows(
             _file_value(item, run.evaluation_date) for item in above_warning
-        ],
+        ),
         "classification_counts": [
             {"kind": kind.value, "count": count}
             for kind, count in classification_counts(run.sizes)
         ],
-        "contexts": [
+        "contexts": rows(
             {
                 "name": item.name,
                 "total_bytes": item.total_bytes,
@@ -71,7 +82,7 @@ def audit_value(run: RepositoryRun) -> dict[str, object]:
                 "hard_bytes": item.hard_bytes,
                 "limit_state": item.limit_state.value,
                 "missing_exact_paths": list(item.missing_exact_paths),
-                "members": [
+                "members": rows(
                     {
                         "path": member.path,
                         "required_exact": member.required_exact,
@@ -79,10 +90,10 @@ def audit_value(run: RepositoryRun) -> dict[str, object]:
                         "counted_bytes": member.counted_bytes,
                     }
                     for member in item.members
-                ],
+                ),
             }
             for item in run.sizes.contexts
-        ],
+        ),
         "documentation": {
             "roots": list(run.documentation.roots),
             "governed_paths": list(run.documentation.governed_paths),
@@ -92,8 +103,8 @@ def audit_value(run: RepositoryRun) -> dict[str, object]:
             "edge_count": len(run.documentation.edges),
             "unreachable_paths": list(run.documentation.unreachable_paths),
         },
-        "migration": [_migration_value(item) for item in run.ratchet.files],
-        "exceptions": [
+        "migration": rows(_migration_value(item) for item in run.ratchet.files),
+        "exceptions": rows(
             {
                 "index": index,
                 "selector": selector_value(item.selector),
@@ -108,12 +119,12 @@ def audit_value(run: RepositoryRun) -> dict[str, object]:
                 "selected_path_count": selected_exceptions[index],
             }
             for index, item in enumerate(run.policy.exceptions.records)
-        ],
-        "changes_from_base": [
+        ),
+        "changes_from_base": rows(
             diagnostic_value(item)
             for item in run.diagnostics
             if item.code.startswith("RAT") and item.code != "RAT001"
-        ],
+        ),
     }
 
 
