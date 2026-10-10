@@ -13,6 +13,9 @@ MAX_MANIFEST_BYTES = 8 * 1024 * 1024
 MAX_RETAINED_TEXT_BYTES = 16 * 1024 * 1024
 MAX_REPORT_BYTES = 16 * 1024 * 1024
 MAX_REPORT_ITEMS = 100_000
+MAX_PATTERN_BYTES = 4096
+MAX_PATTERN_TOKENS = 1024
+MAX_MATCH_WORK = 1_000_000
 
 
 def require_resource(resource: str, actual: int, limit: int, *, operation: str,

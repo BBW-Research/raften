@@ -7,6 +7,8 @@ import re
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import TypeAlias
+from raften import resource_limits as limits
+from raften.matcher_limits import MatchBudget
 
 
 _WINDOWS_DRIVE = re.compile(r"^[A-Za-z]:")
@@ -20,6 +22,12 @@ class PathFlavor(StrEnum):
 
 class PatternSyntaxError(ValueError):
     """Raised when a repository pattern does not use the v1 glob language."""
+
+
+class PatternLimitError(PatternSyntaxError):
+    def __init__(self, resource: str, actual: int, limit: int) -> None:
+        self.resource, self.actual, self.limit = resource, actual, limit
+        super().__init__("pattern exceeds an operational safety limit")
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,33 +125,49 @@ def pattern_validation_error(value: str) -> str | None:
 def compile_pattern(pattern: str) -> CompiledPattern:
     """Compile a validated v1 repository glob into immutable matcher tokens."""
 
+    # Reject before syntax scans, splitting, or token allocation.
+    if len(pattern) > limits.MAX_PATTERN_BYTES:
+        raise PatternLimitError("pattern_bytes", len(pattern), limits.MAX_PATTERN_BYTES)
+    size = len(pattern.encode("utf-8"))
+    if size > limits.MAX_PATTERN_BYTES:
+        raise PatternLimitError("pattern_bytes", size, limits.MAX_PATTERN_BYTES)
     error = pattern_validation_error(pattern)
     if error is not None:
         raise PatternSyntaxError(error)
-    return CompiledPattern(
+    compiled = CompiledPattern(
         source=pattern,
         components=tuple(_compile_component(item) for item in pattern.split("/")),
     )
+    weight = sum(1 if item.recursive else sum(
+        len(token.ranges) if isinstance(token, _ClassToken) else 1
+        for token in item.tokens
+    ) for item in compiled.components)
+    if weight > limits.MAX_PATTERN_TOKENS:
+        raise PatternLimitError("pattern_tokens", weight, limits.MAX_PATTERN_TOKENS)
+    return compiled
 
 
-def match_path(pattern: CompiledPattern | str, path: str) -> bool:
+def match_path(pattern: CompiledPattern | str, path: str, *,
+               budget: MatchBudget | None = None) -> bool:
     """Return whether a pattern matches one complete canonical repository path."""
 
     error = candidate_path_validation_error(path)
     if error is not None:
         raise ValueError(error)
     compiled = compile_pattern(pattern) if isinstance(pattern, str) else pattern
-    return _match_compiled(compiled, path.split("/"))
+    return _match_compiled(compiled, path.split("/"), budget or MatchBudget())
 
 
-def matches_any(patterns: tuple[CompiledPattern, ...], path: str) -> bool:
+def matches_any(patterns: tuple[CompiledPattern, ...], path: str, *,
+                budget: MatchBudget | None = None) -> bool:
     """Return whether any precompiled pattern matches a repository path."""
 
     error = candidate_path_validation_error(path)
     if error is not None:
         raise ValueError(error)
     components = path.split("/")
-    return any(_match_compiled(pattern, components) for pattern in patterns)
+    selected = budget or MatchBudget()
+    return any(_match_compiled(pattern, components, selected) for pattern in patterns)
 
 
 def pattern_has_wildcards(pattern: str) -> bool:
@@ -248,8 +272,9 @@ def _compile_class_ranges(content: str) -> tuple[tuple[str, str], ...]:
     return tuple(ranges)
 
 
-def _match_compiled(pattern: CompiledPattern, path: list[str]) -> bool:
+def _match_compiled(pattern: CompiledPattern, path: list[str], budget: MatchBudget) -> bool:
     path_count = len(path)
+    budget.charge((len(pattern.components) + 1) * (path_count + 1))
     following = [False] * (path_count + 1)
     following[path_count] = True
     for component in reversed(pattern.components):
@@ -261,18 +286,27 @@ def _match_compiled(pattern: CompiledPattern, path: list[str]) -> bool:
         else:
             for path_index in range(path_count - 1, -1, -1):
                 current[path_index] = (
-                    _match_component(component, path[path_index])
-                    and following[path_index + 1]
+                    following[path_index + 1]
+                    and _match_component(component, path[path_index], budget)
                 )
         following = current
     return following[0]
 
 
-def _match_component(component: PatternComponent, value: str) -> bool:
+def _match_component(component: PatternComponent, value: str,
+                     budget: MatchBudget | None = None) -> bool:
+    selected = budget or MatchBudget()
+    selected.charge(len(value) + 1)
     if component.literal is not None:
         return component.literal == value
     tokens = component.tokens
     value_count = len(value)
+    minimum = sum(not isinstance(token, _StarToken) for token in tokens)
+    if minimum > value_count or (minimum != value_count and minimum == len(tokens)):
+        return False
+    weight = sum(len(token.ranges) if isinstance(token, _ClassToken) else 1
+                 for token in tokens)
+    selected.charge((weight + 1) * (value_count + 1))
     following = [False] * (value_count + 1)
     following[value_count] = True
     for token in reversed(tokens):

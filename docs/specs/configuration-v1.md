@@ -1,5 +1,7 @@
 # Version 1 configuration schema
 
+Pattern fields also enforce the fixed byte and weighted-token ceilings in the [glob contract](repository-paths-and-globs-v1.md#unicode-and-complexity), reporting one `CFG016` before expensive matching.
+
 `raften.toml` is a strict, UTF-8 TOML document. Version 1 rejects unknown keys, wrong TOML types, unsupported enum values, unsafe repository paths, malformed patterns, duplicate identities, ambiguous overrides, invalid limits, and inconsistent settings. Declaration order is preserved for records whose semantics depend on it.
 
 Human-facing `name`, `reason`, `owner`, `rationale`, and `tracking_reference` values must be nonblank and reject C0, DEL, and C1 control characters whenever supplied.
