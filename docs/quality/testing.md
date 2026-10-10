@@ -6,6 +6,8 @@ Tests define the policy contract. Assert diagnostic codes and structured fields 
 
 Do not mock Git for behavior that depends on tracked, untracked, ignored, deleted, renamed, or base-revision state. Small real repositories are clearer and more reliable. Unit-test command construction and error translation separately.
 
+Disposable `RepositoryFixture` repositories disable automatic maintenance before setup commits. Detached maintenance can outlive a commit and change administrative metadata during later evaluation. A native Git Trace2 regression verifies that default fixture commits start no maintenance child and that an explicitly enabled synchronous control does. Tests of concurrent repository changes perform their mutations explicitly.
+
 ## Test layers
 
 ### Source characterization

@@ -94,6 +94,8 @@ class RepositoryFixture:
             self.git("config", "user.email", "raften@example.invalid")
             self.git("config", "commit.gpgsign", "false")
             self.git("config", "core.autocrlf", "false")
+            # Detached maintenance can outlive setup and invalidate metadata witnesses.
+            self.git("config", "maintenance.auto", "false")
 
     def cleanup(self) -> None:
         self._temporary_directory.cleanup()
