@@ -6,7 +6,7 @@ import hashlib
 import os
 import subprocess
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from raften.diagnostics import (
@@ -17,6 +17,7 @@ from raften.diagnostics import (
     GIT_UNSAFE_PATH,
 )
 from raften import resource_limits as limits
+from raften.content_limits import ContentBudget
 from raften.git_administration import GitAdministration, administration_command, bind_administration
 from raften.git_output import collect_output
 from raften.git_executable import resolve_git_executable
@@ -79,6 +80,7 @@ GIT_TIMEOUT_SECONDS = 120
 class RepositoryHandle:
     root: Path
     administration: GitAdministration | None = None
+    budget: ContentBudget = field(default_factory=ContentBudget, compare=False, repr=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -416,6 +418,7 @@ def _worktree_entry_matches_index(
             return False
         if defer_regular_content:
             return True
+        repository.budget.content(entry.identity.size_bytes, operation="hash-worktree", path=entry.path)
         object_id = _hash_regular_blob(
             repository.root,
             entry,
@@ -524,14 +527,19 @@ def read_base_blob(
         _malformed("size-base-blob", "Git returned an invalid expanded blob size")
     limits.require_resource("content_bytes", int(size_output), ceiling,
                             operation="read-base-blob", path=entry.path)
-    return _run_git(
+    size = int(size_output)
+    repository.budget.content(size, operation="read-base-blob", path=entry.path)
+    data = _run_git(
         repository,
         operation="read-base-blob",
         arguments=("cat-file", "blob", entry.object_id),
         failure_code=GIT_BASE_OBJECT,
         failure_message="base blob is unavailable or has the wrong type",
-        max_output_bytes=ceiling,
+        max_output_bytes=size,
     )
+    if len(data) != size:
+        _fail(GIT_BASE_OBJECT, "base blob size differs from its preflight", path=entry.path)
+    return data
 
 
 def read_worktree_bytes(
@@ -540,6 +548,8 @@ def read_worktree_bytes(
 ) -> bytes:
     """Read exact bytes for one regular entry from its inventory snapshot."""
 
+    if entry.kind is WorktreeKind.REGULAR and entry.identity is not None:
+        repository.budget.content(entry.identity.size_bytes, operation="read-worktree", path=entry.path)
     return _read_regular_bytes(repository.root, entry)
 
 
@@ -563,6 +573,7 @@ def _run_git(
     administration = repository.administration
     if administration is None:
         _fail(GIT_INVALID_ROOT, "Git operation requires a validated repository handle")
+    repository.budget.git(operation)
     with administration_command(root, administration):
         try:
             git_executable, safe_path = resolve_git_executable(root)
