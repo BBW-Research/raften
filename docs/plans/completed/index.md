@@ -1,5 +1,6 @@
 # Completed implementation plans
 
+- [October 23 security remediation](security-october-23.md)
 - [October security follow-up](security-followup.md)
 - [Security audit remediation](security-audit.md)
 - [Build the standalone tool](standalone-tool.md)
