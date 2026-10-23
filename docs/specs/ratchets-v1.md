@@ -47,6 +47,8 @@ The base policy is read as exact blob bytes and parsed with a source label conta
 
 ## First-adoption manifest
 
+Before JSON decoding, a linear string-aware pass enforces 262,144 lexical tokens (including punctuation), nesting depth 16, 8,192 items per array, 16 keys per object, and 128 characters per numeric token. Strings and escape sequences are scanned without allocating decoded values; their bytes remain covered by the 8 MiB raw input limit. The standard JSON decoder retains syntax locations and duplicate-key checks within this envelope. Capture and rendering also allow at most 8,192 entries, and rendered output must pass the same structural envelope. Limits are fixed host-safety ceilings; overflow produces operational `GIT010` before decoder materialization, rather than a partial baseline.
+
 For a canonical config path, the sidecar replaces a final `.toml` suffix with `.debt.json`; the default is `raften.debt.json`. `init --capture-debt` captures only current candidate paths. It never writes a pattern, classification rule, exception, or exclusion.
 
 The sidecar is strict UTF-8 JSON with this exact logical schema:

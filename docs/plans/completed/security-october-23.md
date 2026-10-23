@@ -9,3 +9,9 @@ The October 23, 2026 Codex Security Cloud scan of `58683e6` reported four new fi
 Five focused regressions reproduced the omission before the fix and cover branch/tag/symbolic refs, reftable/reflog inputs, pre-command refusal, restored writes during resolution, linked-worktree common refs, and witness-limit accounting. Validation and independent review are recorded in the PR.
 
 Nested-input validation: `BASE_REF=origin/main scripts/validate` passed 605 tests on Python 3.13 with one filesystem-capability skip. Independent read-only review passed 39 focused tests and found no actionable defect. Repository policy reports zero errors and the existing `inventory.py` size advisory.
+
+## Debt manifest structure
+
+[Issue #33](https://github.com/BBW-Research/raften/issues/33) tracks JSON object amplification. A linear lexical pass bounds tokens, depth, object members, array entries, and numeric tokens before invoking the standard JSON decoder. Escape-aware string scanning preserves literal filename data and existing schema and duplicate-key diagnostics. Capture and rendering enforce the entry ceiling before projection and generated output must pass the same envelope. The limits are authoritative in the [first-adoption contract](../../specs/ratchets-v1.md#first-adoption-manifest).
+
+Debt validation: `BASE_REF=origin/main scripts/validate` passed 609 tests on Python 3.13 with one filesystem-capability skip. Four focused regressions cover pre-decoder refusal, inclusive boundaries, escaped strings, and capture/render limits. Independent read-only review passed 47 focused tests and checked exact and one-below boundaries for 1,000 generated JSON values without an accounting mismatch.

@@ -22,6 +22,7 @@ from raften.diagnostics import (
     config_diagnostic_sort_key,
 )
 from raften.config_validation import child_path
+from raften.debt_limits import preflight_manifest
 from raften.matcher import candidate_path_validation_error, path_validation_error
 from raften.model import (
     ContentState,
@@ -77,6 +78,8 @@ def capture_debt_manifest(files: Sequence[FileAssessment]) -> MigrationDebtManif
             raise ValueError(
                 f"oversized assessment {assessment.entry.path!r} has no SHA-256 content identity"
             )
+        limits.require_resource("manifest_entries", len(entries) + 1, limits.MAX_MANIFEST_ENTRIES,
+                                operation="capture-manifest")
         entries.append(
             MigrationDebtEntry(
                 path=assessment.entry.path,
@@ -109,7 +112,9 @@ def render_debt_manifest(manifest: MigrationDebtManifest) -> bytes:
                                 limits.MAX_MANIFEST_BYTES, operation="render-manifest")
         output.write(chunk)
     output.write(b"\n")
-    return output.getvalue()
+    data = output.getvalue()
+    preflight_manifest(data.decode("utf-8"), "raften.debt.json")
+    return data
 
 
 def parse_debt_manifest(
@@ -131,6 +136,7 @@ def parse_debt_manifest(
             "migration-debt manifest must be valid UTF-8",
             details=(("byte_offset", error.start),),
         )
+    preflight_manifest(text, source_path)
     try:
         raw = json.loads(
             text,
@@ -244,6 +250,8 @@ def debt_manifest_path(config_path: str) -> str:
 
 
 def _validate_model(manifest: MigrationDebtManifest) -> None:
+    limits.require_resource("manifest_entries", len(manifest.entries), limits.MAX_MANIFEST_ENTRIES,
+                            operation="render-manifest")
     if not _is_integer(manifest.schema_version) or manifest.schema_version != SCHEMA_VERSION:
         raise ValueError(f"unsupported migration-debt schema version {manifest.schema_version}")
     for entry in manifest.entries:
