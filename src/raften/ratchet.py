@@ -179,6 +179,7 @@ def _evaluate_git(
 ) -> tuple[list[FileRatchetAssessment], list[Diagnostic]]:
     files: list[FileRatchetAssessment] = []
     diagnostics = DiagnosticBuffer()
+    classifications: dict[str, tuple[ContentState, int]] = {}
     for current in candidates:
         path = current.entry.path
         hard = _ordinary_hard(current)
@@ -217,9 +218,12 @@ def _evaluate_git(
                 ),
             )
             continue
-        raw = read_base(base)
-        classified = classify_content(raw)
-        if classified.state is not ContentState.PLAINTEXT:
+        if base.object_id not in classifications:
+            classified = classify_content(read_base(base))
+            classifications[base.object_id] = (classified.state, classified.size_bytes)
+            del classified
+        state, base_size = classifications[base.object_id]
+        if state is not ContentState.PLAINTEXT:
             _append_unbaselined(
                 current_policy,
                 files,
@@ -231,10 +235,10 @@ def _evaluate_git(
                 code=RAT_BASE_TYPE_CHANGED,
                 reason="non_plaintext",
                 message="base path is not an eligible regular plaintext file",
-                base_size=len(raw),
+                base_size=base_size,
                 base_identity=f"git:{base.object_id}",
                 extra_details=(
-                    ("base_content_state", classified.state.value),
+                    ("base_content_state", state.value),
                     ("base_object_id", base.object_id),
                 ),
             )
@@ -246,7 +250,7 @@ def _evaluate_git(
             path=path,
             size=size,
             hard=hard,
-            base_size=classified.size_bytes,
+            base_size=base_size,
             base_identity=f"git:{base.object_id}",
             source=RatchetBaselineSource.GIT,
         )

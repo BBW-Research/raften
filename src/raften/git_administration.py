@@ -134,9 +134,9 @@ class _AdministrationScan:
         self.entries = self.directories = self.metadata_files = 0
 
     def walk(self, root: Path) -> None:
-        pending = [(root, True)]
+        pending = [(root, True, True)]
         while pending:
-            path, metadata = pending.pop()
+            path, metadata, witness_files = pending.pop()
             if path in self.witnesses and self.witnesses[path].timestamps:
                 continue
             self.directories += 1
@@ -163,8 +163,11 @@ class _AdministrationScan:
                         _fail(child_path, "Git input is a symlink or special file")
                     if stat.S_ISDIR(child.st_mode):
                         if not metadata or name in INPUT_DIRECTORIES:
-                            pending.append((child_path, False))
-                    elif metadata or path.name == "info":
+                            # Object payloads have separate content-addressed checks;
+                            # refs, reflogs and reftables remain mutable Git inputs.
+                            retain = name != "objects" if metadata else witness_files
+                            pending.append((child_path, False, retain))
+                    elif witness_files or path.name == "info":
                         self.metadata_files += 1
                         limits.require_resource("git_admin_metadata_files", self.metadata_files,
                                                 MAX_ADMIN_METADATA_FILES, operation="bind-administration")

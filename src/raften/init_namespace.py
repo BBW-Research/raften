@@ -1,4 +1,4 @@
-"""Retain directory rename witnesses for initialization and Git command scopes."""
+"""Retain directory rename witnesses for repository command scopes."""
 
 from __future__ import annotations
 

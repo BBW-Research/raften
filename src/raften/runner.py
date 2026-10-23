@@ -19,6 +19,7 @@ from raften.debt import DebtManifestError, debt_manifest_path, parse_debt_manife
 from raften.diagnostics import (
     CFG_PARSE,
     GIT_BASE_OBJECT,
+    GIT_PATH_CHANGED,
     config_diagnostic,
     diagnostic_sort_key,
 )
@@ -29,6 +30,7 @@ from raften.docs import (
 )
 from raften.inventory import (
     InventorySnapshot,
+    _resolve_repository_root,
     RepositoryAccessError,
     RepositoryHandle,
     find_base_entry,
@@ -41,6 +43,8 @@ from raften.inventory import (
     resolve_base_revision,
 )
 from raften.initialization import initialize_repository
+from raften.init_namespace import NamespaceGuard, bind_namespace
+from raften.init_safety import InitializationError
 from raften.model import (
     BaseTreeEntry,
     Diagnostic,
@@ -224,8 +228,39 @@ def _run_repository(
     evaluation_date: date,
     budget: EvaluationBudget,
 ) -> RepositoryRun:
-    repository = open_repository(repository_path)
+    root = _resolve_repository_root(repository_path)
+    try:
+        with bind_namespace(root) as namespace:
+            try:
+                repository = open_repository(root)
+                namespace.verify()
+                result = _run_anchored(
+                    repository, namespace=namespace, config_path=config_path,
+                    base_ref=base_ref, evaluation_date=evaluation_date, budget=budget,
+                )
+            except (ConfigurationError, DebtManifestError, RepositoryAccessError):
+                namespace.verify()
+                raise
+            namespace.verify()
+            return result
+    except InitializationError:
+        fail_repository(
+            GIT_PATH_CHANGED, "repository namespace changed or could not be anchored",
+            details=(("operation", "scan-repository"),),
+        )
+
+
+def _run_anchored(
+    repository: RepositoryHandle,
+    *,
+    namespace: NamespaceGuard,
+    config_path: str,
+    base_ref: str | None,
+    evaluation_date: date,
+    budget: EvaluationBudget,
+) -> RepositoryRun:
     snapshot = inventory_worktree(repository)
+    namespace.verify()
     content = _ContentCache(
         repository,
         frozenset({config_path, debt_manifest_path(config_path)}),
